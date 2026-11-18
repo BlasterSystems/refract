@@ -35,7 +35,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 Release-gate audit (quick profile, partial coverage) of `v0.2.0..v0.3.0`:
 
-- `setup-hooks.sh` installs a hash-pinned launcher into git's own hooks directory instead of pointing `core.hooksPath` at the agent-writable `.githooks/`. A changed hook, validator, docs-check, or `.refract/config.json` blocks the commit until the user re-pins it.
+- `setup-hooks.sh` installs a hash-pinned launcher into git's own hooks directory instead of pointing `core.hooksPath` at the agent-writable `.githooks/`. It runs private copies of the verified hook, validator, docs-check, and `.refract/config.json`, and a change to any of them blocks the commit until the user re-pins it. The configured test and build commands still run project code from the working tree.
 - A repository-supplied manifest can no longer mark refract control files as customized seeds; only refract decides which generated files are mutable.
 - git runs in target repositories through one hardened helper, so repository-configured programs (`core.fsmonitor`, signature programs) never execute during detection or migration scans.
 - Control characters are rejected in generated and manifest paths; repository-derived names and validator output are printed one line each, so they cannot forge warnings or Stop-hook instructions.

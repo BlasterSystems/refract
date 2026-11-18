@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import stat
+import unicodedata
 from pathlib import Path, PurePosixPath
 
 
@@ -14,7 +15,7 @@ def normalize_relative_path(value: str) -> str:
         not isinstance(value, str)
         or not value
         or "\\" in value
-        or any(ord(char) < 0x20 or 0x7F <= ord(char) < 0xA0 for char in value)
+        or any(unicodedata.category(char)[0] == "C" or unicodedata.category(char) in {"Zl", "Zp"} for char in value)
     ):
         raise UnsafePathError(f"unsafe generated path: {value!r}")
     pure = PurePosixPath(value)

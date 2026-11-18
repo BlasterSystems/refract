@@ -49,18 +49,29 @@ cat > "$HOOK.tmp" <<HOOK_EOF
 #!/bin/sh
 $MARKER (installed by setup-hooks.sh; re-run it to re-pin)
 exec python3 -I -c '
-import hashlib, json, os, sys
+import hashlib, json, os, subprocess, sys, tempfile
 pins = json.loads(sys.argv[1])
+root = os.getcwd()
+verified = {}
 for path, digest in sorted(pins.items()):
     try:
-        ok = not os.path.islink(path) and hashlib.sha256(open(path, "rb").read()).hexdigest() == digest
+        data = None if os.path.islink(path) else open(path, "rb").read()
     except OSError:
-        ok = False
-    if not ok:
+        data = None
+    if data is None or hashlib.sha256(data).hexdigest() != digest:
         print("refract pre-commit: " + path + " changed since setup-hooks.sh pinned it.")
         print("Review the change, then re-run ./setup-hooks.sh to re-pin. Commit blocked.")
         sys.exit(1)
-os.execvp("bash", ["bash", ".githooks/pre-commit"])
+    verified[path] = data
+with tempfile.TemporaryDirectory() as private:
+    copies = {}
+    for path, data in verified.items():
+        copies[path] = os.path.join(private, os.path.basename(path))
+        with open(copies[path], "wb") as handle:
+            handle.write(data)
+        os.chmod(copies[path], 0o700)
+    env = dict(os.environ, REFRACT_ROOT=root, REFRACT_BIN=private, REFRACT_CONFIG=copies[".refract/config.json"])
+    sys.exit(subprocess.call(["bash", copies[".githooks/pre-commit"]], env=env))
 ' '$PINS'
 HOOK_EOF
 chmod +x "$HOOK.tmp"

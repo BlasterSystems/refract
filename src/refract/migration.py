@@ -24,7 +24,8 @@ def _git_tracked(root: Path, relative: str) -> bool:
 def _display(name: str) -> str:
     """Escape repository-controlled names so they cannot forge output lines."""
     return "".join(
-        f"\\u{ord(char):04x}" if unicodedata.category(char).startswith("C") else char for char in name
+        f"\\u{ord(char):04x}" if unicodedata.category(char)[0] == "C" or unicodedata.category(char) in {"Zl", "Zp"} else char
+        for char in name
     )
 
 

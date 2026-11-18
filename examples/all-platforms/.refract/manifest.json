@@ -8,7 +8,7 @@
     "opencode",
     "omp"
   ],
-  "updated_at": "2026-11-18T23:32:42+00:00",
+  "updated_at": "2026-11-18T23:36:07+00:00",
   "files": {
     ".agents/skills/architecture-decision/SKILL.md": {
       "sha256": "7bd5fe23cdbf5d058e1e645d33b179ebf92571b7850e2c98c53aa635028f5b2e",
@@ -81,7 +81,7 @@
       "mutable": false
     },
     ".claude/settings.json": {
-      "sha256": "151a24c7e32ccb2aa572aa076990178632c4191031041b957668dc1082d7d65b",
+      "sha256": "62bc907fbb124764b2a923548ab587fe80ebf02ea1ac26456acf1eadc90866e9",
       "executable": false,
       "mutable": false
     },
@@ -161,12 +161,12 @@
       "mutable": false
     },
     ".codex/hooks.json": {
-      "sha256": "3113ad8b222b04f78209d2dfb7df5319e36491ac97e841c84fe03ae74acff507",
+      "sha256": "bb38b5ebdb78142fe89b12e039a7129e16acefc971450d6d89d24eaa08133c7b",
       "executable": false,
       "mutable": false
     },
     ".githooks/pre-commit": {
-      "sha256": "e9e5e80bae61d46b5fb93c87ebb53bc20546fdf996b919e1f5eee34643b0f034",
+      "sha256": "3181c2ac88dc2a07d723f02facf036c93ca8c9289646f8a7a75f45eb45568aab",
       "executable": true,
       "mutable": false
     },
@@ -286,7 +286,7 @@
       "mutable": false
     },
     ".refract/bin/agent-check": {
-      "sha256": "0e6f3f4ad5e8bbb0efeaf6f597060857115d8c1a0f4609cefbb265771193d075",
+      "sha256": "42432c2b6290ed7dda3ff96a52c0865b7708d80f08f5808a272970a1e84b015b",
       "executable": true,
       "mutable": false
     },
@@ -296,12 +296,12 @@
       "mutable": false
     },
     ".refract/bin/docs-check": {
-      "sha256": "d8746c5d8b8bb3624596e3bb60d6d301da7a88fab492058337bc2ea3a5619186",
+      "sha256": "b0a466bcb0fce894a2ab9b393cc02f24f35c097407003ae4848eee974af81ba4",
       "executable": true,
       "mutable": false
     },
     ".refract/bin/validate": {
-      "sha256": "96923480833f62a5f1913b851934a1f0e909df3fead27fa8a6aeb194a9288851",
+      "sha256": "e7cb7098d8329763f653826f7111c79a3f0293e9adaa07ffab5dca3cae6131d6",
       "executable": true,
       "mutable": false
     },
@@ -386,7 +386,7 @@
       "mutable": false
     },
     "setup-hooks.sh": {
-      "sha256": "1d6331e6f951e56247a0c87ba118c39e7db617c1059bd12e8db9133595f366ae",
+      "sha256": "1a1cfd3e62eb2e9042533e6d9c285de05684b0270a35a8d310ca59f5456aa0e3",
       "executable": true,
       "mutable": false
     },

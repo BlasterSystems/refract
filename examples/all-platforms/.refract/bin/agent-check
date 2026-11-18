@@ -16,6 +16,7 @@ import json
 import os
 import subprocess
 import sys
+import unicodedata
 from pathlib import Path
 
 # The pinned hook launcher runs verified private copies of this script and the
@@ -34,13 +35,17 @@ def run_validator() -> list[str]:
         return [f"validator could not run: {exc}"]
     if result.returncode == 0:
         return []
-    lines = [_one_line(line[2:]) for line in result.stdout.splitlines() if line.startswith("- ")]
+    # Split on "\n" only: str.splitlines() also breaks on U+2028 and friends.
+    lines = [_one_line(line[2:]) for line in result.stdout.split("\n") if line.startswith("- ")]
     return lines or [result.stdout.strip() or result.stderr.strip() or "validator failed"]
 
 
 def _one_line(text: str) -> str:
     """Validator output names repository paths; never let it span lines."""
-    return "".join(f"\\u{ord(c):04x}" if ord(c) < 0x20 or 0x7F <= ord(c) < 0xA0 else c for c in text)[:500]
+    return "".join(
+        f"\\u{ord(c):04x}" if unicodedata.category(c)[0] == "C" or unicodedata.category(c) in {"Zl", "Zp"} else c
+        for c in text
+    )[:500]
 
 
 def _run_validator_process() -> subprocess.CompletedProcess[str]:

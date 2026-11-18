@@ -50,7 +50,7 @@ Git hooks are generated only when selected. `setup-hooks.sh` installs a hash-pin
 Generated hooks and scripts run as the developer, outside any agent sandbox, while the files they execute live in the agent-writable workspace:
 
 - **Agent Stop hooks (Claude Code, Codex)** pin the SHA-256 of `agent-check` and `validate` in their hook configuration. They run verified private copies in isolated Python mode and skip if the pins do not match.
-- **The git pre-commit launcher** pins the hook, validator, docs-check, and `.refract/config.json` at setup time and blocks the commit on any change.
+- **The git pre-commit launcher** pins the hook, validator, docs-check, and `.refract/config.json` at setup time. It runs private copies of exactly those verified bytes and blocks the commit on any change. The configured test and build commands are project code and are not pinned; they run from the working tree, as they would by hand.
 - **`.refract/bin` scripts** use `python3 -I`, so modules planted beside them are never imported.
 - **Repository-supplied manifests are untrusted.** They can never mark refract control paths as mutable.
 - **Repository-derived names are escaped** before they reach the terminal or a hook's reply to the agent.
