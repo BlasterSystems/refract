@@ -72,6 +72,7 @@ class GoldenTreeTests(unittest.TestCase):
                 ".githooks/pre-commit",
                 ".refract/bin/docs-check",
                 ".refract/bin/validate",
+                ".refract/bin/agent-check",
                 "setup-hooks.sh",
             }
             for path, generated in files.items():

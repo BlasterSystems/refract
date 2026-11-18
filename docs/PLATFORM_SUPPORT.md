@@ -1,18 +1,38 @@
 # Platform Support
 
-Last verified: 2026-11-18 (Claude Code, Codex, and OpenCode contract diagnostics; Pi and omp last reviewed 2026-11-09).
+Last verified: 2026-11-18 against installed CLIs (Claude Code 2.1.327, Codex 0.169.0, OpenCode 1.19.5, omp 18.22.2). Pi was last reviewed 2026-11-09 and is deprecated (ADR-0010).
 
-| Platform | Version verified | Instructions | Skills | Config/MCP | Agents |
-|---|---:|---|---|---|---|
-| Claude Code | 2.1.325 | `CLAUDE.md` with imported portable core | `.claude/skills`, including advisory bootstrap | `.mcp.json` opt-in | `.claude/agents` opt-in |
-| OpenAI Codex | 0.169.0 | `AGENTS.md` | `.agents/skills`, including advisory bootstrap | `.codex/config.toml` opt-in | `.codex/agents/*.toml` opt-in |
-| Pi Coding Agent | 0.84.4 | `AGENTS.md` | `.agents/skills`, including advisory bootstrap | No built-in MCP | Requires separately reviewed extension/package |
-| OpenCode | 1.19.5 | `AGENTS.md` | `.agents/skills`, including advisory bootstrap | `opencode.json` and native MCP | `.opencode/agents/*.md` opt-in |
-| OhMyPi (omp) | 18.18.3 | `AGENTS.md` portable core; no omp-native context generated | `.agents/skills` native (agents provider, default-on); `.claude/skills` also discovered | Root `mcp.json` / `.mcp.json` fallback | Sticky `.omp/RULES.md` invariants; no other `.omp/` artifacts |
+Capability parity is defined by ADR-0010 and generated from `src/refract/capabilities.py`. A capability a selected platform cannot express produces a CLI warning and an "Unsupported" support row; it is never dropped silently.
 
-Pi, OpenCode, and omp release channels are not npm-tracked versions and are verified against installed builds. Claude Code and Codex are verified against the npm-published latest versions (2.1.325 and 0.169.0) as of 2026-11-18.
+| Capability | Claude Code | OpenAI Codex | OpenCode | OhMyPi (omp) |
+|---|---|---|---|---|
+| Instructions | `CLAUDE.md` importing `AGENTS.md` | `AGENTS.md` | `AGENTS.md` | `AGENTS.md` |
+| Skills | `.claude/skills` mirror | `.agents/skills` | `.agents/skills` | `.agents/skills` |
+| Skill invocation | `/<skill>` | native skills | `.opencode/commands/<skill>.md` | `/skill:<skill>` |
+| Permissions (default) | `.claude/settings.json`: deny `.env` reads; native ask-before-edit/shell mode | `.codex/config.toml`: `on-request`, `workspace-write`, no network | `opencode.json`: edit/bash ask, `.env` reads denied | `.omp/settings.json`: `tools.approvalMode=always-ask`, `autolearn.enabled=false` |
+| Sticky rules | `CLAUDE.md` | `AGENTS.md` | `AGENTS.md` | `.omp/RULES.md` |
+| Subagents (`--agents`) | `.claude/agents/*.md` | `.codex/agents/*.toml` | `.opencode/agents/*.md` | `.omp/agents/*.md` |
+| MCP (`--mcp`) | `.mcp.json` | `.codex/config.toml` | `opencode.json` | `.omp/mcp.json` |
+| Agent hooks (`--hooks`) | `Stop` hook in `.claude/settings.json` | `Stop` hook in `.codex/hooks.json` | `.opencode/plugins/refract-check.js` (`session.idle`) | `.omp/hooks/post/refract-check.ts` (`agent_end`) |
 
-OhMyPi (omp) is a selectable platform (ADR-0008): the adapter generates only the sticky `.omp/RULES.md` invariant file because omp natively discovers standalone `AGENTS.md` and `.agents/skills/<name>/SKILL.md` (the `agents` skill provider, project scope, one-level layout), reads root `mcp.json` / `.mcp.json` as MCP fallback files, and discovers standalone `CLAUDE.md` through its `claude-md` provider. When Claude Code and omp are both selected, identical `.claude/skills` and `.agents/skills` copies collapse during omp skill deduplication; prefer editing the `.agents/skills` copy or selecting `omp` alone, because omp ranks `.claude/skills` higher and would load a stale copy after a one-sided edit. The adapter generates only the sticky `.omp/RULES.md` invariant file (deterministic, manifest-owned); native context, native skills, `.omp/mcp.json`, and hooks are not generated.
+Every agent hook runs the same deterministic script, `.refract/bin/agent-check`. It executes the project validator and reports the result. It never invokes an LLM. On a validation failure the Claude Code and Codex Stop hooks block once, so the agent fixes the problem before finishing. On a turn a hook has already continued they only report, which prevents fix loops. The OpenCode and omp hooks report.
+
+Platform notes:
+
+- **Codex** loads the project `.codex/` layer (config, hooks, agents) only after the project is trusted.
+- **omp** merges `.omp/settings.json` and `.claude/settings.json` into its project settings layer. The Claude-only `permissions` and `hooks` keys do not collide with omp setting ids.
+- **omp skill precedence.** omp ranks `.claude/skills` above `.agents/skills`, so when Claude Code and omp are both selected the validators require the two skill copies to stay identical.
+- **omp MCP.** omp also reads root `.mcp.json` as a fallback. When `claude` and `omp` are both selected with `--mcp`, the same `context7` server is declared twice, and omp resolves it by provider priority.
+- **Pi** is deprecated. It consumes only the portable core, and selecting it prints a deprecation warning.
+
+## Project scope and user-level skills
+
+refract writes only inside the target project. `init` and `retrofit` refuse the home directory, the filesystem root, and any non-repository folder that contains nested git repositories, unless `--allow-unscoped-target` is passed. Run refract inside each project instead. The validators reject generated agent instructions, skills, agents and commands that reference home-relative paths (`~/`, `$HOME`).
+
+Skills that live in user scope load into every project on the machine. The generated omp settings disable auto-learn per project, but refract never deletes user-level files. To clean up after an earlier parent-folder or global install, review and remove the stray entries yourself, for example:
+
+- `~/.omp/agent/skills/<name>` and `~/.agents/skills/<name>`: hand-installed global skills.
+- `~/.omp/agent/managed-skills/`: skills minted by omp auto-learn. Set `autolearn.enabled: false` in `~/.omp/agent/config.yml` to stop minting them globally.
 
 ## Support contract
 
@@ -20,8 +40,8 @@ Capabilities are classified independently as native, portable fallback, extensio
 
 ## Contract validation
 
-Tests validate official file locations and parse generated JSON/TOML. OpenCode tests use `opencode debug config`, `opencode debug skill`, and `opencode debug agent` when the CLI is installed. Provider-authenticated release smoke tests remain a release activity.
+Tests validate official file locations, agent front matter, skill-mirror identity, and parse generated JSON/TOML. When the CLIs are installed, contract tests run `claude mcp get`, `codex mcp list --json` (isolated `CODEX_HOME`), `opencode debug config`, and `omp config get`. Provider-authenticated release smoke tests remain a release activity.
 
 ## Security defaults
 
-No MCP server, Git hook, repository-host workflow, broad permission grant, or issue tracker is enabled without selection. Hooks never invoke an LLM or perform bootstrap mutation. OpenCode project configuration asks before edits and shell commands. Pi extension-based capabilities are never described as native. The external security-audit skill is documented and installed on demand (ADR-0006); it is never generated, auto-installed, or manifest-owned.
+No MCP server, Git hook, repository-host workflow, broad permission grant, or issue tracker is enabled without selection. Hooks never invoke an LLM or perform bootstrap mutation. Every platform's generated project policy asks before edits and shell commands and denies `.env` reads (see the parity table). Pi extension-based capabilities are never described as native. The external security-audit skill is documented and installed on demand (ADR-0006); it is never generated, auto-installed, or manifest-owned.

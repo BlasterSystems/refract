@@ -26,8 +26,9 @@
     },
     "effective_by_platform": {
       "pi": {
+        "agents": false,
         "mcp": false,
-        "agents": false
+        "hooks": false
       }
     }
   }

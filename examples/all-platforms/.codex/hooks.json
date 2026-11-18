@@ -1,0 +1,17 @@
+{
+  "description": "refract deterministic end-of-turn validation",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$(git rev-parse --show-toplevel)/.refract/bin/agent-check\" --format json",
+            "timeout": 120,
+            "statusMessage": "refract validation"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -85,3 +85,45 @@ def assert_safe_root_parent(root: Path) -> None:
             raise UnsafePathError(f"target ancestor is not a directory: {current}")
         if is_root and not stat.S_ISDIR(mode):
             raise UnsafePathError(f"target root is not a directory: {current}")
+
+
+def project_scope_problems(target: Path, *, max_depth: int = 2) -> list[str]:
+    """Explain why a target does not look like a single project root.
+
+    refract writes project-scoped agent configuration. Running it on a home
+    directory or on a folder that groups several repositories makes every
+    nested project (and some agent CLIs' user-scope discovery) inherit one
+    project's skills, hooks, and policies.
+    """
+    resolved = Path(os.path.normpath(str(target.expanduser().absolute())))
+    problems: list[str] = []
+    if resolved == Path(resolved.anchor):
+        problems.append(f"{resolved} is a filesystem root, not a project")
+    if resolved == Path.home().absolute():
+        problems.append(f"{resolved} is the home directory, not a project")
+    if not resolved.is_dir() or (resolved / ".git").exists():
+        return problems
+    nested: list[str] = []
+    frontier = [resolved]
+    for _depth in range(max_depth):
+        next_frontier: list[Path] = []
+        for directory in frontier:
+            try:
+                children = sorted(child for child in directory.iterdir() if child.is_dir() and not child.is_symlink())
+            except OSError:
+                continue
+            for child in children:
+                if child.name.startswith(".") or child.name in {"node_modules", "vendor"}:
+                    continue
+                if (child / ".git").exists():
+                    nested.append(child.relative_to(resolved).as_posix())
+                else:
+                    next_frontier.append(child)
+        frontier = next_frontier
+    if nested:
+        shown = ", ".join(nested[:3]) + (" ..." if len(nested) > 3 else "")
+        problems.append(
+            f"{resolved} is not a git repository but contains nested repositories ({shown}); "
+            "run refract inside each project instead"
+        )
+    return problems

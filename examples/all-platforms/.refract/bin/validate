@@ -21,6 +21,71 @@ REQUIRED_SECTIONS = (
     "## Context", "## Decision drivers", "## Considered options", "## Decision",
     "## Consequences", "## Implementation and validation", "## Revisit triggers", "## References",
 )
+GLOBAL_SCOPE_FORBIDDEN = ("~/", "$HOME", "%USERPROFILE%")
+AGENT_SURFACE_PREFIXES = (
+    ".agents/skills/", ".claude/skills/", ".claude/agents/", ".omp/agents/",
+    ".opencode/agents/", ".opencode/commands/", ".codex/agents/",
+)
+AGENT_SURFACE_FILES = ("AGENTS.md", "CLAUDE.md", ".omp/RULES.md")
+
+
+def _front_matter(text: str) -> dict[str, str] | None:
+    if not text.startswith("---\n"):
+        return None
+    end = text.find("\n---", 4)
+    if end == -1:
+        return None
+    fields: dict[str, str] = {}
+    for line in text[4:end].splitlines():
+        key, sep, value = line.partition(":")
+        if sep and key and not key.startswith((" ", "\t")):
+            fields[key.strip()] = value.strip()
+    return fields
+
+
+def agent_surface_errors(relative: str, text: str) -> list[str]:
+    """Platform-specific contracts for instruction, skill, agent, and command files."""
+    if relative not in AGENT_SURFACE_FILES and not relative.startswith(AGENT_SURFACE_PREFIXES):
+        return []
+    problems = [
+        f"{relative} references user/global scope ({token}); generated agent content must stay project-scoped"
+        for token in GLOBAL_SCOPE_FORBIDDEN
+        if token in text
+    ]
+    parts = relative.split("/")
+    if relative.endswith("/SKILL.md") and len(parts) == 4:
+        fields = _front_matter(text) or {}
+        if fields.get("name") != parts[2] or not fields.get("description"):
+            problems.append(f"{relative}: skill front matter name must match its directory and include a description")
+    elif relative.endswith(".md") and parts[0] in {".claude", ".omp"} and parts[1] == "agents":
+        fields = _front_matter(text) or {}
+        if fields.get("name") != parts[-1][:-3] or not fields.get("description"):
+            problems.append(f"{relative}: agent front matter needs name matching its file and a description")
+    elif relative.endswith(".md") and parts[0] == ".opencode":
+        if not (_front_matter(text) or {}).get("description"):
+            problems.append(f"{relative}: OpenCode front matter needs a description")
+    elif relative.endswith(".toml") and parts[0] == ".codex":
+        try:
+            data = tomllib.loads(text)
+        except ValueError:
+            data = {}
+        for key in ("name", "description", "developer_instructions"):
+            if not isinstance(data.get(key), str) or not data[key].strip():
+                problems.append(f"{relative}: Codex agent requires a non-empty {key}")
+    return problems
+
+
+def mirror_errors(texts: dict[str, str]) -> list[str]:
+    """Skill mirrors must match the portable copy (omp prefers .claude/skills)."""
+    problems = []
+    for relative, text in sorted(texts.items()):
+        if relative.startswith(".claude/skills/"):
+            portable = ".agents/skills/" + relative[len(".claude/skills/"):]
+            if portable in texts and texts[portable] != text:
+                problems.append(f"{relative} differs from {portable}; edit both copies or re-run refract")
+    return problems
+
+
 ERRORS: list[str] = []
 
 
@@ -87,6 +152,19 @@ def manifest_paths() -> list[Path]:
 
 
 def validate_generated(paths: list[Path]) -> None:
+    surfaces: dict[str, str] = {}
+    for path in paths:
+        relative = path.relative_to(ROOT).as_posix()
+        if relative in AGENT_SURFACE_FILES or relative.startswith(AGENT_SURFACE_PREFIXES):
+            try:
+                surfaces[relative] = path.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                continue
+    for relative, text in sorted(surfaces.items()):
+        for problem in agent_surface_errors(relative, text):
+            error(problem)
+    for problem in mirror_errors(surfaces):
+        error(problem)
     for path in paths:
         relative = path.relative_to(ROOT).as_posix()
         try:
@@ -105,10 +183,6 @@ def validate_generated(paths: list[Path]) -> None:
                 for token in PORTABLE_FORBIDDEN:
                     if token in text:
                         error(f"{relative} contains platform-specific token: {token}")
-                if relative.startswith(".agents/skills/") and relative.endswith("/SKILL.md"):
-                    skill_name = relative.split("/")[-2]
-                    if not text.startswith("---\n") or f"\nname: {skill_name}\n" not in text:
-                        error(f"{relative}: skill front matter name must match its directory")
         if path.suffix == ".json":
             try:
                 json.loads(content)

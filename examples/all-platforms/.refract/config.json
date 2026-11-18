@@ -30,24 +30,29 @@
     },
     "effective_by_platform": {
       "claude": {
+        "agents": true,
         "mcp": true,
-        "agents": true
+        "hooks": true
       },
       "codex": {
+        "agents": true,
         "mcp": true,
-        "agents": true
+        "hooks": true
       },
       "pi": {
+        "agents": false,
         "mcp": false,
-        "agents": false
+        "hooks": false
       },
       "opencode": {
+        "agents": true,
         "mcp": true,
-        "agents": true
+        "hooks": true
       },
       "omp": {
-        "mcp": false,
-        "agents": false
+        "agents": true,
+        "mcp": true,
+        "hooks": true
       }
     }
   }

@@ -10,6 +10,7 @@ import unittest
 from pathlib import Path
 
 from refract.apply import apply_plan
+from refract.capabilities import capability_warnings
 from refract.planner import build_plan
 from refract.renderer import render_project
 from tests.helpers import request
@@ -24,6 +25,8 @@ class PlatformContractTests(unittest.TestCase):
             self.assertIn(".claude/skills/docs-check/SKILL.md", files)
             self.assertIn(".claude/skills/semantic-versioning/SKILL.md", files)
             self.assertIn(".claude/agents/architecture-reviewer.md", files)
+            self.assertIn(".claude/settings.json", files)
+            self.assertNotIn(".claude/settings.local.json", files)
             self.assertIn(".mcp.json", files)
             self.assertNotIn(".claude/claude.json", files)
 
@@ -38,36 +41,109 @@ class PlatformContractTests(unittest.TestCase):
             self.assertNotIn(".codex.md", files)
             tomllib.loads(files[".codex/config.toml"].content.decode())
 
-    def test_pi_core_is_native_and_extension_capabilities_not_generated(self) -> None:
+    def test_pi_is_deprecated_portable_core_only(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            files = render_project(request(Path(directory), ["pi"], mcp=True, agents=True))
+            req = request(Path(directory), ["pi"], mcp=True, agents=True, hooks=True)
+            files = render_project(req)
             self.assertIn("AGENTS.md", files)
             self.assertIn(".agents/skills/refract/SKILL.md", files)
-            self.assertIn(".agents/skills/docs-check/SKILL.md", files)
-            self.assertIn(".agents/skills/semantic-versioning/SKILL.md", files)
             self.assertFalse(any(path.startswith(".pi/") for path in files))
-            config = json.loads(files[".refract/config.json"].content)
-            self.assertTrue(config["features"]["requested"]["mcp"])
-            self.assertTrue(config["features"]["requested"]["agents"])
-            self.assertFalse(config["features"]["effective_by_platform"]["pi"]["mcp"])
-            self.assertFalse(config["features"]["effective_by_platform"]["pi"]["agents"])
-            support = files["docs/PLATFORM_SUPPORT.md"].content.decode()
-            self.assertIn("MCP/subagents require extensions", support)
+            self.assertNotIn(".refract/bin/agent-check", files)
+            effective = json.loads(files[".refract/config.json"].content)["features"]["effective_by_platform"]["pi"]
+            self.assertEqual({"mcp": False, "agents": False, "hooks": False}, effective)
+            warnings = capability_warnings(req.features)
+            self.assertTrue(any("deprecated" in warning for warning in warnings), warnings)
+            self.assertTrue(any("no built-in MCP" in warning for warning in warnings), warnings)
 
-    def test_omp_core_is_native_with_only_sticky_rules(self) -> None:
+    def test_omp_has_native_parity_surfaces(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            files = render_project(request(Path(directory), ["omp"], mcp=True, agents=True))
-            self.assertIn("AGENTS.md", files)
-            self.assertIn(".agents/skills/refract/SKILL.md", files)
+            req = request(Path(directory), ["omp"], mcp=True, agents=True, hooks=True)
+            files = render_project(req)
             self.assertEqual(
-                [".omp/RULES.md"],
-                [path for path in files if path.startswith(".omp/")],
+                [
+                    ".omp/RULES.md",
+                    ".omp/agents/architecture-reviewer.md",
+                    ".omp/hooks/post/refract-check.ts",
+                    ".omp/mcp.json",
+                    ".omp/settings.json",
+                ],
+                sorted(path for path in files if path.startswith(".omp/")),
             )
             self.assertNotIn(".mcp.json", files)
-            support = files["docs/PLATFORM_SUPPORT.md"].content.decode()
-            self.assertIn("OhMyPi (omp)", support)
-            self.assertIn("sticky `RULES.md`", support)
-            self.assertIn("sticky .omp/RULES.md invariants", support)
+            settings = json.loads(files[".omp/settings.json"].content)
+            self.assertEqual("always-ask", settings["tools"]["approvalMode"])
+            self.assertFalse(settings["autolearn"]["enabled"])
+            mcp = json.loads(files[".omp/mcp.json"].content)
+            self.assertEqual({"type": "http", "url": "https://mcp.context7.com/mcp"}, mcp["mcpServers"]["context7"])
+            agent = files[".omp/agents/architecture-reviewer.md"].content.decode()
+            self.assertIn("\nname: architecture-reviewer\n", agent)
+            self.assertNotIn("bash", agent.split("---")[1])
+            self.assertEqual([], capability_warnings(req.features))
+            effective = json.loads(files[".refract/config.json"].content)["features"]["effective_by_platform"]["omp"]
+            self.assertEqual({"mcp": True, "agents": True, "hooks": True}, effective)
+
+    def test_claude_and_codex_ship_safe_policy_and_hooks(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            files = render_project(request(Path(directory), ["claude", "codex"], hooks=True))
+            claude = json.loads(files[".claude/settings.json"].content)
+            self.assertIn("Read(./.env)", claude["permissions"]["deny"])
+            self.assertNotIn("allow", claude["permissions"])
+            stop = claude["hooks"]["Stop"][0]["hooks"][0]
+            self.assertIn(".refract/bin/agent-check --format json", stop["command"])
+            codex = tomllib.loads(files[".codex/config.toml"].content.decode())
+            self.assertEqual("on-request", codex["approval_policy"])
+            self.assertEqual("workspace-write", codex["sandbox_mode"])
+            self.assertFalse(codex["sandbox_workspace_write"]["network_access"])
+            hooks = json.loads(files[".codex/hooks.json"].content)
+            self.assertIn(".refract/bin/agent-check\" --format json", hooks["hooks"]["Stop"][0]["hooks"][0]["command"])
+            plain = render_project(request(Path(directory), ["claude", "codex"]))
+            self.assertNotIn("hooks", json.loads(plain[".claude/settings.json"].content))
+            self.assertNotIn(".codex/hooks.json", plain)
+            self.assertIn(".codex/config.toml", plain)
+
+    def test_agent_check_blocks_once_then_reports(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            req = request(root, ["claude"], hooks=True)
+            apply_plan(build_plan(root, render_project(req)), ["claude"])
+            check = root / ".refract/bin/agent-check"
+            ok = subprocess.run(
+                [str(check), "--format", "json"], cwd=root, input='{"stop_hook_active": false}',
+                text=True, capture_output=True, timeout=60, check=False,
+            )
+            self.assertEqual(0, ok.returncode, ok.stderr)
+            self.assertEqual({}, json.loads(ok.stdout))
+            (root / "AGENTS.md").write_text("changed {" + "{TOKEN}}\n", encoding="utf-8")
+            def decide(active: bool) -> dict:
+                result = subprocess.run(
+                    [str(check), "--format", "json"], cwd=root,
+                    input=json.dumps({"stop_hook_active": active}),
+                    text=True, capture_output=True, timeout=60, check=False,
+                )
+                self.assertEqual(0, result.returncode, result.stderr)
+                return json.loads(result.stdout)
+
+            first = decide(False)
+            self.assertEqual("block", first["decision"])
+            self.assertIn("unresolved template token", first["reason"])
+            again = decide(True)
+            self.assertNotEqual("block", again.get("decision"), "must not re-block an already continued turn")
+            self.assertIn("refract validation failed", again["systemMessage"])
+
+    @unittest.skipUnless(shutil.which("omp"), "omp CLI not installed")
+    def test_omp_cli_resolves_project_settings(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            req = request(root, ["omp"])
+            apply_plan(build_plan(root, render_project(req)), ["omp"])
+            for key, expected in (("tools.approvalMode", "always-ask"), ("autolearn.enabled", "false")):
+                result = subprocess.run(
+                    ["omp", "config", "get", key], cwd=root,
+                    text=True, capture_output=True, timeout=60, check=False,
+                )
+                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+                self.assertEqual(expected, result.stdout.strip())
 
     @unittest.skipUnless(shutil.which("claude"), "Claude Code CLI not installed")
     def test_claude_parses_project_mcp(self) -> None:

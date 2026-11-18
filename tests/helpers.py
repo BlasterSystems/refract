@@ -30,7 +30,7 @@ def request(
             components=["python", "node"],
         ),
         features=FeatureSelection(
-            platforms=platforms or ["claude", "codex", "pi", "opencode"],
+            platforms=platforms or ["claude", "codex", "opencode", "omp"],
             mcp=mcp,
             agents=agents,
             github=github or scheduled_audit,

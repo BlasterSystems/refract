@@ -9,8 +9,10 @@ from typing import Any
 
 from . import __version__
 from .detection import detect_project
+from .capabilities import capability_warnings
 from .facade import PreparedBootstrap, apply_bootstrap, inspect_project, prepare_bootstrap
 from .inspection import DEFAULT_MAX_BYTES, DEFAULT_MAX_FILES
+from .paths import project_scope_problems
 from .model import BootstrapRequest, FeatureSelection, ProjectFacts, SUPPORTED_PLATFORMS
 from .protocol import INTENT_SCHEMA, AgentIntent, ResultArtifact, intent_defaults
 from .validation import validate_target
@@ -261,12 +263,7 @@ def _payload(
 
 
 def _capability_warnings(request: BootstrapRequest) -> list[str]:
-    warnings: list[str] = []
-    if "pi" in request.features.platforms and request.features.mcp:
-        warnings.append("Pi has no built-in MCP; no Pi MCP configuration is generated")
-    if "pi" in request.features.platforms and request.features.agents:
-        warnings.append("Pi has no built-in subagents; no Pi agent configuration is generated")
-    return warnings
+    return capability_warnings(request.features)
 
 
 def _display_agent_review(prepared: PreparedBootstrap, warnings: list[str]) -> None:
@@ -314,6 +311,11 @@ def _validate_agent_arguments(args: argparse.Namespace) -> None:
 
 def _run_generation(args: argparse.Namespace) -> int:
     _validate_agent_arguments(args)
+    scope_problems = project_scope_problems(Path(args.target))
+    if scope_problems and not args.allow_unscoped_target:
+        raise ValueError(
+            "; ".join(scope_problems) + " (override with --allow-unscoped-target)"
+        )
     request = _request_from_args(args)
     json_mode = args.plan_format == "json"
     if json_mode and not (args.yes or args.dry_run or args.agent_guided):
@@ -490,7 +492,16 @@ def _add_generation_arguments(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="add a weekly docs-check schedule; implies --github",
     )
-    parser.add_argument("--hooks", action="store_true", help="generate opt-in Git hook files")
+    parser.add_argument(
+        "--hooks",
+        action="store_true",
+        help="generate opt-in Git hooks and deterministic agent end-of-turn validation hooks",
+    )
+    parser.add_argument(
+        "--allow-unscoped-target",
+        action="store_true",
+        help="allow a target that looks like a home directory or a folder of several repositories",
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",
