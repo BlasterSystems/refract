@@ -17,6 +17,7 @@ This is the exact renderer output when all platforms and optional features are e
 .githooks/pre-commit
 .github/workflows/docs-check.yml
 .mcp.json
+.omp/RULES.md
 .opencode/agents/architecture-reviewer.md
 .opencode/commands/adr-new.md
 .opencode/commands/docs-check.md

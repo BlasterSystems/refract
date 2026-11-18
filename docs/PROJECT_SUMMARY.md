@@ -1,11 +1,11 @@
 # Refract Project Summary
 
-**Current release:** MVP 0.1.0  
+**Current release:** 0.2.0  
 **Status:** Implemented; acceptance is enforced by the test and validation suites.
 
 ## Objective
 
-Bootstrap greenfield or existing software projects with provider-neutral instructions, progressive disclosure, ADRs, safe generated-file ownership, and native adapters for Claude Code, Codex, Pi, and OpenCode.
+Bootstrap greenfield or existing software projects with provider-neutral instructions, progressive disclosure, ADRs, safe generated-file ownership, and native adapters for Claude Code, Codex, Pi, OpenCode, and OhMyPi (omp).
 
 ## MVP capabilities
 
@@ -25,7 +25,7 @@ The command surface exposes `init`, `retrofit`, read-only `inspect`, and `valida
 
 - The test suite passes on Python 3.11, 3.13, and 3.14.
 - Repository and generated-project validators pass.
-- Four platform contract diagnostics pass.
+- All platform contract diagnostics pass.
 - Wheel build and isolated installed-CLI smoke pass.
 - Independent hostile safety and final release-gate reviews pass with no remaining blockers.
 

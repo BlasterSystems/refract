@@ -12,6 +12,7 @@ Read this index first and load only records relevant to the current scope.
 | [ADR-0006](0006-opt-in-security-audit-skill.md) | Proposed | Documentation architecture | security, integrations, progressive-disclosure | Add the security-audit skill as an install-on-demand capability with tiered triggers | — |
 | [ADR-0007](0007-install-on-demand-task-breakdown-skills.md) | Proposed | Documentation architecture | planning, integrations, progressive-disclosure | Add install-on-demand task-breakdown and ticket skills with tracker-neutral wiring | — |
 | [ADR-0008](0008-omp-platform-adapter.md) | Proposed | Generator architecture | platforms, omp, adapters, portability | Add OhMyPi (omp) as a fifth selectable platform with a minimal adapter emitting the sticky invariant file | — |
+| [ADR-0009](0009-pre-exposure-repository-hardening.md) | Proposed | Repository operations | security, ci, supply-chain, dependencies | Harden the public repository before increased exposure: security policy, SHA-pinned CI, Dependabot, and local tool state hygiene | — |
 
 Valid statuses: `Proposed`, `Accepted`, `Rejected`, `Deprecated`, `Superseded`.
 

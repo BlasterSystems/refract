@@ -6,9 +6,15 @@ build-backend = "setuptools.build_meta"
 name = "refract"
 version = "0.2.0"
 description = "Provider-neutral bootstrap for AI-assisted software projects"
+readme = "README.md"
 license = {text = "Apache-2.0"}
 requires-python = ">=3.11"
 authors = [{ name = "Mandala" }]
+
+[project.urls]
+Repository = "https://github.com/BlasterSystems/refract"
+Changelog = "https://github.com/BlasterSystems/refract/blob/main/CHANGELOG.md"
+Security = "https://github.com/BlasterSystems/refract/security/policy"
 
 [project.scripts]
 refract = "refract.cli:main"
