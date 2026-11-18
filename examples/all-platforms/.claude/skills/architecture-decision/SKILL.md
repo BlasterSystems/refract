@@ -24,6 +24,6 @@ Do not use it for routine refactors or local implementation details.
 6. Add the record to the index while it is `Proposed`.
 7. Obtain the required human decision before marking it `Accepted`.
 8. To replace an accepted decision, create a new ADR and cross-link it with the old record marked `Superseded`.
-9. Run `.agentprism/bin/validate`.
+9. Run `.refract/bin/validate`.
 
 Accepted ADRs are historical records. Do not rewrite them to make later choices look original.

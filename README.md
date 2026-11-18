@@ -1,4 +1,4 @@
-# AgentPrism
+# Refract
 
 Bootstrap greenfield or existing projects with provider-neutral instructions for Claude Code, Codex, Pi, and OpenCode. Integrations and privileged behavior remain opt-in.
 
@@ -9,9 +9,9 @@ Point your coding agent at this repository and let it drive the bootstrap; the a
 1. The agent runs bounded inspection and a dry-run preview:
 
    ```bash
-   agentprism inspect --target /path/to/project
+   refract inspect --target /path/to/project
 
-   agentprism retrofit \
+   refract retrofit \
      --agent-guided \
      --agent-intent /outside/project/intent.json \
      --dry-run \
@@ -22,14 +22,14 @@ Point your coding agent at this repository and let it drive the bootstrap; the a
 2. The agent stops and shows the plan identifier. You apply in your own interactive terminal:
 
    ```bash
-   agentprism retrofit \
+   refract retrofit \
      --agent-guided \
      --agent-intent /outside/project/intent.json \
      --expected-plan PLAN_SHA256 \
      --target /path/to/project
    ```
 
-After bootstrap, the generated `AGENTS.md`, progressive-disclosure docs, deterministic validators, and the project-scoped `agentprism` skill steer the agent through the development process. See the [agent-guided protocol](docs/AGENT_GUIDED.md) for roles, trust boundaries, and plan integrity.
+After bootstrap, the generated `AGENTS.md`, progressive-disclosure docs, deterministic validators, and the project-scoped `refract` skill steer the agent through the development process. See the [agent-guided protocol](docs/AGENT_GUIDED.md) for roles, trust boundaries, and plan integrity.
 
 ## Supported harnesses
 
@@ -50,30 +50,30 @@ Requires Python 3.11+.
 Clone or download this repository, then run from its checkout:
 
 ```bash
-cd agentprism
+cd refract
 python3 -m pip install -e .
 
 # Preview an all-platform project without writing files
-agentprism init --platform all --dry-run --yes --target /path/to/project
+refract init --platform all --dry-run --yes --target /path/to/project
 
 # Initialize a minimal Pi-compatible project
-agentprism init --platform pi --yes --target /path/to/project
+refract init --platform pi --yes --target /path/to/project
 
 # Add the portable core and selected adapters to an existing project
-agentprism retrofit --platform claude,codex,pi,opencode \
+refract retrofit --platform claude,codex,pi,opencode \
   --dry-run --yes --target /path/to/project
 
 # Inspect bounded evidence without changing the project
-agentprism inspect --target /path/to/project
+refract inspect --target /path/to/project
 
 # Validate generated configuration
-agentprism validate --target /path/to/project
+refract validate --target /path/to/project
 ```
 
 The repository-local entry point works without installation:
 
 ```bash
-scripts/agentprism.sh init --platform all --dry-run --yes --target /path/to/project
+scripts/refract.sh init --platform all --dry-run --yes --target /path/to/project
 ```
 
 ## Optional features
@@ -110,7 +110,7 @@ Read only what the current task requires:
 
 ```bash
 PYTHONPATH=src python3 -m unittest discover -s tests -v
-PYTHONPATH=src python3 -m agentprism validate --target .
+PYTHONPATH=src python3 -m refract validate --target .
 ```
 
 ## Credits

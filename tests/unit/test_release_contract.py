@@ -13,8 +13,8 @@ import tomllib
 import unittest
 from pathlib import Path
 
-from agentprism import __version__
-from agentprism.manifest import Manifest
+from refract import __version__
+from refract.manifest import Manifest
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -37,7 +37,7 @@ class ReleaseContractTests(unittest.TestCase):
         changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
         self.assertIn(f"## [{__version__}]", changelog)
 
-        root_config = json.loads((ROOT / ".agentprism/config.json").read_text(encoding="utf-8"))
+        root_config = json.loads((ROOT / ".refract/config.json").read_text(encoding="utf-8"))
         self.assertEqual(__version__, root_config["generator_version"])
         sync = ROOT / "scripts/sync-version.py"
         self.assertTrue(os.access(sync, os.X_OK))
@@ -51,11 +51,11 @@ class ReleaseContractTests(unittest.TestCase):
         for relative in ("examples/minimal", "examples/all-platforms"):
             example = ROOT / relative
             manifest = json.loads(
-                (example / ".agentprism/manifest.json").read_text(encoding="utf-8")
+                (example / ".refract/manifest.json").read_text(encoding="utf-8")
             )
             self.assertEqual(__version__, manifest["generator_version"])
             validation = subprocess.run(
-                [str(example / ".agentprism/bin/validate")], cwd=example,
+                [str(example / ".refract/bin/validate")], cwd=example,
                 text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 timeout=30, check=False,
             )
@@ -65,7 +65,7 @@ class ReleaseContractTests(unittest.TestCase):
         module = load_sync_version_module()
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            metadata_dir = root / ".agentprism"
+            metadata_dir = root / ".refract"
             metadata_dir.mkdir()
             config = metadata_dir / "config.json"
             config.write_text('{"generator_version": "0.0.0"}\n', encoding="utf-8")
@@ -94,7 +94,7 @@ class ReleaseContractTests(unittest.TestCase):
         module = load_sync_version_module()
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            metadata_dir = root / ".agentprism"
+            metadata_dir = root / ".refract"
             metadata_dir.mkdir()
             external = root / "external.json"
             external.write_text('{"generator_version": "0.0.0"}\n', encoding="utf-8")
@@ -123,7 +123,7 @@ class ReleaseContractTests(unittest.TestCase):
 
     def test_shared_release_skill_is_identical_and_confirmation_gated(self) -> None:
         template = (
-            ROOT / "src/agentprism/templates/core/skills/semantic-versioning/SKILL.md"
+            ROOT / "src/refract/templates/core/skills/semantic-versioning/SKILL.md"
         ).read_text(encoding="utf-8")
         self.assertEqual(
             template,

@@ -42,7 +42,7 @@ Rejected alternative: crediting GitHub Actions and schema URLs — standard infr
 Single change, no epic and no ticket (Jira skipped per instruction):
 
 1. Append the two credit lines to `README.md` (`## Credits`).
-2. Gates: `agentprism validate --target .`, `.agentprism/bin/docs-check --strict`; commit and push to `BlasterSystems/main`.
+2. Gates: `refract validate --target .`, `.refract/bin/docs-check --strict`; commit and push to `BlasterSystems/main`.
 
 ## Risks and open questions
 
@@ -55,6 +55,6 @@ Skipped per user instruction (no target project). N/A.
 ## Follow-up (2026-11-09): superpowers-spec provenance check
 
 - `docs/superpowers-spec.md` contains zero external references; the only question was whether it was derived from `obra/superpowers`.
-- Method: shallow clone of `obra/superpowers` (main @ `22f0b46`, v7.0.2, MIT) and exact-phrase `grep -riF` of the spec's most distinctive sentences: "AgentPrism", "portable project core", "trusted-terminal", "manifest-owned", "dry-run perform no filesystem", "T0 loads", "Unmanaged destinations are conflicts", "The deterministic command surface exposes".
+- Method: shallow clone of `obra/superpowers` (main @ `22f0b46`, v7.0.2, MIT) and exact-phrase `grep -riF` of the spec's most distinctive sentences: "Refract", "portable project core", "trusted-terminal", "manifest-owned", "dry-run perform no filesystem", "T0 loads", "Unmanaged destinations are conflicts", "The deterministic command surface exposes".
 - Result: **0 hits on all eight phrases**. The only overlap is the generic methodology term "progressive disclosure" (9 incidental mentions in their skill docs); the spec's tier wording ("T0 loads…") is absent.
 - Decision (user rule: credit only a word-by-word copy): **no credit** — the spec is original internal content; the shared term is generic methodology vocabulary, not derived text.

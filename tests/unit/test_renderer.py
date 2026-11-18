@@ -6,8 +6,8 @@ import tomllib
 import unittest
 from pathlib import Path
 
-from agentprism.renderer import render_project
-from agentprism.validation import validate_rendered
+from refract.renderer import render_project
+from refract.validation import validate_rendered
 from tests.helpers import request
 
 
@@ -24,7 +24,7 @@ class RendererTests(unittest.TestCase):
             self.assertIn(".codex/config.toml", files)
             self.assertIn(".codex/agents/architecture-reviewer.toml", files)
             self.assertIn(".opencode/agents/architecture-reviewer.md", files)
-            self.assertIn(".agents/skills/agentprism/SKILL.md", files)
+            self.assertIn(".agents/skills/refract/SKILL.md", files)
             self.assertIn(".agents/skills/architecture-decision/SKILL.md", files)
             self.assertNotIn(".codex.md", files)
             self.assertNotIn(".claude/claude.json", files)
@@ -33,14 +33,14 @@ class RendererTests(unittest.TestCase):
             self.assertEqual([], validate_rendered(files))
 
     def test_repository_and_packaged_agent_guided_skills_are_identical(self) -> None:
-        packaged = (ROOT / "src/agentprism/templates/core/skills/agentprism/SKILL.md").read_bytes()
-        self.assertEqual(packaged, (ROOT / ".agents/skills/agentprism/SKILL.md").read_bytes())
-        self.assertEqual(packaged, (ROOT / ".claude/skills/agentprism/SKILL.md").read_bytes())
+        packaged = (ROOT / "src/refract/templates/core/skills/refract/SKILL.md").read_bytes()
+        self.assertEqual(packaged, (ROOT / ".agents/skills/refract/SKILL.md").read_bytes())
+        self.assertEqual(packaged, (ROOT / ".claude/skills/refract/SKILL.md").read_bytes())
 
     def test_agent_guided_skill_stops_before_apply_and_is_provider_neutral(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             files = render_project(request(Path(directory), ["pi"]))
-            skill = files[".agents/skills/agentprism/SKILL.md"].content.decode()
+            skill = files[".agents/skills/refract/SKILL.md"].content.decode()
             self.assertIn("Stop", skill)
             self.assertIn("Never invoke agent-guided apply yourself", skill)
             self.assertIn("integrity only", skill)
@@ -80,7 +80,7 @@ class RendererTests(unittest.TestCase):
             workflow = files[".github/workflows/docs-check.yml"].content.decode()
             self.assertIn("schedule:", workflow)
             self.assertIn("cron: '0 9 * * 1'", workflow)
-            config = json.loads(files[".agentprism/config.json"].content)
+            config = json.loads(files[".refract/config.json"].content)
             self.assertTrue(config["features"]["requested"]["scheduled_audit"])
 
     def test_structured_values_escape_json(self) -> None:
@@ -88,7 +88,7 @@ class RendererTests(unittest.TestCase):
             req = request(Path(directory))
             req.facts.name = 'quoted " project'
             files = render_project(req)
-            config = json.loads(files[".agentprism/config.json"].content)
+            config = json.loads(files[".refract/config.json"].content)
             self.assertEqual('quoted " project', config["project"]["name"])
 
 

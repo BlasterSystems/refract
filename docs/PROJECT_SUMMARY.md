@@ -1,4 +1,4 @@
-# AgentPrism Project Summary
+# Refract Project Summary
 
 **Current release:** MVP 0.1.0  
 **Status:** Implemented; acceptance is enforced by the test and validation suites.

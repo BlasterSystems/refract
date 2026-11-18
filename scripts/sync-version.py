@@ -14,7 +14,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from agentprism import __version__  # noqa: E402
+from refract import __version__  # noqa: E402
 
 
 def _regular_file_stat(path: Path) -> os.stat_result:
@@ -28,7 +28,7 @@ def _regular_file_stat(path: Path) -> os.stat_result:
 
 
 def synchronize(root: Path, version: str, *, check: bool) -> int:
-    metadata_dir = root / ".agentprism"
+    metadata_dir = root / ".refract"
     try:
         metadata_stat = metadata_dir.lstat()
     except FileNotFoundError:
@@ -94,7 +94,7 @@ def synchronize(root: Path, version: str, *, check: bool) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Synchronize repository-derived version metadata with agentprism.__version__."
+        description="Synchronize repository-derived version metadata with refract.__version__."
     )
     parser.add_argument(
         "--check",

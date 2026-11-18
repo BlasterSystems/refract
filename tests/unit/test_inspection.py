@@ -6,8 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from agentprism.inspection import inspect_project
-from agentprism.paths import UnsafePathError
+from refract.inspection import inspect_project
+from refract.paths import UnsafePathError
 
 
 class InspectionTests(unittest.TestCase):

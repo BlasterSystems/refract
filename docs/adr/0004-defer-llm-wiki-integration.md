@@ -10,7 +10,7 @@
 
 ## Context
 
-The repository needs concise, discoverable documentation for coding agents. The LLM Wiki pattern offers immutable raw sources, LLM-maintained synthesis pages, and index-first retrieval. AgentPrism already uses progressive-disclosure instructions, a documentation index, and an ADR index for a comparatively small normative documentation set.
+The repository needs concise, discoverable documentation for coding agents. The LLM Wiki pattern offers immutable raw sources, LLM-maintained synthesis pages, and index-first retrieval. Refract already uses progressive-disclosure instructions, a documentation index, and an ADR index for a comparatively small normative documentation set.
 
 ## Decision drivers
 

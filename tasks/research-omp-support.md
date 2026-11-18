@@ -8,19 +8,19 @@
 
 ## Summary
 
-agentprism supports four platforms as first-class adapters (`claude`, `codex`, `pi`, `opencode`). OhMyPi (omp) is not one of them, yet omp consumes the scaffold's portable core natively today: it discovers standalone `AGENTS.md` and `.agents/skills/<name>/SKILL.md` by default and reads root `mcp.json` / `.mcp.json` as MCP fallback. "Fully supporting omp" therefore means (a) adding `omp` as a selectable platform with a Pi-style no-op adapter, (b) deciding whether to emit any omp-native artifacts (sticky `RULES.md`; `.omp/AGENTS.md` is rejected), (c) contract tests and platform documentation, and (d) an ADR. No generated-file surface changes for omp, so golden tree and examples stay byte-stable except support docs.
+refract supports four platforms as first-class adapters (`claude`, `codex`, `pi`, `opencode`). OhMyPi (omp) is not one of them, yet omp consumes the scaffold's portable core natively today: it discovers standalone `AGENTS.md` and `.agents/skills/<name>/SKILL.md` by default and reads root `mcp.json` / `.mcp.json` as MCP fallback. "Fully supporting omp" therefore means (a) adding `omp` as a selectable platform with a Pi-style no-op adapter, (b) deciding whether to emit any omp-native artifacts (sticky `RULES.md`; `.omp/AGENTS.md` is rejected), (c) contract tests and platform documentation, and (d) an ADR. No generated-file surface changes for omp, so golden tree and examples stay byte-stable except support docs.
 
 ## Current state (evidence)
 
 Generator (repo source):
 
-- `SUPPORTED_PLATFORMS = ("claude", "codex", "pi", "opencode")` — `src/agentprism/model.py:7`; unknown platforms are rejected by `FeatureSelection.validate` (`model.py:73`).
-- Adapter registry `ADAPTERS` — `src/agentprism/adapters/__init__.py:8-13`; `Adapter` protocol renders `dict[str, GeneratedFile]` (`adapters/base.py:10-16`).
+- `SUPPORTED_PLATFORMS = ("claude", "codex", "pi", "opencode")` — `src/refract/model.py:7`; unknown platforms are rejected by `FeatureSelection.validate` (`model.py:73`).
+- Adapter registry `ADAPTERS` — `src/refract/adapters/__init__.py:8-13`; `Adapter` protocol renders `dict[str, GeneratedFile]` (`adapters/base.py:10-16`).
 - Pi precedent: `PiAdapter.render` returns `{}` with a comment stating Pi natively discovers `AGENTS.md` and `.agents/skills` and receives no settings/MCP/subagent config (`adapters/pi.py:6-10`).
 - Packaged skills always render to `.agents/skills/<skill>/SKILL.md` — `renderer.py:87-91`; platform mirrors for Claude go to `.claude/skills` (`adapters/claude.py:20-23`).
 - MCP/agents capability matrix per platform: `effective_by_platform` limits native MCP/agents to `{"claude","codex","opencode"}` — `renderer.py:123-129`; Pi is excluded.
 - Platform support rows are generated per request — `renderer.py:174-178` (`_platform_rows`).
-- Portable-neutrality invariant: `PORTABLE_FORBIDDEN = ("mcp__", "Task tool", ".claude/", ".codex/", ".opencode/", ".pi/")` scanned over `AGENTS.md` and `.agents/skills/**` — `src/agentprism/validation.py:13` and `templates/core/bin/validate.py:99-111`; mirrored in `tests/unit/test_renderer.py:60-65`.
+- Portable-neutrality invariant: `PORTABLE_FORBIDDEN = ("mcp__", "Task tool", ".claude/", ".codex/", ".opencode/", ".pi/")` scanned over `AGENTS.md` and `.agents/skills/**` — `src/refract/validation.py:13` and `templates/core/bin/validate.py:99-111`; mirrored in `tests/unit/test_renderer.py:60-65`.
 - Platform contract tests live in `tests/contracts/test_platforms.py` (per-platform render assertions; CLI-backed tests where the CLI is installed).
 - Repository platform doc now documents omp as a portable-core consumer with verified version 18.18.3 — `docs/PLATFORM_SUPPORT.md:11-15` (added 2026-11-09); README documents supported harnesses — `README.md:34-43`.
 
@@ -53,7 +53,7 @@ What works today without any code change: an omp session in a scaffolded project
 **Decision:** add `omp` as a fifth supported platform with a Pi-style adapter that renders no platform-specific files, and keep omp-native artifacts out of the initial scope except a decision-gated sticky `RULES.md`.
 
 1. `model.py`: `SUPPORTED_PLATFORMS += ("omp",)`; `effective_by_platform` excludes omp from native MCP/agents (join Pi's exclusion set) — `renderer.py:123-129`.
-2. New `src/agentprism/adapters/omp.py`: `OmpAdapter`, `name = "omp"`, `render` returns `{}` with a comment documenting omp's native discovery (AGENTS.md, `.agents/skills`, root `.mcp.json` fallback); register in `adapters/__init__.py` and `_platform_rows` (`renderer.py:174-178`).
+2. New `src/refract/adapters/omp.py`: `OmpAdapter`, `name = "omp"`, `render` returns `{}` with a comment documenting omp's native discovery (AGENTS.md, `.agents/skills`, root `.mcp.json` fallback); register in `adapters/__init__.py` and `_platform_rows` (`renderer.py:174-178`).
 3. Do **not** generate `.omp/AGENTS.md`: it would shadow the standalone `AGENTS.md` (priority 100 vs 10) and duplicate mutable-seed content with drift risk; omp's containment collapse only dedups identical files. Rejected alternative.
 4. Decision-gated option: generate `.omp/RULES.md` with a handful of deterministic invariants (e.g. "never weaken security controls to make a task pass", "agent-guided bootstrap stops after preview"). Sticky rules persist across long conversations, which plain `AGENTS.md` context does not guarantee. Gate: separate story, owner decision, kept free of LLM-authored content (ADR-0005 hook/LLM principle).
 5. Neutrality hardening: add `.omp/` to `PORTABLE_FORBIDDEN` in `validation.py` and the rendered `templates/core/bin/validate.py`, plus the mirrored test list (`tests/unit/test_renderer.py:63`), so core docs never embed omp-specific paths.
@@ -69,7 +69,7 @@ What works today without any code change: an omp session in a scaffolded project
 
 Ordered by contract risk, not glossiness:
 
-1. **Story 1 (P1) — omp platform + adapter + ADR-0008.** ADR-0008 Proposed; `SUPPORTED_PLATFORMS`, adapter, registry, platform rows, `effective_by_platform` exclusion, neutrality token (`.omp/`) in both validators and test list; renderer/contract tests; examples refresh; golden tree unchanged (omp adds no files). *Acceptance:* `init --platform omp --dry-run` renders the portable core with no omp-specific files; `--platform all` includes omp; `agentprism validate` passes with a planted `.omp/` token in a core doc; unittest suite green.
+1. **Story 1 (P1) — omp platform + adapter + ADR-0008.** ADR-0008 Proposed; `SUPPORTED_PLATFORMS`, adapter, registry, platform rows, `effective_by_platform` exclusion, neutrality token (`.omp/`) in both validators and test list; renderer/contract tests; examples refresh; golden tree unchanged (omp adds no files). *Acceptance:* `init --platform omp --dry-run` renders the portable core with no omp-specific files; `--platform all` includes omp; `refract validate` passes with a planted `.omp/` token in a core doc; unittest suite green.
 2. **Story 2 (P2) — support matrix and template docs.** Generated `docs/PLATFORM_SUPPORT.md` platform row for omp; repository doc row flips to selectable; README wording; `docs/GENERATED_OUTPUT.md` unchanged. *Acceptance:* docs-check clean; docs state omp consumes the portable core natively and name what is not generated.
 3. **Story 3 (P2, decision-gated) — sticky `.omp/RULES.md`.** Only if the owner accepts the invariant-file idea; opt-in with omp selection; deterministic content only. *Acceptance:* retrofit/apply ownership rules apply; content has no LLM-authored or platform-specific tool syntax beyond omp paths; tests cover idempotency.
 4. **Story 4 (P3) — live omp smoke.** Manual verification on installed omp 18.18.3: session in a freshly scaffolded `--platform omp` project loads `AGENTS.md`, all four skills (`omp` skill list or session evidence), and root `.mcp.json` when `--mcp`. Record CLI version + date in `docs/PLATFORM_SUPPORT.md`. *Acceptance:* support-matrix row updated with evidence.

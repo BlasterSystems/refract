@@ -67,7 +67,7 @@ Adopt Option 1: omp becomes the fifth supported platform with a minimal adapter 
 ## Implementation and validation
 
 1. Platform, adapter, sticky `.omp/RULES.md`, registry, platform rows, neutrality tokens, contract tests, and docs landed on `feat/omp-platform-support`.
-2. Gates: the unittest suite (including the new omp contract test), `agentprism validate --target .`, `.agentprism/bin/validate` (ADR structural checks), `docs-check`, the canonical all-platform dry-run preview, and both example refreshes.
+2. Gates: the unittest suite (including the new omp contract test), `refract validate --target .`, `.refract/bin/validate` (ADR structural checks), `docs-check`, the canonical all-platform dry-run preview, and both example refreshes.
 3. Live omp smoke recorded in `docs/PLATFORM_SUPPORT.md` with CLI version and date.
 
 ## Revisit triggers

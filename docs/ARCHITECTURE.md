@@ -2,7 +2,7 @@
 
 ## Overview
 
-AgentPrism separates portable project knowledge, coding-platform adapters, and optional integrations.
+Refract separates portable project knowledge, coding-platform adapters, and optional integrations.
 
 ```text
 bounded evidence ──> untrusted agent proposal ──> human-confirmed facts

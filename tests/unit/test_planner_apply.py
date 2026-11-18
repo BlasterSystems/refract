@@ -7,11 +7,11 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from agentprism.apply import ApplyError, apply_plan
-from agentprism.manifest import Manifest, sha256_path
-from agentprism.model import GeneratedFile
-from agentprism.planner import Action, build_plan
-from agentprism.renderer import render_project
+from refract.apply import ApplyError, apply_plan
+from refract.manifest import Manifest, sha256_path
+from refract.model import GeneratedFile
+from refract.planner import Action, build_plan
+from refract.renderer import render_project
 from tests.helpers import request
 
 
@@ -28,7 +28,7 @@ class PlannerApplyTests(unittest.TestCase):
             second = build_plan(root, render_project(req))
             self.assertFalse(second.changes)
             self.assertFalse(second.conflicts)
-            manifest_path = root / ".agentprism/manifest.json"
+            manifest_path = root / ".refract/manifest.json"
             before = manifest_path.read_bytes()
             apply_plan(second, req.features.normalized_platforms())
             self.assertEqual(before, manifest_path.read_bytes())
@@ -50,11 +50,11 @@ class PlannerApplyTests(unittest.TestCase):
             root = Path(directory) / "project"
             req = request(root)
             apply_plan(build_plan(root, render_project(req)), req.features.normalized_platforms())
-            (root / ".agentprism/bin/validate").write_text("modified\n", encoding="utf-8")
+            (root / ".refract/bin/validate").write_text("modified\n", encoding="utf-8")
             plan = build_plan(root, render_project(req))
             self.assertTrue(
                 any(
-                    op.path == ".agentprism/bin/validate" and op.action == Action.CONFLICT
+                    op.path == ".refract/bin/validate" and op.action == Action.CONFLICT
                     for op in plan.operations
                 )
             )
@@ -74,7 +74,7 @@ class PlannerApplyTests(unittest.TestCase):
                     raise OSError("injected failure")
                 return real_link(source, destination, **kwargs)
 
-            with mock.patch("agentprism.apply.os.link", side_effect=fail_second):
+            with mock.patch("refract.apply.os.link", side_effect=fail_second):
                 with self.assertRaises(ApplyError):
                     apply_plan(plan, req.features.normalized_platforms())
             self.assertFalse(root.exists())
@@ -84,10 +84,10 @@ class PlannerApplyTests(unittest.TestCase):
             root = Path(directory) / "project"
             req = request(root)
             apply_plan(build_plan(root, render_project(req)), req.features.normalized_platforms())
-            validator = root / ".agentprism/bin/validate"
+            validator = root / ".refract/bin/validate"
             validator.chmod(0o644)
             plan = build_plan(root, render_project(req))
-            operation = next(op for op in plan.operations if op.path == ".agentprism/bin/validate")
+            operation = next(op for op in plan.operations if op.path == ".refract/bin/validate")
             self.assertEqual(Action.UPDATE_GENERATED, operation.action)
             apply_plan(plan, req.features.normalized_platforms())
             self.assertTrue(os.access(validator, os.X_OK))
@@ -98,7 +98,7 @@ class PlannerApplyTests(unittest.TestCase):
             req = request(root)
             apply_plan(build_plan(root, render_project(req)), req.features.normalized_platforms())
             plan = build_plan(root, render_project(req))
-            validator = root / ".agentprism/bin/validate"
+            validator = root / ".refract/bin/validate"
             validator.write_text("changed after planning\n", encoding="utf-8")
             with self.assertRaises(ApplyError):
                 apply_plan(plan, req.features.normalized_platforms())
@@ -114,7 +114,7 @@ class PlannerApplyTests(unittest.TestCase):
             (root / "AGENTS.md").write_text("changed after planning\n", encoding="utf-8")
             with self.assertRaises(ApplyError):
                 apply_plan(plan, req.features.normalized_platforms())
-            self.assertFalse((root / ".agentprism/manifest.json").exists())
+            self.assertFalse((root / ".refract/manifest.json").exists())
 
     def test_stale_create_plan_never_overwrites_new_unmanaged_file(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -167,33 +167,33 @@ class PlannerApplyTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            (root / ".agentprism").mkdir()
-            os.mkfifo(root / ".agentprism/manifest.json")
+            (root / ".refract").mkdir()
+            os.mkfifo(root / ".refract/manifest.json")
             plan = build_plan(root, render_project(request(root)))
-            operation = next(op for op in plan.operations if op.path == ".agentprism/manifest.json")
+            operation = next(op for op in plan.operations if op.path == ".refract/manifest.json")
             self.assertEqual(Action.CONFLICT, operation.action)
             self.assertIn("regular file", operation.detail)
 
     def test_malicious_manifest_path_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            (root / ".agentprism").mkdir()
+            (root / ".refract").mkdir()
             manifest = {
-                "schema": "agentprism-manifest/v1",
+                "schema": "refract-manifest/v1",
                 "generator_version": "0.1.0",
                 "platforms": ["pi"],
                 "files": {"../victim": {"sha256": "0" * 64, "executable": False}},
             }
-            (root / ".agentprism/manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            (root / ".refract/manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
             plan = build_plan(root, render_project(request(root)))
-            self.assertTrue(any(op.path == ".agentprism/manifest.json" and op.action == Action.CONFLICT for op in plan.operations))
+            self.assertTrue(any(op.path == ".refract/manifest.json" and op.action == Action.CONFLICT for op in plan.operations))
 
     def test_unmanaged_manifest_is_conflict(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            (root / ".agentprism").mkdir()
+            (root / ".refract").mkdir()
             original = '{"files": {}}\n'
-            path = root / ".agentprism/manifest.json"
+            path = root / ".refract/manifest.json"
             path.write_text(original, encoding="utf-8")
             plan = build_plan(root, render_project(request(root)))
             self.assertTrue(plan.conflicts)
@@ -216,7 +216,7 @@ class PlannerApplyTests(unittest.TestCase):
                     raise OSError("injected failure")
                 return real_link(source, destination, **kwargs)
 
-            with mock.patch("agentprism.apply.os.link", side_effect=fail_second):
+            with mock.patch("refract.apply.os.link", side_effect=fail_second):
                 with self.assertRaises(ApplyError):
                     apply_plan(plan, req.features.normalized_platforms())
             self.assertEqual([], list(root.iterdir()))
@@ -228,10 +228,10 @@ class PlannerApplyTests(unittest.TestCase):
             apply_plan(build_plan(root, desired), ["pi"])
             keep_plan = build_plan(root, {})
             self.assertTrue(any(op.action == Action.REMOVE_OBSOLETE for op in keep_plan.operations))
-            before = (root / ".agentprism/manifest.json").read_bytes()
+            before = (root / ".refract/manifest.json").read_bytes()
             apply_plan(keep_plan, ["pi"], remove_obsolete=False)
             self.assertTrue((root / "owned.txt").exists())
-            self.assertEqual(before, (root / ".agentprism/manifest.json").read_bytes())
+            self.assertEqual(before, (root / ".refract/manifest.json").read_bytes())
             remove_plan = build_plan(root, {}, remove_obsolete=True)
             apply_plan(remove_plan, ["pi"], remove_obsolete=True)
             self.assertFalse((root / "owned.txt").exists())

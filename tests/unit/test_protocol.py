@@ -7,11 +7,11 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-import agentprism
-from agentprism.facade import apply_bootstrap, prepare_bootstrap
-from agentprism.model import GeneratedFile
-from agentprism.planner import build_plan
-from agentprism.protocol import AgentIntent, ResultArtifact, plan_document, plan_identifier
+import refract
+from refract.facade import apply_bootstrap, prepare_bootstrap
+from refract.model import GeneratedFile
+from refract.planner import build_plan
+from refract.protocol import AgentIntent, ResultArtifact, plan_document, plan_identifier
 from tests.helpers import request
 
 
@@ -19,7 +19,7 @@ class ProtocolTests(unittest.TestCase):
     def test_agent_intent_is_strict_and_unverified(self) -> None:
         intent = AgentIntent.from_dict(
             {
-                "schema": "agentprism-intent/v1",
+                "schema": "refract-intent/v1",
                 "project": {"name": "safe-project", "test_command": "python -m unittest"},
                 "features": {"platforms": ["pi"], "mcp": False},
             }
@@ -36,7 +36,7 @@ class ProtocolTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     AgentIntent.from_dict(
                         {
-                            "schema": "agentprism-intent/v1",
+                            "schema": "refract-intent/v1",
                             "project": {"name": "safe"},
                             "features": forbidden,
                         }
@@ -59,7 +59,7 @@ class ProtocolTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     AgentIntent.from_dict(
                         {
-                            "schema": "agentprism-intent/v1",
+                            "schema": "refract-intent/v1",
                             "project": {"name": name},
                             "features": {},
                         }
@@ -67,7 +67,7 @@ class ProtocolTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             AgentIntent.from_dict(
                 {
-                    "schema": "agentprism-intent/v1",
+                    "schema": "refract-intent/v1",
                     "project": {"name": "safe", "test_command": "`unsafe`"},
                     "features": {},
                 }
@@ -77,7 +77,7 @@ class ProtocolTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             real = root / "intent.json"
-            real.write_text('{"schema":"agentprism-intent/v1","project":{},"features":{}}', encoding="utf-8")
+            real.write_text('{"schema":"refract-intent/v1","project":{},"features":{}}', encoding="utf-8")
             link = root / "link.json"
             link.symlink_to(real)
             with self.assertRaises(ValueError):
@@ -88,7 +88,7 @@ class ProtocolTests(unittest.TestCase):
                 AgentIntent.load(large)
 
     def test_public_facade_does_not_accept_desired_file_maps(self) -> None:
-        self.assertIs(agentprism.prepare_bootstrap, prepare_bootstrap)
+        self.assertIs(refract.prepare_bootstrap, prepare_bootstrap)
         parameters = inspect.signature(prepare_bootstrap).parameters
         self.assertEqual({"request", "remove_obsolete"}, set(parameters))
 
@@ -137,16 +137,16 @@ class ProtocolTests(unittest.TestCase):
             self.assertEqual("apply-failed", result.status)
             self.assertEqual("not-needed", result.rollback_status)
             self.assertIn("plan identifier mismatch", result.errors[0])
-            self.assertFalse((root / ".agentprism/manifest.json").exists())
+            self.assertFalse((root / ".refract/manifest.json").exists())
 
     def test_plan_and_result_artifacts_are_schema_versioned(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             prepared = prepare_bootstrap(request(Path(directory), ["pi"]))
-            self.assertEqual("agentprism-plan/v1", prepared.artifact.to_dict()["schema"])
+            self.assertEqual("refract-plan/v1", prepared.artifact.to_dict()["schema"])
             result = ResultArtifact(
                 target=str(Path(directory)), status="applied", applied=True, plan_id=prepared.plan_id
             ).to_dict()
-            self.assertEqual("agentprism-result/v1", result["schema"])
+            self.assertEqual("refract-result/v1", result["schema"])
             self.assertEqual("deterministic-result", result["authority"])
             self.assertEqual("not-needed", result["rollback_status"])
 
@@ -231,7 +231,7 @@ class ProtocolTests(unittest.TestCase):
                     raise OSError("injected failure")
                 return real_link(source, destination, **kwargs)
 
-            with mock.patch("agentprism.apply.os.link", side_effect=fail_second):
+            with mock.patch("refract.apply.os.link", side_effect=fail_second):
                 result = apply_bootstrap(prepared)
             self.assertFalse(result.applied)
             self.assertEqual("apply-failed", result.status)

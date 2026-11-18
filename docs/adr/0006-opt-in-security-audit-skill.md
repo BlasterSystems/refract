@@ -77,7 +77,7 @@ The generator renders `docs/SECURITY_AUDIT.md` as a mutable seed documenting ins
 1. Added `docs/SECURITY_AUDIT.md` to the renderer core templates as a mutable seed.
 2. Wired tiered triggers into the template and self-hosted `DEVELOPMENT_PROCESS.md`, indexed the document in both documentation indexes and the progressive-disclosure tiers, and added the optional-feature note to platform support.
 3. Updated the golden all-platform tree and the generated-output catalog.
-4. Gates: the unittest suite, `agentprism validate --target .`, `docs-check`, and the canonical all-platform dry-run preview must pass.
+4. Gates: the unittest suite, `refract validate --target .`, `docs-check`, and the canonical all-platform dry-run preview must pass.
 
 ## Revisit triggers
 
