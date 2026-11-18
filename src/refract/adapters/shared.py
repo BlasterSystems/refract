@@ -28,25 +28,38 @@ def skill_description(skill_markdown: str) -> str:
 
 # Hook launcher: a hook command runs outside any agent sandbox, while the
 # scripts it executes live in the agent-writable workspace. The launcher
-# therefore runs agent-check only if both scripts still match the SHA-256
-# digests pinned into the hook configuration at generation time (Codex keeps
+# therefore reads both scripts once, checks them against the SHA-256 digests
+# pinned into the hook configuration at generation time, and executes private
+# copies of exactly the verified bytes (no time-of-check/time-of-use window) (Codex keeps
 # .codex/ read-only under workspace-write). A mismatch, including a cwd that
 # resolves to a different repository, skips the check with a JSON notice.
 # The project root is the nearest ancestor of the start directory holding
 # .refract/bin/agent-check, so non-git and monorepo-subdirectory projects work.
 _LAUNCHER = (
-    "import hashlib,json,os,subprocess,sys\n"
+    "import hashlib,json,os,subprocess,sys,tempfile\n"
     "r=os.path.abspath(sys.argv[1] or os.curdir)\n"
     "while not os.path.isfile(os.path.join(r,\".refract/bin/agent-check\")) and os.path.dirname(r)!=r:\n"
     " r=os.path.dirname(r)\n"
-    "pins=json.loads(sys.argv[2])\n"
-    "def ok(rel,digest):\n"
+    "def read(rel):\n"
     " p=os.path.join(r,rel)\n"
-    " return os.path.isfile(p) and not os.path.islink(p) and hashlib.sha256(open(p,\"rb\").read()).hexdigest()==digest\n"
-    "if not all(ok(k,v) for k,v in pins.items()):\n"
-    " print(json.dumps({\"systemMessage\":\"refract hook skipped: hook scripts do not match the generated hashes; re-run refract\"}))\n"
-    " sys.exit(0)\n"
-    "sys.exit(subprocess.call([sys.executable,\"-I\",os.path.join(r,\".refract/bin/agent-check\"),\"--format\",\"json\"]))"
+    " try:\n"
+    "  return None if os.path.islink(p) else open(p,\"rb\").read()\n"
+    " except OSError:\n"
+    "  return None\n"
+    "verified={}\n"
+    "for rel,digest in json.loads(sys.argv[2]).items():\n"
+    " data=read(rel)\n"
+    " if data is None or hashlib.sha256(data).hexdigest()!=digest:\n"
+    "  print(json.dumps({\"systemMessage\":\"refract hook skipped: hook scripts do not match the generated hashes; re-run refract\"}))\n"
+    "  sys.exit(0)\n"
+    " verified[rel]=data\n"
+    "with tempfile.TemporaryDirectory() as private:\n"
+    " copies={}\n"
+    " for rel,data in verified.items():\n"
+    "  copies[rel]=os.path.join(private,os.path.basename(rel))\n"
+    "  open(copies[rel],\"wb\").write(data)\n"
+    " env=dict(os.environ,REFRACT_ROOT=r,REFRACT_VALIDATOR=copies[\".refract/bin/validate\"])\n"
+    " sys.exit(subprocess.call([sys.executable,\"-I\",copies[\".refract/bin/agent-check\"],\"--format\",\"json\"],env=env))"
 )
 
 

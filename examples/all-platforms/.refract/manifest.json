@@ -8,7 +8,7 @@
     "opencode",
     "omp"
   ],
-  "updated_at": "2026-11-18T21:47:25+00:00",
+  "updated_at": "2026-11-18T21:56:18+00:00",
   "files": {
     ".agents/skills/architecture-decision/SKILL.md": {
       "sha256": "7bd5fe23cdbf5d058e1e645d33b179ebf92571b7850e2c98c53aa635028f5b2e",
@@ -36,7 +36,7 @@
       "mutable": false
     },
     ".claude/settings.json": {
-      "sha256": "a9672a68a737226317043b275f67143701abe890a1c770c74a2c236a7e82c92c",
+      "sha256": "7a3347037d39677a42a66c6fa625c7f2494b5ec641192fc8aca3ecbfffc2a9d9",
       "executable": false,
       "mutable": false
     },
@@ -71,7 +71,7 @@
       "mutable": false
     },
     ".codex/hooks.json": {
-      "sha256": "320fd24c845799032de2ab66ac587e1cebd6abce57d58098a63252bdde7c7d2a",
+      "sha256": "13ce6849108b1f24883158321c994cc7f1b30c897f69a6f7180f50ebe0b868fe",
       "executable": false,
       "mutable": false
     },
@@ -146,7 +146,7 @@
       "mutable": false
     },
     ".refract/bin/agent-check": {
-      "sha256": "4cd9f093c25c9eead5321137ceaa273b7da1f1e1496da7e5e39b9e2641bf6975",
+      "sha256": "ac575b0184d71c037229661654cc90043e09df6f38e47dc79f90bd9b0954b380",
       "executable": true,
       "mutable": false
     },
@@ -156,7 +156,7 @@
       "mutable": false
     },
     ".refract/bin/validate": {
-      "sha256": "b5c393d72b373b119f2443c6da5c878824afbd1b3666b588e6d1ab4877a8b6ad",
+      "sha256": "3c9d36de411840f0fe89414192cb52e567b1730b67b802c906e88c7918375136",
       "executable": true,
       "mutable": false
     },

@@ -9,7 +9,9 @@ import sys
 import tomllib
 from pathlib import Path, PurePosixPath
 
-ROOT = Path(__file__).resolve().parents[2]
+# REFRACT_ROOT is set by the pinned agent hook launcher, which runs a verified
+# private copy of this script against the project.
+ROOT = Path(os.environ.get("REFRACT_ROOT") or Path(__file__).resolve().parents[2])
 MANIFEST = ROOT / ".refract/manifest.json"
 MANIFEST_SCHEMA = "refract-manifest/v1"
 VALID_STATUSES = {"Proposed", "Accepted", "Rejected", "Deprecated", "Superseded"}

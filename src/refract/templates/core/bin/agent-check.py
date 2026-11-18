@@ -13,12 +13,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-VALIDATOR = ROOT / ".refract/bin/validate"
+# The pinned hook launcher runs verified private copies of this script and the
+# validator, passing the project root and validator copy explicitly.
+ROOT = Path(os.environ.get("REFRACT_ROOT") or Path(__file__).resolve().parents[2])
+VALIDATOR = Path(os.environ.get("REFRACT_VALIDATOR") or ROOT / ".refract/bin/validate")
 DRIFT_PREFIXES = ("manifest-owned file content changed", "manifest-owned file mode changed")
 
 

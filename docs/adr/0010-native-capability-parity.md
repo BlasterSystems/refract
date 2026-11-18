@@ -84,7 +84,7 @@ Pi is deprecated. Selecting it emits a warning, and it will be removed in the ne
 - More generated files per platform, with a larger golden tree and examples.
 - `.claude/settings.json` is generated when `--permissions` or `--hooks` is selected. omp also merges this file into its project settings layer, but the Claude-only keys there do not collide with omp setting ids.
 - The OpenCode plugin and omp hook live in agent-writable directories and are not hash-pinned. Neither platform sandboxes the agent, so a hook cannot widen access the agent already has.
-- Residual: a time-of-check/time-of-use window between hashing and executing the hook scripts.
+- The pinned launcher executes private copies of the verified bytes, so a script rewritten after the check is never run.
 - Codex loads project `.codex/` configuration, hooks included, only for trusted projects.
 
 ### Risks and mitigations

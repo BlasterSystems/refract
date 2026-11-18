@@ -4,7 +4,7 @@
   "platforms": [
     "pi"
   ],
-  "updated_at": "2026-11-18T21:47:25+00:00",
+  "updated_at": "2026-11-18T21:56:18+00:00",
   "files": {
     ".agents/skills/architecture-decision/SKILL.md": {
       "sha256": "7bd5fe23cdbf5d058e1e645d33b179ebf92571b7850e2c98c53aa635028f5b2e",
@@ -32,7 +32,7 @@
       "mutable": false
     },
     ".refract/bin/validate": {
-      "sha256": "b5c393d72b373b119f2443c6da5c878824afbd1b3666b588e6d1ab4877a8b6ad",
+      "sha256": "3c9d36de411840f0fe89414192cb52e567b1730b67b802c906e88c7918375136",
       "executable": true,
       "mutable": false
     },
