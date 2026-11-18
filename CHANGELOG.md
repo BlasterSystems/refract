@@ -4,10 +4,54 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-18
+
+### Breaking changes
+
+- Project renamed to Refract: distribution and CLI are `refract`, the Python package is `refract`, generated-project metadata lives in `.refract/`, and protocol schema strings use the `refract-` prefix.
+- License switched from MIT to Apache-2.0.
+- OpenCode's hand-written `adr-new` and `docs-check` commands are replaced by one generated command per skill; re-run with `--remove-obsolete` to delete the old `adr-new` command.
+- `init` and `retrofit` refuse the home directory, the filesystem root, and folders that group several repositories unless `--allow-unscoped-target` is passed.
+- The generated ticket lifecycle is section 9 of `docs/DEVELOPMENT_PROCESS.md` (new Skill workflow and Deploy sections).
+
+### Added
+
+- OhMyPi (omp) as a selectable platform.
+- Native capability parity across Claude Code, Codex, OpenCode, and omp from one capability registry (ADR-0010): subagents, MCP, permission policies, per-skill invocation, and deterministic agent hooks in each platform's native format; unsupported selections warn instead of being dropped.
+- omp: `.omp/agents`, `.omp/mcp.json`, `.omp/settings.json` (auto-learn disabled per project so sessions stop minting user-scope skills), and an `agent_end` hook.
+- `--permissions`: opt-in restrictive policies (ask before edit/shell, deny `.env` reads) for every platform.
+- `--hooks` adds agent end-of-turn validation through `.refract/bin/agent-check`; Claude Code and Codex Stop hooks pin script hashes, run isolated Python on verified private copies, block a failing turn once, and only report manifest drift.
+- Portable agentic workflow skills (ADR-0011): `research`, `confidence-check`, `implement`, `security-check`, `quality-review`, `commit`, `deploy-dev`, `deploy-prd`, `hotfix`; a project-owned `docs/DEPLOYMENT.md` seed with the deterministic `.refract/bin/deploy-ready` gate; `docs/branches/` seed; extended task template; GitHub pull request template with a deploy-affecting block.
+- `--keep-existing` retrofit (ADR-0012): keep unmanaged files and whole skill groups as project-owned; refract control paths still conflict. Retrofit prints migration findings about existing agent setups; see `docs/MIGRATION.md`.
+- Validators check agent and skill front matter, skill-mirror identity, and references to user-level agent directories.
+
 ### Changed
 
-- License switched from MIT to Apache-2.0.
-- Project renamed to Refract: distribution and CLI are `refract`, the Python package is `refract`, generated-project metadata lives in `.refract/`, and protocol schema strings use the `refract-` prefix.
+- Codex `.codex/config.toml` and Claude `.claude/settings.json` are generated only when a selected feature needs them.
+- The planner flags customized seeds whose generated version changed.
+- Repository hardening: security policy, SHA-pinned CI actions, Dependabot, and a stable merge-gate check.
+
+### Security
+
+Release-gate audit (quick profile, partial coverage) of `v0.2.0..v0.3.0`:
+
+- `setup-hooks.sh` installs a hash-pinned launcher into git's own hooks directory instead of pointing `core.hooksPath` at the agent-writable `.githooks/`. A changed hook, validator, docs-check, or `.refract/config.json` blocks the commit until the user re-pins it.
+- A repository-supplied manifest can no longer mark refract control files as customized seeds; only refract decides which generated files are mutable.
+- git runs in target repositories through one hardened helper, so repository-configured programs (`core.fsmonitor`, signature programs) never execute during detection or migration scans.
+- Control characters are rejected in generated and manifest paths; repository-derived names and validator output are printed one line each, so they cannot forge warnings or Stop-hook instructions.
+- `.refract/bin` scripts run in isolated Python mode (`-I`), so modules planted next to them are ignored.
+- OpenCode advisory commands now run in a plan agent whose edits are actually denied.
+- `deploy-prd` reads its policy from the default branch, asks before running gate and probe commands, and merges with the inspected head commit pinned.
+- Platform documentation states exactly what `--permissions` enforces on each platform, including where `.env` files remain readable.
+
+### Documentation
+
+- README restructured with progressive disclosure: a "Choose your path" router, task sections with ready-to-paste prompts, and collapsed reference blocks.
+- New `docs/PROMPTS.md` prompt library; `docs/AGENT_GUIDED.md` intent example updated.
+
+### Deprecated
+
+- Pi: selecting it prints a deprecation warning; it will be removed in the next major release in favour of omp.
 
 ## [0.2.0] - 2026-11-09
 

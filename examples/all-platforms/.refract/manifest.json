@@ -1,6 +1,6 @@
 {
   "schema": "refract-manifest/v1",
-  "generator_version": "0.2.0",
+  "generator_version": "0.3.0",
   "platforms": [
     "claude",
     "codex",
@@ -8,7 +8,7 @@
     "opencode",
     "omp"
   ],
-  "updated_at": "2026-11-18T22:17:48+00:00",
+  "updated_at": "2026-11-18T23:32:42+00:00",
   "files": {
     ".agents/skills/architecture-decision/SKILL.md": {
       "sha256": "7bd5fe23cdbf5d058e1e645d33b179ebf92571b7850e2c98c53aa635028f5b2e",
@@ -26,12 +26,12 @@
       "mutable": false
     },
     ".agents/skills/deploy-dev/SKILL.md": {
-      "sha256": "26a125554a7f4d747be8f1ae8ddd4191fcbe70c9bd9c2020e1dacd5b7ad96f82",
+      "sha256": "ff57029b7fd7dedb296ed76b2aafad328f785df75148d7fe1dd8bc1ce5885a8d",
       "executable": false,
       "mutable": false
     },
     ".agents/skills/deploy-prd/SKILL.md": {
-      "sha256": "f473260cbba4e355c8a668698e5092115718f551d9f9325ff6e8698ad08f2cbe",
+      "sha256": "8b8b2d58dec4da08ffc2d40400a7a532a0b178db2d0e5de76889262d4bc80576",
       "executable": false,
       "mutable": false
     },
@@ -61,7 +61,7 @@
       "mutable": false
     },
     ".agents/skills/research/SKILL.md": {
-      "sha256": "a632528f6ca750442661b03eced5f5541d2cdfd0c72f8d508e8a6c27012d8b1e",
+      "sha256": "aeff7c707d6b3b039b948efe69af404d8358c102e89cc68018276fe26b816573",
       "executable": false,
       "mutable": false
     },
@@ -81,7 +81,7 @@
       "mutable": false
     },
     ".claude/settings.json": {
-      "sha256": "7a3347037d39677a42a66c6fa625c7f2494b5ec641192fc8aca3ecbfffc2a9d9",
+      "sha256": "151a24c7e32ccb2aa572aa076990178632c4191031041b957668dc1082d7d65b",
       "executable": false,
       "mutable": false
     },
@@ -101,12 +101,12 @@
       "mutable": false
     },
     ".claude/skills/deploy-dev/SKILL.md": {
-      "sha256": "26a125554a7f4d747be8f1ae8ddd4191fcbe70c9bd9c2020e1dacd5b7ad96f82",
+      "sha256": "ff57029b7fd7dedb296ed76b2aafad328f785df75148d7fe1dd8bc1ce5885a8d",
       "executable": false,
       "mutable": false
     },
     ".claude/skills/deploy-prd/SKILL.md": {
-      "sha256": "f473260cbba4e355c8a668698e5092115718f551d9f9325ff6e8698ad08f2cbe",
+      "sha256": "8b8b2d58dec4da08ffc2d40400a7a532a0b178db2d0e5de76889262d4bc80576",
       "executable": false,
       "mutable": false
     },
@@ -136,7 +136,7 @@
       "mutable": false
     },
     ".claude/skills/research/SKILL.md": {
-      "sha256": "a632528f6ca750442661b03eced5f5541d2cdfd0c72f8d508e8a6c27012d8b1e",
+      "sha256": "aeff7c707d6b3b039b948efe69af404d8358c102e89cc68018276fe26b816573",
       "executable": false,
       "mutable": false
     },
@@ -161,7 +161,7 @@
       "mutable": false
     },
     ".codex/hooks.json": {
-      "sha256": "13ce6849108b1f24883158321c994cc7f1b30c897f69a6f7180f50ebe0b868fe",
+      "sha256": "3113ad8b222b04f78209d2dfb7df5319e36491ac97e841c84fe03ae74acff507",
       "executable": false,
       "mutable": false
     },
@@ -286,32 +286,32 @@
       "mutable": false
     },
     ".refract/bin/agent-check": {
-      "sha256": "ac575b0184d71c037229661654cc90043e09df6f38e47dc79f90bd9b0954b380",
+      "sha256": "0e6f3f4ad5e8bbb0efeaf6f597060857115d8c1a0f4609cefbb265771193d075",
       "executable": true,
       "mutable": false
     },
     ".refract/bin/deploy-ready": {
-      "sha256": "be8d3398c575c9fcb9592e2d8215cec626725fc9169a5f4eadac18cc8bb48857",
+      "sha256": "3e15d91154cee9a5e67a865fe441621e6a5f60b09b35451f20fcffa55586c50f",
       "executable": true,
       "mutable": false
     },
     ".refract/bin/docs-check": {
-      "sha256": "3f07e588e95f28b46596390486eccf4e5afa9e505daaea0ed059818edb34e8b1",
+      "sha256": "d8746c5d8b8bb3624596e3bb60d6d301da7a88fab492058337bc2ea3a5619186",
       "executable": true,
       "mutable": false
     },
     ".refract/bin/validate": {
-      "sha256": "3c9d36de411840f0fe89414192cb52e567b1730b67b802c906e88c7918375136",
+      "sha256": "96923480833f62a5f1913b851934a1f0e909df3fead27fa8a6aeb194a9288851",
       "executable": true,
       "mutable": false
     },
     ".refract/config.json": {
-      "sha256": "7b939cd54c705aa803758c6de5cd0283474d723aa15d8a576453003e2bbb3ca8",
+      "sha256": "09550ec5610ec40f072279857bef6c8e8d65def71b252d4bb9f3013703322305",
       "executable": false,
       "mutable": false
     },
     "AGENTS.md": {
-      "sha256": "bb2d6f806e94c05dfbe7c554d2acb886995625e5312a7ad107aff8f4d8195dfd",
+      "sha256": "6dfe3f796fa1d207375b78aba0af53e3654fefe7a710fde0186d2ebae2248b12",
       "executable": false,
       "mutable": true
     },
@@ -341,7 +341,7 @@
       "mutable": true
     },
     "docs/PLATFORM_SUPPORT.md": {
-      "sha256": "9ef91939bad28483a04c9b38eca117a9a4b6247d0cc538b9eff0e235ec04e894",
+      "sha256": "69fb7a33bc3cfef578b1ef1154c0a9f19ba15704f188c0ca4124a429caafdac2",
       "executable": false,
       "mutable": false
     },
@@ -381,12 +381,12 @@
       "mutable": true
     },
     "opencode.json": {
-      "sha256": "3ab01ba3298483e1cf0c28c6e8c21c49157b6181945072bad86c460620186b20",
+      "sha256": "ed548b9f40515979a0e548848bfee4d7b923d2386b6279ea53dbaae17cdec9bb",
       "executable": false,
       "mutable": false
     },
     "setup-hooks.sh": {
-      "sha256": "37f204b77013fce58805c76a03107ea6fac27c71182bf743ec110a84bb26e10f",
+      "sha256": "1d6331e6f951e56247a0c87ba118c39e7db617c1059bd12e8db9133595f366ae",
       "executable": true,
       "mutable": false
     },

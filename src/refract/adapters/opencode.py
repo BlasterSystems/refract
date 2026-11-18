@@ -28,6 +28,10 @@ class OpenCodeAdapter:
                 "bash": "ask",
             },
         }
+        # Advisory commands run in the plan agent. OpenCode evaluates the last
+        # matching rule, so the project-level edit "ask" above would override
+        # plan's built-in deny; an agent-scoped deny keeps plan read-only.
+        config["agent"] = {"plan": {"permission": {"edit": "deny"}}}
         if features.permissions:
             config["permission"]["read"] = {"*": "allow", **{f"*{pattern}": "deny" for pattern in SECRET_GLOBS}}  # type: ignore[index]
         if features.mcp:

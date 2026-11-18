@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S python3 -I
 from __future__ import annotations
 
 import hashlib
@@ -103,7 +103,12 @@ def error(message: str) -> None:
 
 
 def safe_path(relative: str) -> Path | None:
-    if not isinstance(relative, str) or not relative or "\\" in relative or "\x00" in relative:
+    if (
+        not isinstance(relative, str)
+        or not relative
+        or "\\" in relative
+        or any(ord(char) < 0x20 or 0x7F <= ord(char) < 0xA0 for char in relative)
+    ):
         error(f"unsafe manifest path: {relative!r}")
         return None
     pure = PurePosixPath(relative)
@@ -314,6 +319,7 @@ validate_adrs()
 if ERRORS:
     print("Configuration validation failed:")
     for item in ERRORS:
-        print(f"- {item}")
+        # One finding per line: escape control characters from repository paths.
+        print("- " + "".join(f"\\u{ord(c):04x}" if ord(c) < 0x20 or 0x7F <= ord(c) < 0xA0 else c for c in item))
     sys.exit(1)
 print("Configuration validation passed")

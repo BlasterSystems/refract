@@ -10,7 +10,12 @@ class UnsafePathError(ValueError):
 
 
 def normalize_relative_path(value: str) -> str:
-    if not isinstance(value, str) or not value or "\x00" in value or "\\" in value:
+    if (
+        not isinstance(value, str)
+        or not value
+        or "\\" in value
+        or any(ord(char) < 0x20 or 0x7F <= ord(char) < 0xA0 for char in value)
+    ):
         raise UnsafePathError(f"unsafe generated path: {value!r}")
     pure = PurePosixPath(value)
     if pure.is_absolute() or any(part in {"", ".", ".."} for part in pure.parts):

@@ -34,7 +34,7 @@ Each feature is rendered in every selected platform's native format, following t
 
 - `mcp`: native MCP configuration per platform (`.mcp.json`, `.codex/config.toml`, `opencode.json`, `.omp/mcp.json`).
 - `agents`: the read-only architecture reviewer as a native subagent per platform.
-- `hooks`: Git hooks plus deterministic agent end-of-turn hooks. Each agent hook runs `.refract/bin/agent-check`, which executes the project validator.
+- `hooks`: Git hooks plus deterministic agent end-of-turn hooks. Each agent hook runs `.refract/bin/agent-check`, which executes the project validator. Run `./setup-hooks.sh` once to install the pre-commit hook: it writes a hash-pinned launcher into git's own hooks directory, and a commit is blocked if `.githooks/pre-commit`, the validator, docs-check, or `.refract/config.json` changed since setup. Review the change, then re-run `./setup-hooks.sh` to re-pin.
 - `permissions`: restrictive native project policies (`.claude/settings.json`, `.codex/config.toml`, `opencode.json`, `.omp/settings.json`). It is off by default, so existing Claude and Codex settings never conflict during retrofit.
 
 `pi` remains a valid platform but is deprecated.

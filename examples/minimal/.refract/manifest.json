@@ -1,10 +1,10 @@
 {
   "schema": "refract-manifest/v1",
-  "generator_version": "0.2.0",
+  "generator_version": "0.3.0",
   "platforms": [
     "pi"
   ],
-  "updated_at": "2026-11-18T22:17:48+00:00",
+  "updated_at": "2026-11-18T23:32:42+00:00",
   "files": {
     ".agents/skills/architecture-decision/SKILL.md": {
       "sha256": "7bd5fe23cdbf5d058e1e645d33b179ebf92571b7850e2c98c53aa635028f5b2e",
@@ -22,12 +22,12 @@
       "mutable": false
     },
     ".agents/skills/deploy-dev/SKILL.md": {
-      "sha256": "26a125554a7f4d747be8f1ae8ddd4191fcbe70c9bd9c2020e1dacd5b7ad96f82",
+      "sha256": "ff57029b7fd7dedb296ed76b2aafad328f785df75148d7fe1dd8bc1ce5885a8d",
       "executable": false,
       "mutable": false
     },
     ".agents/skills/deploy-prd/SKILL.md": {
-      "sha256": "f473260cbba4e355c8a668698e5092115718f551d9f9325ff6e8698ad08f2cbe",
+      "sha256": "8b8b2d58dec4da08ffc2d40400a7a532a0b178db2d0e5de76889262d4bc80576",
       "executable": false,
       "mutable": false
     },
@@ -57,7 +57,7 @@
       "mutable": false
     },
     ".agents/skills/research/SKILL.md": {
-      "sha256": "a632528f6ca750442661b03eced5f5541d2cdfd0c72f8d508e8a6c27012d8b1e",
+      "sha256": "aeff7c707d6b3b039b948efe69af404d8358c102e89cc68018276fe26b816573",
       "executable": false,
       "mutable": false
     },
@@ -72,27 +72,27 @@
       "mutable": false
     },
     ".refract/bin/deploy-ready": {
-      "sha256": "be8d3398c575c9fcb9592e2d8215cec626725fc9169a5f4eadac18cc8bb48857",
+      "sha256": "3e15d91154cee9a5e67a865fe441621e6a5f60b09b35451f20fcffa55586c50f",
       "executable": true,
       "mutable": false
     },
     ".refract/bin/docs-check": {
-      "sha256": "3f07e588e95f28b46596390486eccf4e5afa9e505daaea0ed059818edb34e8b1",
+      "sha256": "d8746c5d8b8bb3624596e3bb60d6d301da7a88fab492058337bc2ea3a5619186",
       "executable": true,
       "mutable": false
     },
     ".refract/bin/validate": {
-      "sha256": "3c9d36de411840f0fe89414192cb52e567b1730b67b802c906e88c7918375136",
+      "sha256": "96923480833f62a5f1913b851934a1f0e909df3fead27fa8a6aeb194a9288851",
       "executable": true,
       "mutable": false
     },
     ".refract/config.json": {
-      "sha256": "2193defabbb71a3a85582d110f749d0568c388e9b15f3d9bc10ba43b137b1179",
+      "sha256": "577bfe17193670bcca8a6518f987516ce6e8070473d934ed015341c61933b801",
       "executable": false,
       "mutable": false
     },
     "AGENTS.md": {
-      "sha256": "61e88379cc7ff501d2d7e5b7fb6df054894d3d158a65bf63c156cecf2dadbf30",
+      "sha256": "cc3893494bc2ff058f335be3e9fc7d3df9e04df328482ea78f081a331542a3e0",
       "executable": false,
       "mutable": true
     },
@@ -117,7 +117,7 @@
       "mutable": true
     },
     "docs/PLATFORM_SUPPORT.md": {
-      "sha256": "3b83a0d97e572a8ca66fe5a1ccc19600b7d2920df47d0b7ebc1697a43f34ad70",
+      "sha256": "c2e3083c60142b908b5ddf1b7a3fa5fa7445761fcc2a2cb556775d29242e49ec",
       "executable": false,
       "mutable": false
     },

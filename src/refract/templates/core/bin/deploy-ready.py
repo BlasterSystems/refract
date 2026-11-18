@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S python3 -I
 """Deterministic readiness gate for the deploy skills.
 
 Exits non-zero, listing what is missing, unless docs/DEPLOYMENT.md declares

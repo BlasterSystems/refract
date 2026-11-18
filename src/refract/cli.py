@@ -61,6 +61,11 @@ def _answer(data: dict[str, Any], section: str, key: str, default: Any = None) -
     return nested.get(key, default) if isinstance(nested, dict) else default
 
 
+def _terminal_safe_line(value: str) -> str:
+    """Like _terminal_safe_text, but also escapes newlines: one message, one line."""
+    return _terminal_safe_text(value).replace("\n", "\\u000a")
+
+
 def _terminal_safe_text(value: str) -> str:
     """Escape terminal controls while preserving ordinary text and line layout."""
     rendered: list[str] = []
@@ -284,7 +289,7 @@ def _display_agent_review(prepared: PreparedBootstrap, warnings: list[str]) -> N
     if claim["present"]:
         print("WARNING: The existing manifest is a repository-supplied, unauthenticated ownership claim.")
     for warning in warnings:
-        print(f"WARNING: {_terminal_safe_text(warning)}")
+        print(f"WARNING: {_terminal_safe_line(warning)}")
     diffs = prepared.review_diffs(include_existing_content=True)
     if diffs:
         print("Reviewable generated-file diffs:")
@@ -347,7 +352,7 @@ def _run_generation(args: argparse.Namespace) -> int:
         else:
             print(_terminal_safe_text(plan.format()))
             for warning in warnings:
-                print(f"WARNING: {_terminal_safe_text(warning)}", file=sys.stderr)
+                print(f"WARNING: {_terminal_safe_line(warning)}", file=sys.stderr)
     if plan.conflicts:
         if json_mode:
             print(json.dumps(_payload(prepared, args, status="conflict", applied=False, warnings=warnings), indent=2))
@@ -442,7 +447,7 @@ def _run_generation(args: argparse.Namespace) -> int:
                 print(json.dumps(validation_result.to_dict(), ensure_ascii=True, sort_keys=True))
             print("Validation failed after apply:", file=sys.stderr)
             for error in errors:
-                print(f"- {_terminal_safe_text(error)}", file=sys.stderr)
+                print(f"- {_terminal_safe_line(error)}", file=sys.stderr)
         return 1
     if json_mode:
         print(json.dumps(_payload(prepared, args, status="applied", applied=True, warnings=warnings), indent=2))
@@ -599,7 +604,7 @@ def main(argv: list[str] | None = None) -> int:
             errors = validate_target(Path(args.target))
             if errors:
                 for error in errors:
-                    print(f"- {_terminal_safe_text(error)}", file=sys.stderr)
+                    print(f"- {_terminal_safe_line(error)}", file=sys.stderr)
                 return 1
             print("Validation passed.")
             return 0

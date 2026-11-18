@@ -9,6 +9,13 @@
       "*.env.*": "deny"
     }
   },
+  "agent": {
+    "plan": {
+      "permission": {
+        "edit": "deny"
+      }
+    }
+  },
   "mcp": {
     "context7": {
       "type": "remote",

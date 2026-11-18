@@ -27,4 +27,5 @@ Read only the section relevant to the current task.
 ## Evaluations
 
 - [LLM Wiki evaluation](LLM_WIKI_EVALUATION.md) — fit assessment, recommendation, and optional pilot plan.
+- [Prompt library](PROMPTS.md): copy-paste prompts for setup, migration, the workflow skills, deployment, upgrades, and troubleshooting.
 - [Migrating an existing agent setup](MIGRATION.md) — keep-existing retrofit, migration findings, and post-adoption steps.

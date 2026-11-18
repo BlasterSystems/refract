@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 import re
-import subprocess
 from pathlib import Path
 
+from .gitsafe import run_git
 from .model import DetectedValue, ProjectFacts
 
 
@@ -29,19 +29,8 @@ def _script_command(manager: str, script: str) -> str:
 
 
 def _detect_ticket_prefix(root: Path) -> str | None:
-    if not (root / ".git").exists():
-        return None
-    try:
-        result = subprocess.run(
-            ["git", "log", "--format=%s", "-100"],
-            cwd=root,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            timeout=5,
-            check=False,
-            text=True,
-        )
-    except (OSError, subprocess.TimeoutExpired):
+    result = run_git(root, "log", "--no-show-signature", "--format=%s", "-100", timeout=5)
+    if result is None or result.returncode != 0:
         return None
     matches = re.findall(r"\b([A-Z][A-Z0-9_]{1,15})-[0-9]+\b", result.stdout)
     if not matches:

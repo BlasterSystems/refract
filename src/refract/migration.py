@@ -8,32 +8,24 @@ the retrofit.
 
 from __future__ import annotations
 
-import os
-import subprocess
+import unicodedata
 from pathlib import Path
+
+from .gitsafe import run_git
 
 from .planner import Action, Plan, skill_group
 
 
 def _git_tracked(root: Path, relative: str) -> bool:
-    # Only the target's own repository, and never repository-configured
-    # helpers: core.fsmonitor in .git/config is executed by git ls-files.
-    if not (root / ".git").exists():
-        return False
-    try:
-        result = subprocess.run(
-            [
-                "git", "--no-optional-locks", "-c", "core.fsmonitor=false",
-                "-C", str(root), "ls-files", "--error-unmatch", "--", relative,
-            ],
-            capture_output=True,
-            timeout=10,
-            check=False,
-            env={**os.environ, "GIT_CONFIG_NOSYSTEM": "1", "GIT_CEILING_DIRECTORIES": str(root.parent)},
-        )
-    except (OSError, subprocess.SubprocessError):
-        return False
-    return result.returncode == 0
+    result = run_git(root, "ls-files", "--error-unmatch", "--", relative)
+    return result is not None and result.returncode == 0
+
+
+def _display(name: str) -> str:
+    """Escape repository-controlled names so they cannot forge output lines."""
+    return "".join(
+        f"\\u{ord(char):04x}" if unicodedata.category(char).startswith("C") else char for char in name
+    )
 
 
 def _skill_names(directory: Path) -> set[str]:
@@ -60,7 +52,7 @@ def existing_setup_findings(root: Path) -> list[str]:
         findings.append(".pi/ configures the deprecated Pi agent; select the omp platform instead")
     claude_only = sorted(_skill_names(root / ".claude/skills") - _skill_names(root / ".agents/skills"))
     if claude_only:
-        shown = ", ".join(claude_only[:8]) + (" ..." if len(claude_only) > 8 else "")
+        shown = ", ".join(_display(name) for name in claude_only[:8]) + (" ..." if len(claude_only) > 8 else "")
         findings.append(
             f"{len(claude_only)} skill(s) exist only in .claude/skills ({shown}); Codex, OpenCode, and omp read "
             ".agents/skills, so copy the project-specific ones there to share them across agents"
@@ -99,7 +91,7 @@ def plan_findings(plan: Plan) -> list[str]:
     kept = sorted(op.path for op in plan.operations if op.action == Action.SKIP_UNMANAGED and "--keep-existing" in op.detail)
     if not kept:
         return findings
-    findings.append(f"kept {len(kept)} existing project-owned file(s) instead of refract's versions: {', '.join(kept)}")
+    findings.append(f"kept {len(kept)} existing project-owned file(s) instead of refract's versions: {', '.join(map(_display, kept))}")
     by_group: dict[str, dict[str, list[str]]] = {}
     for op in plan.operations:
         group = skill_group(op.path)
@@ -115,11 +107,12 @@ def plan_findings(plan: Plan) -> list[str]:
     for group, entry in sorted(by_group.items()):
         if not entry["kept"] or not (entry["skipped"] or entry["managed"]):
             continue
-        message = f"skill '{group}': project-owned at {', '.join(entry['kept'])}"
+        group = _display(group)
+        message = f"skill '{group}': project-owned at {', '.join(map(_display, entry['kept']))}"
         if entry["skipped"]:
-            message += f"; refract did not generate {', '.join(entry['skipped'])}, so agents that read only those locations have no '{group}' skill"
+            message += f"; refract did not generate {', '.join(map(_display, entry['skipped']))}, so agents that read only those locations have no '{group}' skill"
         if entry["managed"]:
-            message += f"; refract's copy remains at {', '.join(entry['managed'])}, so agents will see different '{group}' skills until one copy is removed"
+            message += f"; refract's copy remains at {', '.join(map(_display, entry['managed']))}, so agents will see different '{group}' skills until one copy is removed"
         findings.append(message)
     for path, what in PLATFORM_CONFIG.items():
         if path in kept:
