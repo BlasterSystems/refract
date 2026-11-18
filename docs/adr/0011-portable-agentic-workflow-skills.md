@@ -1,8 +1,8 @@
 # ADR-0011: Portable agentic workflow skills
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-18
-- **Decision owners:** Not assigned
+- **Decision owners:** Project owner (accepted 2026-11-18)
 - **Scope:** Generated portable core (skills, process documents, templates)
 - **Tags:** skills, workflow, deployment, process, portability
 - **Supersedes:** None
