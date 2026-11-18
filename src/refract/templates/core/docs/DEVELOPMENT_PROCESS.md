@@ -4,6 +4,25 @@
 
 Use this workflow for changes to **{{PROJECT_NAME}}**. Scale the ceremony to the risk and size of the task, but do not skip validation or explicit architectural decisions.
 
+## Skill workflow
+
+The portable project skills implement this process. Invoke them by name on any supported coding agent.
+
+| Stage | Skill | Output |
+|---|---|---|
+| Idea or epic, no code yet | `research` | `tasks/research-<slug>.md`; tracker tickets only after approval |
+| Readiness | `confidence-check` | Readiness result in the task file |
+| One ticket | `implement` | Task file, branch, tested change, pull request |
+| Security | `security-check` | CRITICAL / WARNING / INFO report |
+| Review | `quality-review` | Reuse, quality, and efficiency findings |
+| Commit | `commit` | Conventional commit and updated branch document |
+| Deploy | `deploy-dev`, `deploy-prd` | Tag, pipeline result, verification evidence |
+| Emergency | `hotfix` | Minimal fix through the full checks |
+| Decisions | `architecture-decision` | Indexed ADR |
+| Release version | `semantic-versioning` | Release commit and annotated tag |
+
+Deploy skills act only on explicit request and only after `.refract/bin/deploy-ready` passes.
+
 ## 1. Understand
 
 - Read the request and acceptance criteria.
@@ -63,7 +82,11 @@ Open a pull request for reviewable changes. Before merge, significant changes re
 
 For security-sensitive changes or open vulnerability questions, use the security-audit skill in guidance mode; see `docs/SECURITY_AUDIT.md`.
 
-## 7. Complete
+## 7. Deploy
+
+Deployments follow `docs/DEPLOYMENT.md`. Deploy-affecting changes name an artifact invariant and a functional probe before merge, and every deployment records both results as evidence. A configuration change made outside the pipeline is a deploy.
+
+## 8. Complete
 
 - Ensure acceptance criteria are met.
 - Ensure new or superseding ADRs are indexed and linked.

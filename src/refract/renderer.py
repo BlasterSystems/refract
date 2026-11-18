@@ -20,10 +20,10 @@ def _display(value: str | None, fallback: str = "Not configured") -> str:
 
 
 def _ticket_lifecycle(prefix: str) -> str:
-    """Rendered only when a ticket prefix is configured (section 8 of the
+    """Rendered only when a ticket prefix is configured (section 9 of the
     development process). Status transitions are part of the definition of
     done; wording stays tracker-neutral."""
-    return f"""## 8. Ticket lifecycle
+    return f"""## 9. Ticket lifecycle
 
 Work is tracked in the project's issue tracker: task identifiers use the `{prefix}-<number>` convention. **Status transitions are part of the definition of done: a ticket is never left in a state that contradicts the code.**
 
@@ -72,6 +72,8 @@ def render_project(request: BootstrapRequest, template_root: Path | None = None)
         "docs/AGENT_GUIDED.md": ("core/docs/AGENT_GUIDED.md", True),
         "docs/ARCHITECTURE.md": ("core/docs/ARCHITECTURE.md", True),
         "docs/DEVELOPMENT_PROCESS.md": ("core/docs/DEVELOPMENT_PROCESS.md", True),
+        "docs/DEPLOYMENT.md": ("core/docs/DEPLOYMENT.md", True),
+        "docs/branches/README.md": ("core/docs/branches/README.md", True),
         "docs/README.md": ("core/docs/README.md", True),
         "docs/RELEASING.md": ("core/docs/RELEASING.md", True),
         "docs/SECURITY_AUDIT.md": ("core/docs/SECURITY_AUDIT.md", True),
@@ -93,7 +95,7 @@ def render_project(request: BootstrapRequest, template_root: Path | None = None)
             target, templates.render(f"core/skills/{skill}/SKILL.md", values)
         )
 
-    for name in ("validate", "docs-check"):
+    for name in ("validate", "docs-check", "deploy-ready"):
         target = f".refract/bin/{name}"
         files[target] = GeneratedFile.text(
             target, templates.render(f"core/bin/{name}.py", values), executable=True
@@ -174,6 +176,11 @@ def render_project(request: BootstrapRequest, template_root: Path | None = None)
         files[".github/workflows/docs-check.yml"] = GeneratedFile.text(
             ".github/workflows/docs-check.yml",
             templates.render("integrations/github/docs-check.yml", values),
+        )
+        files[".github/PULL_REQUEST_TEMPLATE.md"] = GeneratedFile.text(
+            ".github/PULL_REQUEST_TEMPLATE.md",
+            templates.render("integrations/github/PULL_REQUEST_TEMPLATE.md", values),
+            mutable=True,
         )
 
     return dict(sorted(files.items()))

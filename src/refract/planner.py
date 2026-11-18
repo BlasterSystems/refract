@@ -159,12 +159,14 @@ def build_plan(
             and previous.get("mutable", False)
             and current_hash != previous.get("sha256")
         ):
+            seed_changed = desired_hash != previous.get("sha256")
             operations.append(
                 Operation(
                     relative,
                     Action.NO_CHANGE,
                     generated,
-                    "mutable generated seed was customized and is preserved",
+                    "mutable generated seed was customized and is preserved"
+                    + ("; the generated seed changed since it was customized, review the new version manually" if seed_changed else ""),
                     expected_hash=current_hash,
                     expected_executable=_is_executable(path),
                 )

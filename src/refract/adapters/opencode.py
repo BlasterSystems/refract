@@ -8,7 +8,7 @@ from .shared import CONTEXT7_URL, SECRET_GLOBS, skill_description
 
 
 # Skills that only inspect and report run in OpenCode's read-only plan agent.
-ADVISORY_SKILLS = {"refract", "docs-check"}
+ADVISORY_SKILLS = {"refract", "docs-check", "security-check", "quality-review"}
 
 
 def _frontmatter_value(value: str) -> str:

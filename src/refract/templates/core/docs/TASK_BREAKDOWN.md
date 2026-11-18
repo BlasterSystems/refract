@@ -33,7 +33,7 @@ Use `planning-and-task-breakdown` for engineering plans that stay in the reposit
 
 | Project convention | Task list target |
 |---|---|
-| Ticket prefix configured (section 8) | One tracker item per task, using the `PREFIX-<number>` convention; record the tracker location in `tasks/plan.md` |
+| Ticket prefix configured (Ticket lifecycle section of `docs/DEVELOPMENT_PROCESS.md`) | One tracker item per task, using the `PREFIX-<number>` convention; record the tracker location in `tasks/plan.md` |
 | No ticket prefix | The skill's defaults: `tasks/plan.md` for the plan document and `tasks/todo.md` for the ordered checklist |
 
 - Implementation detail for each task still lives in a per-task file created from `tasks/task-template.md`; the plan document and task list are the ordered index, not replacements.

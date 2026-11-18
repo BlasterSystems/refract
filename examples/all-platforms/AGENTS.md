@@ -23,6 +23,8 @@ Treat values marked “Not configured” or “Not detected” as unknown. Inspe
 7. Never expose credentials or weaken security controls to make a task pass.
 8. For agent-guided bootstrap maintenance, read `docs/AGENT_GUIDED.md`; agents may preview but must hand apply to a human terminal.
 9. For versions, releases, or tags, read `docs/RELEASING.md` and use the `semantic-versioning` skill.
+10. Follow the skill workflow in `docs/DEVELOPMENT_PROCESS.md`: `research` before code for new features, `implement` for one ticket, `security-check` and `quality-review` before merge, `commit` for commits. Deploy only through `deploy-dev` and `deploy-prd`, and only when asked.
+11. Install skills, agents, hooks, and settings for this project inside this repository only, never in user-level or global agent directories.
 
 ## Progressive Disclosure
 
@@ -33,7 +35,7 @@ Do not load all project documentation preemptively.
 | T0 | This file | Always |
 | T1 | `docs/README.md`, `docs/DEVELOPMENT_PROCESS.md`, `docs/TASK_BREAKDOWN.md`, and the current task file | Starting implementation work |
 | T2 | `docs/ARCHITECTURE.md`, `docs/adr/README.md`, and `docs/SECURITY_AUDIT.md` | The task changes architecture, is security-sensitive, or asks why the system works a certain way |
-| T3 | Matching Proposed or Accepted ADRs, or `docs/RELEASING.md` | Their scope, tags, components, decision, or a release is relevant |
+| T3 | Matching Proposed or Accepted ADRs, `docs/RELEASING.md`, or `docs/DEPLOYMENT.md` | Their scope, tags, components, decision, a release, or a deployment is relevant |
 | T4 | Rejected, Deprecated, or Superseded ADRs and historical specifications | Auditing history or resolving conflicting guidance |
 
 For architectural work, read `docs/adr/README.md` first. Load only matching ADRs. Do not read every ADR unless performing an explicit architecture audit.
