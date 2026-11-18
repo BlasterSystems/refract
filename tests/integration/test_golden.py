@@ -6,7 +6,7 @@ from pathlib import Path
 
 import json
 
-from refract.model import BootstrapRequest, FeatureSelection, ProjectFacts
+from refract.model import SUPPORTED_PLATFORMS, BootstrapRequest, FeatureSelection, ProjectFacts
 from refract.renderer import render_project
 from tests.helpers import request
 
@@ -50,15 +50,32 @@ class GoldenTreeTests(unittest.TestCase):
         self.assertEqual(set(desired), actual_paths)
         for path, generated in desired.items():
             self.assertEqual(generated.content, (example / path).read_bytes(), path)
+            actual_executable = bool((example / path).stat().st_mode & 0o100)
+            self.assertEqual(actual_executable, generated.executable, path)
 
     def test_all_platform_tree_matches_golden(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             files = render_project(
-                request(Path(directory), mcp=True, agents=True, github=True, hooks=True)
+                request(
+                    Path(directory),
+                    list(SUPPORTED_PLATFORMS),
+                    mcp=True,
+                    agents=True,
+                    github=True,
+                    hooks=True,
+                )
             )
             actual = "\n".join(sorted(files)) + "\n"
             expected = (ROOT / "tests/golden/all-platforms/tree.txt").read_text(encoding="utf-8")
             self.assertEqual(expected, actual)
+            expected_executable = {
+                ".githooks/pre-commit",
+                ".refract/bin/docs-check",
+                ".refract/bin/validate",
+                "setup-hooks.sh",
+            }
+            for path, generated in files.items():
+                self.assertEqual(generated.executable, path in expected_executable, path)
             output_doc = (ROOT / "docs/GENERATED_OUTPUT.md").read_text(encoding="utf-8")
             documented = output_doc.split("```text\n", 1)[1].split("```", 1)[0]
             self.assertEqual(expected, documented)
