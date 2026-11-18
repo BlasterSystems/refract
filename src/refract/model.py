@@ -6,6 +6,10 @@ from typing import Any
 
 SUPPORTED_PLATFORMS = ("claude", "codex", "pi", "opencode", "omp")
 
+# Portable skills rendered to .agents/skills and mirrored where a platform
+# does not read that directory natively.
+CORE_SKILLS = ("refract", "architecture-decision", "docs-check", "semantic-versioning")
+
 
 @dataclass(frozen=True)
 class DetectedValue:
@@ -68,6 +72,7 @@ class FeatureSelection:
     github: bool = False
     scheduled_audit: bool = False
     hooks: bool = False
+    permissions: bool = False
 
     def validate(self) -> list[str]:
         unknown = sorted(set(self.platforms) - set(SUPPORTED_PLATFORMS))

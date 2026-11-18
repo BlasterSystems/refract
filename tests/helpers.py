@@ -14,6 +14,7 @@ def request(
     github: bool = False,
     scheduled_audit: bool = False,
     hooks: bool = False,
+    permissions: bool = False,
     ticket_prefix: str | None = None,
 ) -> BootstrapRequest:
     return BootstrapRequest(
@@ -30,11 +31,12 @@ def request(
             components=["python", "node"],
         ),
         features=FeatureSelection(
-            platforms=platforms or ["claude", "codex", "pi", "opencode"],
+            platforms=platforms or ["claude", "codex", "opencode", "omp"],
             mcp=mcp,
             agents=agents,
             github=github or scheduled_audit,
             scheduled_audit=scheduled_audit,
             hooks=hooks,
+            permissions=permissions,
         ),
     )

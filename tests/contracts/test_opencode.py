@@ -24,7 +24,18 @@ class OpenCodeContractTests(unittest.TestCase):
             self.assertEqual("ask", config["permission"]["edit"])
             self.assertEqual("ask", config["permission"]["bash"])
             self.assertNotIn("model", config)
-            self.assertIn(".opencode/commands/adr-new.md", files)
+            self.assertNotIn("read", config["permission"], ".env read deny is part of opt-in permissions")
+            restricted = json.loads(render_project(request(root, ["opencode"], permissions=True))["opencode.json"].content)
+            self.assertEqual("deny", restricted["permission"]["read"]["*.env"])
+            for skill in ("refract", "architecture-decision", "docs-check", "semantic-versioning"):
+                command = files[f".opencode/commands/{skill}.md"].content.decode()
+                self.assertTrue(command.startswith("---\ndescription: "), command)
+                self.assertIn(f"`{skill}` skill", command)
+                self.assertEqual(skill in {"refract", "docs-check"}, "\nagent: plan\n" in command, skill)
+            self.assertNotIn(".opencode/plugins/refract-check.js", files)
+            hooked = render_project(request(root, ["opencode"], hooks=True))
+            self.assertIn(".opencode/plugins/refract-check.js", hooked)
+            self.assertIn(".refract/bin/agent-check", hooked)
             self.assertIn(".opencode/agents/architecture-reviewer.md", files)
             self.assertIn(".agents/skills/refract/SKILL.md", files)
             self.assertIn(".agents/skills/architecture-decision/SKILL.md", files)
@@ -85,7 +96,7 @@ class OpenCodeContractTests(unittest.TestCase):
             # list project agents; the agents/commands/skills surface is
             # verified on the filesystem instead.
             self.assertTrue((root / ".opencode/agents/architecture-reviewer.md").is_file())
-            self.assertTrue((root / ".opencode/commands/adr-new.md").is_file())
+            self.assertTrue((root / ".opencode/commands/architecture-decision.md").is_file())
             self.assertTrue((root / ".opencode/commands/docs-check.md").is_file())
             skills = {
                 path.parent.name for path in (root / ".agents/skills").glob("*/SKILL.md")

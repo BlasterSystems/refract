@@ -28,7 +28,7 @@ _PROJECT_KEYS = {
     "run_command",
     "ticket_prefix",
 }
-_FEATURE_KEYS = {"platforms", "mcp", "agents", "github", "scheduled_audit", "hooks"}
+_FEATURE_KEYS = {"platforms", "mcp", "agents", "github", "scheduled_audit", "hooks", "permissions"}
 _FORBIDDEN_FIELD_NAMES = {
     "path",
     "paths",
@@ -222,6 +222,7 @@ def request_payload(request: BootstrapRequest) -> dict[str, Any]:
             "github": request.features.github,
             "scheduled_audit": request.features.scheduled_audit,
             "hooks": request.features.hooks,
+            "permissions": request.features.permissions,
         },
     }
 

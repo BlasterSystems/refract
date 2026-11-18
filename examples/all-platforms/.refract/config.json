@@ -26,28 +26,39 @@
       "agents": true,
       "github": true,
       "scheduled_audit": false,
-      "hooks": true
+      "hooks": true,
+      "permissions": true
     },
     "effective_by_platform": {
       "claude": {
+        "permissions": true,
+        "agents": true,
         "mcp": true,
-        "agents": true
+        "hooks": true
       },
       "codex": {
+        "permissions": true,
+        "agents": true,
         "mcp": true,
-        "agents": true
+        "hooks": true
       },
       "pi": {
+        "permissions": false,
+        "agents": false,
         "mcp": false,
-        "agents": false
+        "hooks": false
       },
       "opencode": {
+        "permissions": true,
+        "agents": true,
         "mcp": true,
-        "agents": true
+        "hooks": true
       },
       "omp": {
-        "mcp": false,
-        "agents": false
+        "permissions": true,
+        "agents": true,
+        "mcp": true,
+        "hooks": true
       }
     }
   }

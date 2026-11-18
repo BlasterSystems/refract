@@ -1,6 +1,6 @@
 # Refract
 
-Bootstrap greenfield or existing projects with provider-neutral instructions for Claude Code, Codex, Pi, OpenCode, and OhMyPi (omp). Integrations and privileged behavior remain opt-in.
+Bootstrap greenfield or existing projects with provider-neutral instructions and native capability parity for Claude Code, Codex, OpenCode, and OhMyPi (omp). Pi remains selectable but is deprecated. Integrations and privileged behavior remain opt-in.
 
 ## How it works
 
@@ -103,13 +103,15 @@ must never modify project files, stage, commit, or apply anything — the human 
 
 ## Supported harnesses
 
-First-class adapters generate native artifacts for:
+First-class adapters render each capability (permissions, skill invocation, subagents, MCP, deterministic agent hooks) in the platform's native format (ADR-0010):
 
-- Claude Code (`CLAUDE.md`, `.claude/`, `.mcp.json`)
-- OpenAI Codex (`AGENTS.md`, `.codex/config.toml`, `.codex/agents/`)
-- Pi Coding Agent (`AGENTS.md`, `.agents/skills`)
-- OpenCode (`AGENTS.md`, `.agents/skills`, `opencode.json`, `.opencode/`)
-- OhMyPi (omp) — portable core natively plus a sticky `.omp/RULES.md` invariant file (omp discovers `AGENTS.md` and `.agents/skills` by default, reads root `mcp.json` / `.mcp.json` as an MCP fallback, and also loads `CLAUDE.md`)
+- Claude Code (`CLAUDE.md`, `.claude/settings.json`, `.claude/skills`, `.claude/agents/`, `.mcp.json`)
+- OpenAI Codex (`AGENTS.md`, `.agents/skills`, `.codex/config.toml`, `.codex/hooks.json`, `.codex/agents/`)
+- OpenCode (`AGENTS.md`, `.agents/skills`, `opencode.json`, `.opencode/commands|agents|plugins`)
+- OhMyPi (omp) (`AGENTS.md`, `.agents/skills`, `.omp/settings.json`, `.omp/RULES.md`, `.omp/agents/`, `.omp/mcp.json`, `.omp/hooks/`)
+- Pi Coding Agent: deprecated; portable core only (`AGENTS.md`, `.agents/skills`)
+
+Restrictive permission policies are opt-in (`--permissions`). refract writes only inside the target project and refuses home directories or folders that group several repositories (`--allow-unscoped-target` overrides).
 
 See the [platform support matrix](docs/PLATFORM_SUPPORT.md) for verified versions and support levels.
 
@@ -126,11 +128,11 @@ python3 -m pip install -e .
 # Preview an all-platform project without writing files
 refract init --platform all --dry-run --yes --target /path/to/project
 
-# Initialize a minimal Pi-compatible project
-refract init --platform pi --yes --target /path/to/project
+# Initialize a minimal omp project
+refract init --platform omp --yes --target /path/to/project
 
 # Add the portable core and selected adapters to an existing project
-refract retrofit --platform claude,codex,pi,opencode \
+refract retrofit --platform claude,codex,opencode,omp \
   --dry-run --yes --target /path/to/project
 
 # Inspect bounded evidence without changing the project

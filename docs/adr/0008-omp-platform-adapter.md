@@ -1,12 +1,12 @@
 # ADR-0008: OMP platform adapter
 
-- **Status:** Proposed
+- **Status:** Superseded
 - **Date:** 2026-11-09
 - **Decision owners:** Not assigned
 - **Scope:** Generator architecture and platform support
 - **Tags:** platforms, omp, adapters, portability
 - **Supersedes:** None
-- **Superseded by:** None
+- **Superseded by:** ADR-0010
 
 ## Context
 

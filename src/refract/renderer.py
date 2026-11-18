@@ -6,7 +6,8 @@ from pathlib import Path
 from . import __version__
 from .adapters import ADAPTERS
 from .adapters.base import AdapterContext
-from .model import BootstrapRequest, GeneratedFile
+from .capabilities import effective_features, platform_rows, platform_table_header
+from .model import CORE_SKILLS, BootstrapRequest, GeneratedFile
 from .templating import TemplateEngine
 
 
@@ -86,7 +87,7 @@ def render_project(request: BootstrapRequest, template_root: Path | None = None)
             mutable=mutable,
         )
 
-    for skill in ("refract", "architecture-decision", "docs-check", "semantic-versioning"):
+    for skill in CORE_SKILLS:
         target = f".agents/skills/{skill}/SKILL.md"
         files[target] = GeneratedFile.text(
             target, templates.render(f"core/skills/{skill}/SKILL.md", values)
@@ -121,12 +122,10 @@ def render_project(request: BootstrapRequest, template_root: Path | None = None)
                 "github": request.features.github,
                 "scheduled_audit": request.features.scheduled_audit,
                 "hooks": request.features.hooks,
+                "permissions": request.features.permissions,
             },
             "effective_by_platform": {
-                platform: {
-                    "mcp": request.features.mcp and platform in {"claude", "codex", "opencode"},
-                    "agents": request.features.agents and platform in {"claude", "codex", "opencode"},
-                }
+                platform: effective_features(platform, request.features)
                 for platform in request.features.normalized_platforms()
             },
         },
@@ -136,7 +135,7 @@ def render_project(request: BootstrapRequest, template_root: Path | None = None)
     )
 
     support_values = dict(values)
-    support_values["PLATFORM_ROWS"] = _platform_rows(request)
+    support_values["PLATFORM_TABLE"] = platform_table_header() + "\n" + platform_rows(request.features)
     files["docs/PLATFORM_SUPPORT.md"] = GeneratedFile.text(
         "docs/PLATFORM_SUPPORT.md",
         templates.render("core/docs/PLATFORM_SUPPORT.md", support_values),
@@ -148,6 +147,16 @@ def render_project(request: BootstrapRequest, template_root: Path | None = None)
             if path in files and files[path].content != generated.content:
                 raise ValueError(f"platform adapters produced conflicting output for {path}")
             files[path] = generated
+
+    if request.features.hooks and any(
+        effective_features(platform, request.features)["hooks"]
+        for platform in request.features.normalized_platforms()
+    ):
+        files[".refract/bin/agent-check"] = GeneratedFile.text(
+            ".refract/bin/agent-check",
+            templates.render("core/bin/agent-check.py", values),
+            executable=True,
+        )
 
     if request.features.hooks:
         files[".githooks/pre-commit"] = GeneratedFile.text(
@@ -169,22 +178,3 @@ def render_project(request: BootstrapRequest, template_root: Path | None = None)
 
     return dict(sorted(files.items()))
 
-
-def _platform_rows(request: BootstrapRequest) -> str:
-    enabled = set(request.features.normalized_platforms())
-    rows = [
-        ("Claude Code", "claude", "CLAUDE.md; .claude/skills; optional .mcp.json", "Native"),
-        ("OpenAI Codex", "codex", "AGENTS.md; .agents/skills; optional .codex/config.toml", "Native"),
-        ("Pi Coding Agent", "pi", "AGENTS.md and .agents/skills", "Native core; MCP/subagents require extensions"),
-        ("OpenCode", "opencode", "AGENTS.md; .agents/skills; opencode.json", "Native"),
-        (
-            "OhMyPi (omp)",
-            "omp",
-            "AGENTS.md and .agents/skills",
-            "Native core; root mcp.json/.mcp.json MCP fallback; sticky .omp/RULES.md invariants",
-        ),
-    ]
-    return "\n".join(
-        f"| {label} | {'Enabled' if key in enabled else 'Not selected'} | {artifacts} | {support} |"
-        for label, key, artifacts, support in rows
-    )

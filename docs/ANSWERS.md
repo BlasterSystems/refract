@@ -15,17 +15,31 @@ Use `--answers FILE` to provide confirmed project facts and feature choices with
     "ticket_prefix": null
   },
   "features": {
-    "platforms": ["claude", "codex", "pi", "opencode", "omp"],
+    "platforms": ["claude", "codex", "opencode", "omp"],
     "mcp": false,
     "agents": false,
     "github": true,
     "scheduled_audit": false,
-    "hooks": false
+    "hooks": false,
+    "permissions": false
   }
 }
 ```
 
 `features.platforms` may also be the string `"all"` or a comma-separated string such as `"claude,codex"`. Feature values must be JSON booleans, not strings. Project command fields and `ticket_prefix` accept a string or `null`.
+
+### What each feature generates
+
+Each feature is rendered in every selected platform's native format, following the capability matrix in `docs/PLATFORM_SUPPORT.md` (ADR-0010). A feature that a selected platform cannot express produces a warning; it is never dropped silently.
+
+- `mcp`: native MCP configuration per platform (`.mcp.json`, `.codex/config.toml`, `opencode.json`, `.omp/mcp.json`).
+- `agents`: the read-only architecture reviewer as a native subagent per platform.
+- `hooks`: Git hooks plus deterministic agent end-of-turn hooks. Each agent hook runs `.refract/bin/agent-check`, which executes the project validator.
+- `permissions`: restrictive native project policies (`.claude/settings.json`, `.codex/config.toml`, `opencode.json`, `.omp/settings.json`). It is off by default, so existing Claude and Codex settings never conflict during retrofit.
+
+`pi` remains a valid platform but is deprecated.
+
+The target must be a single project root. refract refuses the home directory, the filesystem root, and folders that group several repositories. `--allow-unscoped-target` is a CLI-only override and cannot be set from an answers file.
 
 Preview before applying:
 

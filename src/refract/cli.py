@@ -9,8 +9,10 @@ from typing import Any
 
 from . import __version__
 from .detection import detect_project
+from .capabilities import capability_warnings
 from .facade import PreparedBootstrap, apply_bootstrap, inspect_project, prepare_bootstrap
 from .inspection import DEFAULT_MAX_BYTES, DEFAULT_MAX_FILES
+from .paths import project_scope_problems
 from .model import BootstrapRequest, FeatureSelection, ProjectFacts, SUPPORTED_PLATFORMS
 from .protocol import INTENT_SCHEMA, AgentIntent, ResultArtifact, intent_defaults
 from .validation import validate_target
@@ -41,7 +43,7 @@ def _validate_answers(data: dict[str, Any]) -> None:
         value = project.get(key)
         if value is not None and not isinstance(value, str):
             raise ValueError(f"answers project.{key} must be a string or null")
-    for key in ("mcp", "agents", "github", "scheduled_audit", "hooks"):
+    for key in ("mcp", "agents", "github", "scheduled_audit", "hooks", "permissions"):
         value = features.get(key)
         if value is not None and not isinstance(value, bool):
             raise ValueError(f"answers features.{key} must be a boolean")
@@ -144,6 +146,11 @@ def _request_from_args(args: argparse.Namespace) -> BootstrapRequest:
         ),
         "scheduled_audit": scheduled_audit,
         "hooks": bool(args.hooks or proposed_features.get("hooks", False) or _answer(answers, "features", "hooks", False)),
+        "permissions": bool(
+            args.permissions
+            or proposed_features.get("permissions", False)
+            or _answer(answers, "features", "permissions", False)
+        ),
     }
 
     agent_preview = args.agent_guided and args.dry_run
@@ -165,7 +172,10 @@ def _request_from_args(args: argparse.Namespace) -> BootstrapRequest:
                 "scheduled_audit": _prompt_bool(
                     "Enable scheduled documentation audit", proposed_selection["scheduled_audit"]
                 ),
-                "hooks": _prompt_bool("Enable Git hooks", proposed_selection["hooks"]),
+                "hooks": _prompt_bool("Enable Git and agent hooks", proposed_selection["hooks"]),
+                "permissions": _prompt_bool(
+                    "Enable restrictive project permission policies", proposed_selection["permissions"]
+                ),
             }
             if proposed_selection["scheduled_audit"]:
                 proposed_selection["github"] = True
@@ -261,12 +271,7 @@ def _payload(
 
 
 def _capability_warnings(request: BootstrapRequest) -> list[str]:
-    warnings: list[str] = []
-    if "pi" in request.features.platforms and request.features.mcp:
-        warnings.append("Pi has no built-in MCP; no Pi MCP configuration is generated")
-    if "pi" in request.features.platforms and request.features.agents:
-        warnings.append("Pi has no built-in subagents; no Pi agent configuration is generated")
-    return warnings
+    return capability_warnings(request.features)
 
 
 def _display_agent_review(prepared: PreparedBootstrap, warnings: list[str]) -> None:
@@ -314,6 +319,11 @@ def _validate_agent_arguments(args: argparse.Namespace) -> None:
 
 def _run_generation(args: argparse.Namespace) -> int:
     _validate_agent_arguments(args)
+    scope_problems = project_scope_problems(Path(args.target))
+    if scope_problems and not args.allow_unscoped_target:
+        raise ValueError(
+            "; ".join(scope_problems) + " (override with --allow-unscoped-target)"
+        )
     request = _request_from_args(args)
     json_mode = args.plan_format == "json"
     if json_mode and not (args.yes or args.dry_run or args.agent_guided):
@@ -490,7 +500,21 @@ def _add_generation_arguments(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="add a weekly docs-check schedule; implies --github",
     )
-    parser.add_argument("--hooks", action="store_true", help="generate opt-in Git hook files")
+    parser.add_argument(
+        "--hooks",
+        action="store_true",
+        help="generate opt-in Git hooks and deterministic agent end-of-turn validation hooks",
+    )
+    parser.add_argument(
+        "--permissions",
+        action="store_true",
+        help="generate restrictive native project permission policies (ask before edit/shell, deny .env reads)",
+    )
+    parser.add_argument(
+        "--allow-unscoped-target",
+        action="store_true",
+        help="allow a target that looks like a home directory or a folder of several repositories",
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",

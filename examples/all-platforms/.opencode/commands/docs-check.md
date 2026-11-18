@@ -1,6 +1,8 @@
 ---
-description: Check documentation and ADR coverage for current changes
+description: "Check whether code, configuration, architecture, or integration changes need corresponding documentation or ADR updates."
 agent: plan
 ---
 
-Use the `docs-check` skill and run `.refract/bin/docs-check`. Review the report against the current change. For architecture findings, read the ADR index before loading relevant decisions. Summarize confirmed gaps and uncertainty.
+Load and follow the `docs-check` skill for this request.
+
+$ARGUMENTS
