@@ -7,6 +7,7 @@ All notable changes to this project are documented here. The format follows [Kee
 ### Changed
 
 - License switched from MIT to Apache-2.0.
+- Project renamed to AgentPrism: distribution and CLI are `agentprism`, the Python package is `agentprism`, generated-project metadata lives in `.agentprism/`, and protocol schema strings use the `agentprism-` prefix.
 
 ## [0.2.0] - 2026-11-09
 

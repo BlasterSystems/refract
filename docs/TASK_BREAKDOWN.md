@@ -1,6 +1,6 @@
 # Task Breakdown and Tickets
 
-This repository documents optional integrations with two MIT-licensed planning skills, decided in ADR-0007. Scaffolded projects receive a project-level copy of this document rendered from `src/agentic_bootstrap/templates/core/docs/TASK_BREAKDOWN.md`; this copy applies to this repository itself.
+This repository documents optional integrations with two MIT-licensed planning skills, decided in ADR-0007. Scaffolded projects receive a project-level copy of this document rendered from `src/agentprism/templates/core/docs/TASK_BREAKDOWN.md`; this copy applies to this repository itself.
 
 - [planning-and-task-breakdown](https://github.com/addyosmani/agent-skills) — turns a spec or clear requirements into a dependency graph, vertical slices, and ordered tasks with acceptance criteria, verification steps, and checkpoints.
 - [create-tickets](https://github.com/emiliosheinz/agent-skills) — turns a specification or product document into a prioritized, dependency-aware list of high-level tickets for Linear, GitHub Issues, or Jira.
@@ -14,7 +14,7 @@ npx skills add addyosmani/agent-skills --skill planning-and-task-breakdown
 npx skills add https://github.com/emiliosheinz/agent-skills --skill create-tickets
 ```
 
-- The installed skills are unmanaged project content: never add them to `.agentic/` ownership or commit them.
+- The installed skills are unmanaged project content: never add them to `.agentprism/` ownership or commit them.
 - A per-skill install of `planning-and-task-breakdown` omits the upstream repository's shared `references/` directory; the skill works standalone, but its definition-of-done reference is unavailable (upstream issue #361).
 - Both skills are agent-neutral markdown; no platform-specific configuration is required.
 

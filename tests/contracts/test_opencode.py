@@ -8,9 +8,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from agentic_bootstrap.apply import apply_plan
-from agentic_bootstrap.planner import build_plan
-from agentic_bootstrap.renderer import render_project
+from agentprism.apply import apply_plan
+from agentprism.planner import build_plan
+from agentprism.renderer import render_project
 from tests.helpers import request
 
 
@@ -26,7 +26,7 @@ class OpenCodeContractTests(unittest.TestCase):
             self.assertNotIn("model", config)
             self.assertIn(".opencode/commands/adr-new.md", files)
             self.assertIn(".opencode/agents/architecture-reviewer.md", files)
-            self.assertIn(".agents/skills/agentic-bootstrap/SKILL.md", files)
+            self.assertIn(".agents/skills/agentprism/SKILL.md", files)
             self.assertIn(".agents/skills/architecture-decision/SKILL.md", files)
             self.assertIn(".agents/skills/semantic-versioning/SKILL.md", files)
 
@@ -70,7 +70,7 @@ class OpenCodeContractTests(unittest.TestCase):
                 path.parent.name for path in (root / ".agents/skills").glob("*/SKILL.md")
             }
             self.assertEqual(
-                {"agentic-bootstrap", "architecture-decision", "docs-check", "semantic-versioning"},
+                {"agentprism", "architecture-decision", "docs-check", "semantic-versioning"},
                 skills,
             )
 

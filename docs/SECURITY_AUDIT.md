@@ -1,6 +1,6 @@
 # Security Audit
 
-This repository documents an optional integration with the [security-audit skill](https://github.com/cloudflare/security-audit-skill), decided in ADR-0006. Scaffolded projects receive a project-level copy of this document rendered from `src/agentic_bootstrap/templates/core/docs/SECURITY_AUDIT.md`; this copy applies to this repository itself.
+This repository documents an optional integration with the [security-audit skill](https://github.com/cloudflare/security-audit-skill), decided in ADR-0006. Scaffolded projects receive a project-level copy of this document rendered from `src/agentprism/templates/core/docs/SECURITY_AUDIT.md`; this copy applies to this repository itself.
 
 The skill runs a six-phase vulnerability audit workflow: reconnaissance, coverage-led hunting, candidate validation, structured findings, independent verification, and a target-neutral report. It has two modes:
 
@@ -17,7 +17,7 @@ npx skills add https://github.com/cloudflare/security-audit-skill --skill securi
 
 - Requires Node.js (the skill ships zero-dependency validators) and an agent that supports parallel sub-agents.
 - If the skills CLI does not support the active platform, copy `skills/security-audit/` from the repository into that platform's project skill directory.
-- The installed skill is unmanaged project content: never add it to `.agentic/` ownership or commit it.
+- The installed skill is unmanaged project content: never add it to `.agentprism/` ownership or commit it.
 
 ## When to run
 

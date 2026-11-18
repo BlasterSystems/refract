@@ -1,19 +1,19 @@
-# Agentic Bootstrap MVP Specification
+# AgentPrism MVP Specification
 
 ## Scope
 
-Agentic Bootstrap produces a portable project core and optional native adapters for Claude Code, OpenAI Codex, Pi Coding Agent, and OpenCode. The MVP supports greenfield initialization, retrofit, dry-run planning, and deterministic validation.
+AgentPrism produces a portable project core and optional native adapters for Claude Code, OpenAI Codex, Pi Coding Agent, and OpenCode. The MVP supports greenfield initialization, retrofit, dry-run planning, and deterministic validation.
 
 ## Required core
 
 Every generated project contains:
 
 - `AGENTS.md`
-- `.agentic/config.json`
-- `.agentic/manifest.json` after apply
-- `.agentic/bin/validate`
-- `.agentic/bin/docs-check`
-- `.agents/skills/agentic-bootstrap/SKILL.md`
+- `.agentprism/config.json`
+- `.agentprism/manifest.json` after apply
+- `.agentprism/bin/validate`
+- `.agentprism/bin/docs-check`
+- `.agents/skills/agentprism/SKILL.md`
 - `.agents/skills/architecture-decision/SKILL.md`
 - `.agents/skills/docs-check/SKILL.md`
 - `docs/ARCHITECTURE.md`

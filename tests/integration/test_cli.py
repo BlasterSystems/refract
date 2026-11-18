@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = ROOT / "scripts/agentic-bootstrap.sh"
+SCRIPT = ROOT / "scripts/agentprism.sh"
 
 
 def run_cli(*args: str, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
@@ -56,7 +56,7 @@ class CliIntegrationTests(unittest.TestCase):
             validation = run_cli("validate", "--target", str(target))
             self.assertEqual(0, validation.returncode, validation.stdout)
             standalone = subprocess.run(
-                [str(target / ".agentic/bin/validate")],
+                [str(target / ".agentprism/bin/validate")],
                 cwd=target,
                 text=True,
                 stdout=subprocess.PIPE,
@@ -86,7 +86,7 @@ class CliIntegrationTests(unittest.TestCase):
             result = run_cli("inspect", "--target", str(target))
             self.assertEqual(0, result.returncode, result.stdout)
             payload = json.loads(result.stdout)
-            self.assertEqual("agentic-bootstrap-inspection/v1", payload["schema"])
+            self.assertEqual("agentprism-inspection/v1", payload["schema"])
             self.assertEqual("missing", payload["root_state"])
             self.assertFalse(target.exists())
 
@@ -97,7 +97,7 @@ class CliIntegrationTests(unittest.TestCase):
             intent.write_text(
                 json.dumps(
                     {
-                        "schema": "agentic-bootstrap-intent/v1",
+                        "schema": "agentprism-intent/v1",
                         "project": {"name": "guided-project", "test_command": "python -m unittest"},
                         "features": {"platforms": ["pi"], "mcp": False},
                     }
@@ -110,7 +110,7 @@ class CliIntegrationTests(unittest.TestCase):
             )
             self.assertEqual(0, result.returncode, result.stdout)
             payload = json.loads(result.stdout)
-            self.assertEqual("agentic-bootstrap-plan/v1", payload["schema"])
+            self.assertEqual("agentprism-plan/v1", payload["schema"])
             self.assertEqual(64, len(payload["plan_id"]))
             self.assertEqual("integrity-only-not-identity-or-authorization", payload["plan_id_semantics"])
             self.assertTrue(payload["human_handoff_required"])
@@ -128,7 +128,7 @@ class CliIntegrationTests(unittest.TestCase):
             intent.write_text(
                 json.dumps(
                     {
-                        "schema": "agentic-bootstrap-intent/v1",
+                        "schema": "agentprism-intent/v1",
                         "project": {"name": "guided-project", "run_command": None},
                         "features": {"platforms": ["pi"]},
                     }
@@ -174,7 +174,7 @@ class CliIntegrationTests(unittest.TestCase):
             intent.write_text(
                 json.dumps(
                     {
-                        "schema": "agentic-bootstrap-intent/v1",
+                        "schema": "agentprism-intent/v1",
                         "project": {"name": "guided", "content": "arbitrary"},
                         "features": {},
                     }
@@ -221,7 +221,7 @@ class CliIntegrationTests(unittest.TestCase):
             result = run_cli("init", "--platform", "pi", "--yes", "--target", str(target))
             self.assertEqual(1, result.returncode, result.stdout)
             self.assertFalse((target / "AGENTS.md").exists())
-            self.assertFalse((target / ".agentic/manifest.json").exists())
+            self.assertFalse((target / ".agentprism/manifest.json").exists())
             self.assertTrue((target / "docs/adr/bad-name.md").is_file())
 
     def test_strict_docs_check_fails_when_diff_evidence_is_unavailable(self) -> None:
@@ -230,7 +230,7 @@ class CliIntegrationTests(unittest.TestCase):
             result = run_cli("init", "--platform", "pi", "--yes", "--target", str(target))
             self.assertEqual(0, result.returncode, result.stdout)
             check = subprocess.run(
-                [str(target / ".agentic/bin/docs-check"), "--strict"], cwd=target,
+                [str(target / ".agentprism/bin/docs-check"), "--strict"], cwd=target,
                 text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 timeout=30, check=False,
             )

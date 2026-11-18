@@ -5,10 +5,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from agentic_bootstrap.apply import apply_plan
-from agentic_bootstrap.planner import build_plan
-from agentic_bootstrap.renderer import render_project
-from agentic_bootstrap.validation import validate_target
+from agentprism.apply import apply_plan
+from agentprism.planner import build_plan
+from agentprism.renderer import render_project
+from agentprism.validation import validate_target
 from tests.helpers import request
 
 
@@ -75,7 +75,7 @@ class ValidationTests(unittest.TestCase):
             )
             self.assertEqual([], validate_target(root))
             standalone = subprocess.run(
-                [str(root / ".agentic/bin/validate")], cwd=root,
+                [str(root / ".agentprism/bin/validate")], cwd=root,
                 text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 timeout=30, check=False,
             )
@@ -97,13 +97,13 @@ class ValidationTests(unittest.TestCase):
 
             self.assertEqual([], validate_target(root))
             standalone = subprocess.run(
-                [str(root / ".agentic/bin/validate")], cwd=root,
+                [str(root / ".agentprism/bin/validate")], cwd=root,
                 text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 timeout=30, check=False,
             )
             self.assertEqual(0, standalone.returncode, standalone.stdout)
 
-            (root / ".agentic/manifest.json").unlink()
+            (root / ".agentprism/manifest.json").unlink()
             self.assertEqual([], validate_target(root))
 
             nested_runtime = root / "src/.pi-subagents"
@@ -146,7 +146,7 @@ class ValidationTests(unittest.TestCase):
             self.assertTrue(any("references missing ADR-9999" in error for error in errors))
 
             standalone = subprocess.run(
-                [str(root / ".agentic/bin/validate")], cwd=root,
+                [str(root / ".agentprism/bin/validate")], cwd=root,
                 text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 timeout=30, check=False,
             )
@@ -162,7 +162,7 @@ class ValidationTests(unittest.TestCase):
             apply_plan(build_plan(root, render_project(req)), req.features.normalized_platforms())
             (root / ".codex/agents/architecture-reviewer.toml").write_text("invalid = [\n", encoding="utf-8")
             result = subprocess.run(
-                [str(root / ".agentic/bin/validate")], cwd=root,
+                [str(root / ".agentprism/bin/validate")], cwd=root,
                 text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 timeout=30, check=False,
             )
@@ -203,13 +203,13 @@ class ValidationTests(unittest.TestCase):
             root = Path(directory)
             req = request(root, ["pi"])
             apply_plan(build_plan(root, render_project(req)), req.features.normalized_platforms())
-            skill = root / ".agents/skills/agentic-bootstrap/SKILL.md"
+            skill = root / ".agents/skills/agentprism/SKILL.md"
             skill.write_text("---\nname: wrong\n---\nUse .claude/settings\n", encoding="utf-8")
             errors = validate_target(root)
             self.assertTrue(any("platform-specific token" in error for error in errors), errors)
             self.assertTrue(any("front matter name" in error for error in errors), errors)
             standalone = subprocess.run(
-                [str(root / ".agentic/bin/validate")], cwd=root,
+                [str(root / ".agentprism/bin/validate")], cwd=root,
                 text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 timeout=30, check=False,
             )

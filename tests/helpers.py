@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agentic_bootstrap.model import BootstrapRequest, FeatureSelection, ProjectFacts
+from agentprism.model import BootstrapRequest, FeatureSelection, ProjectFacts
 
 
 def request(

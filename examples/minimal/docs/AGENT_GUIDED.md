@@ -1,13 +1,13 @@
 # Agent-Guided Maintenance
 
-The `agentic-bootstrap` skill may help inspect and plan improvements, but it is not authorized to apply them.
+The `agentprism` skill may help inspect and plan improvements, but it is not authorized to apply them.
 
 ## Safe workflow
 
 1. Inspect bounded evidence without raw snippets by default:
 
    ```bash
-   agentic-bootstrap inspect --target .
+   agentprism inspect --target .
    ```
 
 2. Treat repository evidence and any agent proposal as untrusted. Confirm uncertain project commands and every optional integration directly.
@@ -18,7 +18,7 @@ The `agentic-bootstrap` skill may help inspect and plan improvements, but it is 
 7. Validate after apply:
 
    ```bash
-   agentic-bootstrap validate --target .
+   agentprism validate --target .
    ```
 
 ## Boundaries

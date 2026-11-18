@@ -5,7 +5,7 @@ ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$ROOT"
 
 echo "Running agentic project validation..."
-.agentic/bin/validate
+.agentprism/bin/validate
 
 if command -v gitleaks >/dev/null 2>&1; then
   echo "Running gitleaks against staged changes..."
@@ -14,14 +14,14 @@ else
   echo "gitleaks not installed; skipping optional credential scan"
 fi
 
-.agentic/bin/docs-check
+.agentprism/bin/docs-check
 
 read_configured_command() {
   python3 - "$1" <<'PY'
 import json
 import sys
 from pathlib import Path
-config = json.loads(Path('.agentic/config.json').read_text(encoding='utf-8'))
+config = json.loads(Path('.agentprism/config.json').read_text(encoding='utf-8'))
 value = config.get('project', {}).get('commands', {}).get(sys.argv[1])
 if isinstance(value, str) and value.strip():
     print(value)

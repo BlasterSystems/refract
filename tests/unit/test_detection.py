@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from agentic_bootstrap.detection import detect_project
+from agentprism.detection import detect_project
 
 
 class DetectionTests(unittest.TestCase):
