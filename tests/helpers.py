@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agentprism.model import BootstrapRequest, FeatureSelection, ProjectFacts
+from refract.model import BootstrapRequest, FeatureSelection, ProjectFacts
 
 
 def request(

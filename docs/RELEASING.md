@@ -1,10 +1,10 @@
-# Releasing AgentPrism
+# Releasing Refract
 
 Use the `semantic-versioning` skill for every version bump, release commit, and Git tag.
 
 ## Version policy
 
-AgentPrism follows [Semantic Versioning 2.0.0](https://semver.org/). Tags are annotated and use `vMAJOR.MINOR.PATCH`.
+Refract follows [Semantic Versioning 2.0.0](https://semver.org/). Tags are annotated and use `vMAJOR.MINOR.PATCH`.
 
 Before `1.0.0`:
 
@@ -19,9 +19,9 @@ After `1.0.0`, incompatible public behavior requires a major release.
 These two files must contain the same version:
 
 - `pyproject.toml`
-- `src/agentprism/__init__.py`
+- `src/refract/__init__.py`
 
-`src/agentprism/manifest.py`, generated configurations, example manifests, CLI output, and platform documents derive their version from the package source. Refresh them; do not edit their version strings individually.
+`src/refract/manifest.py`, generated configurations, example manifests, CLI output, and platform documents derive their version from the package source. Refresh them; do not edit their version strings individually.
 
 ## Prepare a release
 
@@ -39,11 +39,11 @@ These two files must contain the same version:
 7. Refresh checked-in examples:
 
    ```bash
-   scripts/agentprism.sh init --platform pi --yes --remove-obsolete \
+   scripts/refract.sh init --platform pi --yes --remove-obsolete \
      --target examples/minimal --name minimal-example \
      --description "Portable core example"
 
-   scripts/agentprism.sh init --platform all --yes --remove-obsolete \
+   scripts/refract.sh init --platform all --yes --remove-obsolete \
      --target examples/all-platforms --name all-platforms-example \
      --description "All adapters and optional integrations" \
      --mcp --agents --github --hooks
@@ -54,9 +54,9 @@ These two files must contain the same version:
    ```bash
    PYTHONPATH=src python3 scripts/sync-version.py --check
    PYTHONPATH=src python3 -m unittest discover -s tests -v
-   PYTHONPATH=src python3 -m agentprism validate --target .
-   .agentprism/bin/validate
-   python3 -m pip wheel --no-deps --no-build-isolation -w /tmp/agentprism-wheel .
+   PYTHONPATH=src python3 -m refract validate --target .
+   .refract/bin/validate
+   python3 -m pip wheel --no-deps --no-build-isolation -w /tmp/refract-wheel .
    ```
 
 9. Review the complete diff and obtain explicit confirmation before creating Git objects.

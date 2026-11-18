@@ -17,7 +17,7 @@ npx skills add https://github.com/cloudflare/security-audit-skill --skill securi
 
 - Requires Node.js (the skill ships zero-dependency validators) and an agent that supports parallel sub-agents.
 - If the skills CLI does not support the active platform, copy `skills/security-audit/` from the repository into that platform's project skill directory.
-- The installed skill is unmanaged project content: never add it to `.agentprism/` ownership or commit it.
+- The installed skill is unmanaged project content: never add it to `.refract/` ownership or commit it.
 
 ## When to run
 

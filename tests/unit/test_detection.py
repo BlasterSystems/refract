@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from agentprism.detection import detect_project
+from refract.detection import detect_project
 
 
 class DetectionTests(unittest.TestCase):

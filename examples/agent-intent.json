@@ -1,5 +1,5 @@
 {
-  "schema": "agentprism-intent/v1",
+  "schema": "refract-intent/v1",
   "project": {
     "name": "example-service",
     "description": "Processes example requests",

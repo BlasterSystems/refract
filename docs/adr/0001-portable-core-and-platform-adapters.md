@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-30
-- **Decision owners:** AgentPrism maintainers
+- **Decision owners:** Refract maintainers
 - **Scope:** Generator architecture
 - **Tags:** portability, adapters, instructions
 - **Supersedes:** None

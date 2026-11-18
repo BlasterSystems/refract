@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-31
-- **Decision owners:** AgentPrism maintainers
+- **Decision owners:** Refract maintainers
 - **Scope:** Generator interface and trust boundary
 - **Tags:** agents, llm, safety, portability, retrofit
 - **Supersedes:** None
@@ -10,7 +10,7 @@
 
 ## Context
 
-AgentPrism currently exposes deterministic `init`, `retrofit`, and `validate` CLI workflows. Detection produces typed project facts, canonical templates and adapters render desired files, the planner classifies ownership-aware operations, and staged apply provides stale-plan checks, rollback, validation, and a manifest.
+Refract currently exposes deterministic `init`, `retrofit`, and `validate` CLI workflows. Detection produces typed project facts, canonical templates and adapters render desired files, the planner classifies ownership-aware operations, and staged apply provides stale-plan checks, rollback, validation, and a manifest.
 
 This model is safe and repeatable, but it has limited judgment when a destination contains partial agent configuration, unfamiliar project conventions, or ambiguous commands. A language model can inspect broader context, identify uncertainty, ask clarifying questions, and explain manual improvements. It cannot by itself provide the same guarantees for ownership, idempotency, structured serialization, authorization, rollback, or path safety.
 

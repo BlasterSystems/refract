@@ -1,19 +1,19 @@
-# AgentPrism MVP Specification
+# Refract MVP Specification
 
 ## Scope
 
-AgentPrism produces a portable project core and optional native adapters for Claude Code, OpenAI Codex, Pi Coding Agent, and OpenCode. The MVP supports greenfield initialization, retrofit, dry-run planning, and deterministic validation.
+Refract produces a portable project core and optional native adapters for Claude Code, OpenAI Codex, Pi Coding Agent, and OpenCode. The MVP supports greenfield initialization, retrofit, dry-run planning, and deterministic validation.
 
 ## Required core
 
 Every generated project contains:
 
 - `AGENTS.md`
-- `.agentprism/config.json`
-- `.agentprism/manifest.json` after apply
-- `.agentprism/bin/validate`
-- `.agentprism/bin/docs-check`
-- `.agents/skills/agentprism/SKILL.md`
+- `.refract/config.json`
+- `.refract/manifest.json` after apply
+- `.refract/bin/validate`
+- `.refract/bin/docs-check`
+- `.agents/skills/refract/SKILL.md`
 - `.agents/skills/architecture-decision/SKILL.md`
 - `.agents/skills/docs-check/SKILL.md`
 - `docs/ARCHITECTURE.md`

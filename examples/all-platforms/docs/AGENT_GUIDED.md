@@ -1,13 +1,13 @@
 # Agent-Guided Maintenance
 
-The `agentprism` skill may help inspect and plan improvements, but it is not authorized to apply them.
+The `refract` skill may help inspect and plan improvements, but it is not authorized to apply them.
 
 ## Safe workflow
 
 1. Inspect bounded evidence without raw snippets by default:
 
    ```bash
-   agentprism inspect --target .
+   refract inspect --target .
    ```
 
 2. Treat repository evidence and any agent proposal as untrusted. Confirm uncertain project commands and every optional integration directly.
@@ -18,7 +18,7 @@ The `agentprism` skill may help inspect and plan improvements, but it is not aut
 7. Validate after apply:
 
    ```bash
-   agentprism validate --target .
+   refract validate --target .
    ```
 
 ## Boundaries

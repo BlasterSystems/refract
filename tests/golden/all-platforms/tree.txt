@@ -1,14 +1,11 @@
-.agentprism/bin/docs-check
-.agentprism/bin/validate
-.agentprism/config.json
-.agents/skills/agentprism/SKILL.md
 .agents/skills/architecture-decision/SKILL.md
 .agents/skills/docs-check/SKILL.md
+.agents/skills/refract/SKILL.md
 .agents/skills/semantic-versioning/SKILL.md
 .claude/agents/architecture-reviewer.md
-.claude/skills/agentprism/SKILL.md
 .claude/skills/architecture-decision/SKILL.md
 .claude/skills/docs-check/SKILL.md
+.claude/skills/refract/SKILL.md
 .claude/skills/semantic-versioning/SKILL.md
 .codex/agents/architecture-reviewer.toml
 .codex/config.toml
@@ -18,6 +15,9 @@
 .opencode/agents/architecture-reviewer.md
 .opencode/commands/adr-new.md
 .opencode/commands/docs-check.md
+.refract/bin/docs-check
+.refract/bin/validate
+.refract/config.json
 AGENTS.md
 CLAUDE.md
 docs/AGENT_GUIDED.md

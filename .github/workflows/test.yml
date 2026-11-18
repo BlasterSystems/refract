@@ -24,8 +24,8 @@ jobs:
         run: python -m pip install .
       - name: Verify installed CLI and packaged templates
         run: |
-          agentprism --version
-          agentprism init --platform all --dry-run --yes --target "${RUNNER_TEMP}/package-smoke"
+          refract --version
+          refract init --platform all --dry-run --yes --target "${RUNNER_TEMP}/package-smoke"
       - name: Run unit, integration, and contract tests
         env:
           PYTHONPATH: src
@@ -33,4 +33,4 @@ jobs:
       - name: Validate repository
         env:
           PYTHONPATH: src
-        run: python -m agentprism validate --target .
+        run: python -m refract validate --target .

@@ -30,11 +30,11 @@ Use `--answers FILE` to provide confirmed project facts and feature choices with
 Preview before applying:
 
 ```bash
-agentprism init --answers answers.json --dry-run --yes --target /path/to/project
+refract init --answers answers.json --dry-run --yes --target /path/to/project
 ```
 
 Keep answers files free of credentials. They describe project metadata and generated features, not secrets or provider tokens.
 
 ## Agent proposals
 
-`--answers` is a trusted-caller input and is not an LLM proposal format. Agent-guided workflows use `--agent-intent FILE` with schema `agentprism-intent/v1`; those values remain unverified until confirmed in the separate interactive human apply. Agent intents reject unknown fields, arbitrary paths, content, patches, modes, manifest entries, credentials, confirmations, and approvals. See `docs/AGENT_GUIDED.md`.
+`--answers` is a trusted-caller input and is not an LLM proposal format. Agent-guided workflows use `--agent-intent FILE` with schema `refract-intent/v1`; those values remain unverified until confirmed in the separate interactive human apply. Agent intents reject unknown fields, arbitrary paths, content, patches, modes, manifest entries, credentials, confirmations, and approvals. See `docs/AGENT_GUIDED.md`.

@@ -6,11 +6,11 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from agentprism import cli
-from agentprism.facade import prepare_bootstrap
-from agentprism.manifest import Manifest, sha256_path
-from agentprism.model import BootstrapRequest, FeatureSelection, ProjectFacts
-from agentprism.protocol import ResultArtifact
+from refract import cli
+from refract.facade import prepare_bootstrap
+from refract.manifest import Manifest, sha256_path
+from refract.model import BootstrapRequest, FeatureSelection, ProjectFacts
+from refract.protocol import ResultArtifact
 
 
 class _TTY:
@@ -39,7 +39,7 @@ class AgentGuidedCliTests(unittest.TestCase):
             intent_path.write_text(
                 json.dumps(
                     {
-                        "schema": "agentprism-intent/v1",
+                        "schema": "refract-intent/v1",
                         "project": {"name": "guided-project", "description": "Guided project"},
                         "features": {"platforms": ["pi"]},
                     }
@@ -89,7 +89,7 @@ class AgentGuidedCliTests(unittest.TestCase):
             ):
                 self.assertIn(required, displayed)
             self.assertTrue((target / "AGENTS.md").is_file())
-            self.assertTrue((target / ".agentprism/manifest.json").is_file())
+            self.assertTrue((target / ".refract/manifest.json").is_file())
 
     def test_final_decline_leaves_target_unchanged(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -188,7 +188,7 @@ class AgentGuidedCliTests(unittest.TestCase):
             malicious = "GITHUB_TOKEN=ghp_EXFILTRATED\x1b[2J\u202e\n"
             agents = root / "AGENTS.md"
             agents.write_text(malicious, encoding="utf-8")
-            (root / ".agentprism").mkdir()
+            (root / ".refract").mkdir()
             manifest = Manifest(
                 platforms=["pi"],
                 files={
@@ -199,7 +199,7 @@ class AgentGuidedCliTests(unittest.TestCase):
                     }
                 },
             )
-            (root / ".agentprism/manifest.json").write_bytes(manifest.to_bytes())
+            (root / ".refract/manifest.json").write_bytes(manifest.to_bytes())
             prepared = prepare_bootstrap(
                 BootstrapRequest(
                     target=root,
@@ -290,7 +290,7 @@ class AgentGuidedCliTests(unittest.TestCase):
                 self.assertIn('"rollback_status": "not-needed"', output.getvalue())
                 self.assertNotIn("\u202e", output.getvalue())
                 self.assertNotIn("\u202e", error_output.getvalue())
-                self.assertTrue((target / ".agentprism/manifest.json").is_file())
+                self.assertTrue((target / ".refract/manifest.json").is_file())
 
     def test_exception_output_escapes_untrusted_paths(self) -> None:
         with tempfile.TemporaryDirectory() as directory, tempfile.TemporaryDirectory() as outside:

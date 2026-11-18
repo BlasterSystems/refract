@@ -6,8 +6,8 @@ from pathlib import Path
 
 import json
 
-from agentprism.model import BootstrapRequest, FeatureSelection, ProjectFacts
-from agentprism.renderer import render_project
+from refract.model import BootstrapRequest, FeatureSelection, ProjectFacts
+from refract.renderer import render_project
 from tests.helpers import request
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 class GoldenTreeTests(unittest.TestCase):
     def assert_example_matches_renderer(self, relative: str) -> None:
         example = ROOT / relative
-        config = json.loads((example / ".agentprism/config.json").read_text(encoding="utf-8"))
+        config = json.loads((example / ".refract/config.json").read_text(encoding="utf-8"))
         project = config["project"]
         requested = config["features"]["requested"]
         req = BootstrapRequest(
@@ -45,7 +45,7 @@ class GoldenTreeTests(unittest.TestCase):
         actual_paths = {
             path.relative_to(example).as_posix()
             for path in example.rglob("*")
-            if path.is_file() and path.relative_to(example).as_posix() != ".agentprism/manifest.json"
+            if path.is_file() and path.relative_to(example).as_posix() != ".refract/manifest.json"
         }
         self.assertEqual(set(desired), actual_paths)
         for path, generated in desired.items():
