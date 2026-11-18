@@ -8,6 +8,7 @@ the retrofit.
 
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 
@@ -15,12 +16,20 @@ from .planner import Action, Plan, skill_group
 
 
 def _git_tracked(root: Path, relative: str) -> bool:
+    # Only the target's own repository, and never repository-configured
+    # helpers: core.fsmonitor in .git/config is executed by git ls-files.
+    if not (root / ".git").exists():
+        return False
     try:
         result = subprocess.run(
-            ["git", "-C", str(root), "ls-files", "--error-unmatch", "--", relative],
+            [
+                "git", "--no-optional-locks", "-c", "core.fsmonitor=false",
+                "-C", str(root), "ls-files", "--error-unmatch", "--", relative,
+            ],
             capture_output=True,
             timeout=10,
             check=False,
+            env={**os.environ, "GIT_CONFIG_NOSYSTEM": "1", "GIT_CEILING_DIRECTORIES": str(root.parent)},
         )
     except (OSError, subprocess.SubprocessError):
         return False
@@ -59,7 +68,10 @@ def existing_setup_findings(root: Path) -> list[str]:
     claude_md = root / "CLAUDE.md"
     if claude_md.is_file() and (root / "AGENTS.md").is_file():
         try:
-            imports_agents = "@AGENTS.md" in claude_md.read_text(encoding="utf-8", errors="replace")
+            if claude_md.is_symlink():
+                raise OSError("symlink")
+            with claude_md.open("rb") as handle:
+                imports_agents = b"@AGENTS.md" in handle.read(1_000_000)
         except OSError:
             imports_agents = True
         if not imports_agents:
@@ -70,20 +82,46 @@ def existing_setup_findings(root: Path) -> list[str]:
     return findings
 
 
+PLATFORM_CONFIG = {
+    ".claude/settings.json": "Claude Code hooks and permissions",
+    ".codex/config.toml": "Codex MCP, agent, and permission settings",
+    ".codex/hooks.json": "Codex hooks",
+    "opencode.json": "OpenCode permissions and MCP",
+    ".omp/settings.json": "omp approval policy and autolearn protection",
+    ".omp/mcp.json": "omp MCP",
+    ".mcp.json": "Claude Code MCP",
+}
+
+
 def plan_findings(plan: Plan) -> list[str]:
-    """Explain what --keep-existing kept and what it therefore did not generate."""
+    """Explain exactly what --keep-existing kept and what it did not generate."""
     findings: list[str] = []
-    kept = [op.path for op in plan.operations if op.action == Action.SKIP_UNMANAGED and "--keep-existing" in op.detail]
-    skipped = sorted({skill_group(op.path) for op in plan.operations if op.action == Action.SKIP_KEPT} - {None})
-    if kept:
-        findings.append(f"kept {len(kept)} existing project-owned file(s) instead of refract's versions: {', '.join(kept)}")
-    if skipped:
-        findings.append(
-            "project-owned skills replace refract's on every platform: " + ", ".join(skipped)
-            + "; refract's copies for other agents were not generated"
-        )
-    if ".claude/settings.json" in kept:
-        findings.append("Claude Code hooks and permissions from refract are not installed because .claude/settings.json was kept")
-    if ".codex/config.toml" in kept:
-        findings.append("Codex MCP, agent, and permission settings from refract are not installed because .codex/config.toml was kept")
+    kept = sorted(op.path for op in plan.operations if op.action == Action.SKIP_UNMANAGED and "--keep-existing" in op.detail)
+    if not kept:
+        return findings
+    findings.append(f"kept {len(kept)} existing project-owned file(s) instead of refract's versions: {', '.join(kept)}")
+    by_group: dict[str, dict[str, list[str]]] = {}
+    for op in plan.operations:
+        group = skill_group(op.path)
+        if not group:
+            continue
+        entry = by_group.setdefault(group, {"kept": [], "skipped": [], "managed": []})
+        if op.action == Action.SKIP_UNMANAGED and op.path in kept:
+            entry["kept"].append(op.path)
+        elif op.action == Action.SKIP_KEPT:
+            entry["skipped"].append(op.path)
+        elif op.action in {Action.NO_CHANGE, Action.UPDATE_GENERATED, Action.CREATE} and op.path in plan.previous_manifest.files:
+            entry["managed"].append(op.path)
+    for group, entry in sorted(by_group.items()):
+        if not entry["kept"] or not (entry["skipped"] or entry["managed"]):
+            continue
+        message = f"skill '{group}': project-owned at {', '.join(entry['kept'])}"
+        if entry["skipped"]:
+            message += f"; refract did not generate {', '.join(entry['skipped'])}, so agents that read only those locations have no '{group}' skill"
+        if entry["managed"]:
+            message += f"; refract's copy remains at {', '.join(entry['managed'])}, so agents will see different '{group}' skills until one copy is removed"
+        findings.append(message)
+    for path, what in PLATFORM_CONFIG.items():
+        if path in kept:
+            findings.append(f"{what} from refract are not installed because {path} was kept")
     return findings

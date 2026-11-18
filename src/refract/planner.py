@@ -92,10 +92,29 @@ def skill_group(relative: str) -> str | None:
     return None
 
 
+# refract's own control surface: its scripts, configuration, and hooks are
+# executed or trusted by generated hooks, so a repository-supplied copy must
+# never be kept in place of the generated one.
+PROTECTED_PREFIXES = (".refract/", ".githooks/")
+PROTECTED_FILES = ("setup-hooks.sh",)
+
+
+def is_protected(relative: str) -> bool:
+    return relative.startswith(PROTECTED_PREFIXES) or relative in PROTECTED_FILES
+
+
+def _skill_directory_group(relative: str) -> str | None:
+    """Skill name for paths that define a skill (not OpenCode command wrappers)."""
+    parts = relative.split("/")
+    if len(parts) >= 4 and parts[1] == "skills" and parts[0] in {".agents", ".claude"}:
+        return parts[2]
+    return None
+
+
 def _unmanaged_existing(root: Path, desired: dict[str, GeneratedFile], manifest: Manifest) -> set[str]:
     found: set[str] = set()
     for relative, generated in desired.items():
-        if relative in manifest.files:
+        if relative in manifest.files or is_protected(relative):
             continue
         try:
             path = assert_safe_target_path(root, relative)
@@ -164,7 +183,7 @@ def build_plan(
     kept: set[str] = set()
     if keep_existing and not manifest_error:
         kept = _unmanaged_existing(root, normalized_desired, manifest)
-        kept_skills = {group for group in map(skill_group, kept) if group}
+        kept_skills = {group for group in map(_skill_directory_group, kept) if group}
         for relative in sorted(normalized_desired):
             if relative in kept or skill_group(relative) not in kept_skills or relative in manifest.files:
                 continue
@@ -283,6 +302,15 @@ def build_plan(
                     "existing unmanaged file kept as project-owned (--keep-existing)",
                     expected_hash=current_hash,
                     expected_executable=_is_executable(path),
+                )
+            )
+        elif is_protected(relative):
+            operations.append(
+                Operation(
+                    relative,
+                    Action.CONFLICT,
+                    generated,
+                    "unmanaged destination exists at a refract control path; move it aside (cannot be kept)",
                 )
             )
         else:

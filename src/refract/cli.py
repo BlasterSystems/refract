@@ -284,7 +284,7 @@ def _display_agent_review(prepared: PreparedBootstrap, warnings: list[str]) -> N
     if claim["present"]:
         print("WARNING: The existing manifest is a repository-supplied, unauthenticated ownership claim.")
     for warning in warnings:
-        print(f"WARNING: {warning}")
+        print(f"WARNING: {_terminal_safe_text(warning)}")
     diffs = prepared.review_diffs(include_existing_content=True)
     if diffs:
         print("Reviewable generated-file diffs:")
@@ -347,7 +347,7 @@ def _run_generation(args: argparse.Namespace) -> int:
         else:
             print(_terminal_safe_text(plan.format()))
             for warning in warnings:
-                print(f"WARNING: {warning}", file=sys.stderr)
+                print(f"WARNING: {_terminal_safe_text(warning)}", file=sys.stderr)
     if plan.conflicts:
         if json_mode:
             print(json.dumps(_payload(prepared, args, status="conflict", applied=False, warnings=warnings), indent=2))

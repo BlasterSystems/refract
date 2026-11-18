@@ -1,8 +1,8 @@
 # ADR-0012: Keep-existing retrofit mode
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-18
-- **Decision owners:** Not assigned
+- **Decision owners:** Project owner (accepted 2026-11-18)
 - **Scope:** Retrofit planning and ownership
 - **Tags:** retrofit, ownership, migration, skills, safety
 - **Supersedes:** None
@@ -20,14 +20,15 @@ There is a second problem: keeping a project's skill in one location while refra
 
 - Never overwrite or adopt unmanaged files (AGENTS.md rule 4, ADR-0003).
 - Let real projects adopt refract incrementally, without deleting their own configuration first.
-- Every selected agent must see one version of each skill.
+- Never generate a second, different copy of a skill the project keeps, and report every case where agents still differ.
+- refract's own control surface (`.refract/**`, `.githooks/*`, `setup-hooks.sh`) is executed or trusted by generated hooks, so it can never be replaced by repository content.
 - Keep the default safe and explicit; the new behaviour is opt-in.
 
 ## Considered options
 
 ### Option 1: Opt-in keep-existing mode with skill-group consistency (selected)
 
-`--keep-existing` plans each conflicting unmanaged file as `SKIP_UNMANAGED`: it is kept and not adopted into the manifest. For every kept skill, the other generated copies of that skill are planned as `SKIP_KEPT` (not created), so all agents use the project's version.
+`--keep-existing` plans each conflicting unmanaged file as `SKIP_UNMANAGED`: it is kept and not adopted into the manifest. For every skill kept in a skill directory (`.agents/skills` or `.claude/skills`), the other generated copies of that skill are planned as `SKIP_KEPT` (not created), so no agent sees refract's version next to the project's. A kept OpenCode command alone does not suppress the skill elsewhere.
 
 ### Option 2: Adopt existing files into the manifest
 
@@ -43,8 +44,9 @@ Adopt Option 1.
 
 - Without the flag, behaviour is unchanged. The conflict detail now points to `--keep-existing`.
 - `--keep-existing` is recorded in the plan document, so it is bound to the plan identifier.
-- Edited refract-owned files, symlinks and non-regular files still conflict.
-- Retrofit prints migration findings about the existing setup. They are read from file names, git tracking and the `CLAUDE.md` import line, never from other file contents:
+- Edited refract-owned files, symlinks, non-regular files and refract control paths (`.refract/**`, `.githooks/*`, `setup-hooks.sh`) still conflict.
+- Migration findings name, for each kept skill, the project-owned locations, the locations refract did not generate (agents reading only those have no copy), and any refract-managed copy that remains (agents differ until one copy is removed).
+- Retrofit prints migration findings about the existing setup. They are read from file names, git tracking and the `CLAUDE.md` import line, never from other file contents. Git runs only in the target's own repository, with `core.fsmonitor` disabled, so repository-configured helpers never execute:
   - committed personal settings,
   - non-functional configuration files,
   - Pi directories,

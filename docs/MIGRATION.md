@@ -27,10 +27,12 @@ By default, any unmanaged file at a generated path is a `CONFLICT`, and the appl
 - **Adopt refract's version.** Move or merge your file aside, then re-run. Do this for generic files you no longer need to customize.
 - **Keep yours.** Re-run with `--keep-existing`:
   - Every conflicting unmanaged file is kept as project-owned (`SKIP_UNMANAGED`). refract never adopts it into its manifest and never overwrites it.
-  - When you keep a skill (for example your own `research`), refract does not generate its copies of that skill for the other agents (`SKIP_KEPT`), so every agent sees exactly one version. To give Codex, OpenCode, and omp the same skill, copy yours into `.agents/skills/<name>/SKILL.md`.
+  - When you keep a skill directory (for example your own `.claude/skills/research`), refract does not generate its other copies of that skill (`SKIP_KEPT`), so no agent sees refract's version next to yours. Agents that read only the skipped locations then have no copy: to give Codex, OpenCode, and omp the same skill, copy yours into `.agents/skills/<name>/SKILL.md`.
   - Keeping `.claude/settings.json` or `.codex/config.toml` means refract's hooks, MCP, and permission settings for that platform are not installed; the plan warns about this.
 
-`--keep-existing` never overrides a refract-owned file that was edited after generation, a symlink, or a non-regular file. Those remain conflicts.
+`--keep-existing` never overrides a refract-owned file that was edited after generation, a symlink, or a non-regular file. It also never keeps repository content at refract's control paths (`.refract/**`, `.githooks/*`, `setup-hooks.sh`), because generated hooks execute or trust them. All of these remain conflicts; move them aside.
+
+The plan reports, for every kept skill, which agents use your copy, which have no copy, and whether refract's copy remains somewhere so agents would differ.
 
 ## 3. Apply and configure
 
