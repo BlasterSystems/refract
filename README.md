@@ -56,6 +56,64 @@ Point your coding agent at this repository and let it drive the bootstrap; the a
 
 After bootstrap, the generated `AGENTS.md`, progressive-disclosure docs, deterministic validators, and the project-scoped `refract` skill steer the agent through the development process. See the [agent-guided protocol](docs/AGENT_GUIDED.md) for roles, trust boundaries, and plan integrity.
 
+### Copy-paste prompt
+
+Install Refract once (`pip install /path/to/refract`), then paste this into your agent from your project root:
+
+```text
+Add Refract to this project in advisory mode. You may inspect and preview, but you
+must never modify project files, stage, commit, or apply anything — the human applies.
+
+1. If the `refract` CLI is unavailable, clone
+   https://github.com/BlasterSystems/refract and `pip install <checkout>`.
+
+2. Bounded, read-only inspection (JSON evidence only; do not add --include-snippets):
+
+   refract inspect --target .
+
+3. From the evidence, write a strict proposal to /tmp/refract-intent.json (outside
+   this repo). Only these fields are accepted; anything else is rejected:
+
+   {
+     "schema": "refract-intent/v1",
+     "project": {
+       "name": "<from evidence>",
+       "description": "<from evidence>",
+       "build_command": "<from evidence or null>",
+       "test_command": "<from evidence or null>",
+       "run_command": null,
+       "ticket_prefix": null
+     },
+     "features": {
+       "platforms": ["<harnesses this project uses>"],
+       "mcp": false,
+       "agents": false,
+       "github": false,
+       "scheduled_audit": false,
+       "hooks": false
+     }
+   }
+
+   Valid platforms: claude, codex, pi, opencode, omp. Leave every privileged
+   feature false and ask me before enabling any. Never include credentials, file
+   contents, or fields outside the schema. Do not read .env, key files, or other
+   known secret locations.
+
+4. Deterministic dry-run preview (writes only to stdout):
+
+   refract retrofit --agent-guided --agent-intent /tmp/refract-intent.json \
+     --dry-run --plan-format json --target .
+
+5. STOP. Report the plan identifier and every planned operation. Flag any update
+   or removal of an existing file for exact diff review in my terminal, plus any
+   conflicts (unmanaged files are never overwritten). Do not apply.
+
+6. Wait for me. I will apply in my own interactive terminal:
+
+   refract retrofit --agent-guided --agent-intent /tmp/refract-intent.json \
+     --expected-plan <PLAN_SHA256> --target .
+```
+
 ## Supported harnesses
 
 First-class adapters generate native artifacts for:
