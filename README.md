@@ -7,24 +7,11 @@ Bootstrap greenfield or existing projects with provider-neutral instructions for
 Both project types converge on the same managed, validated, ownership-tracked state:
 
 ```mermaid
-flowchart TD
-  subgraph greenfield["Greenfield · init"]
-    G1["new repo"] --> G2["pick platforms + features"]
-    G2 --> G3["render full scaffold"]
-  end
-  subgraph brownfield["Brownfield · retrofit"]
-    B1["existing repo + conventions"] --> B2["bounded read-only inspection"]
-    B2 --> B3["ownership-aware plan"]
-    B3 --> B4{"file managed?"}
-    B4 -- "unmanaged" --> B5["refuse overwrite → conflict surfaced"]
-    B4 -- "manifest-owned" --> B6["stage only if prior state matches"]
-  end
-  G3 --> V["validate: syntax · token · portable core · ADRs"]
-  B6 --> V
-  V --> A["human confirms → staged apply / rollback"]
-  B5 --> A
-  A --> M["manifest hashes → idempotent re-runs, drift alarms"]
-  M -. "re-run later" .-> B2
+flowchart LR
+  N["New project → refract init"] --> P
+  E["Existing project → refract retrofit"] --> P
+  P["Dry-run plan + preview<br/>nothing is written yet"] --> V["Deterministic validation<br/>syntax · tokens · ADRs · portable core"] --> H["Human applies<br/>staged apply · rollback-safe"] --> M["Managed state<br/>.refract/ manifest · file hashes"]
+  M -. "re-run later: idempotent,<br/>unmanaged files never overwritten" .-> P
 ```
 
 ## Use with an agent
