@@ -4,6 +4,9 @@
 .opencode/package.json
 .opencode/bun.lock
 .opencode/.gitignore
+/.serena/
+/.mcp.json
+/uv.lock
 
 # Dependencies and virtual environments
 node_modules/
