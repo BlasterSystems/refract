@@ -9,7 +9,7 @@ Support is capability-specific. “Enabled” means the adapter was selected; it
 | Claude Code | Not selected | CLAUDE.md (imports AGENTS.md) | .claude/skills mirror | /<skill> | .claude/settings.json | CLAUDE.md | .claude/agents/*.md | .mcp.json | .claude/settings.json Stop hook |
 | OpenAI Codex | Not selected | AGENTS.md | .agents/skills | $<skill> or /skills | .codex/config.toml approval_policy/sandbox_mode (project .codex/ layer loads only for trusted projects) | AGENTS.md | .codex/agents/*.toml | .codex/config.toml | .codex/hooks.json Stop hook (project .codex/ layer loads only for trusted projects) |
 | OpenCode | Not selected | AGENTS.md | .agents/skills | .opencode/commands/<skill>.md | opencode.json permission | AGENTS.md | .opencode/agents/*.md | opencode.json mcp | .opencode/plugins/refract-check.js (session.idle) |
-| OhMyPi (omp) | Not selected | AGENTS.md | .agents/skills | /skill:<skill> | .omp/settings.json tools.approvalMode (also disables user-scope autolearn skill minting for this project) | .omp/RULES.md | .omp/agents/*.md | .omp/mcp.json | .omp/hooks/post/refract-check.ts (agent_end) |
+| OhMyPi (omp) | Not selected | AGENTS.md | .agents/skills | /skill:<skill> | .omp/settings.json tools.approvalMode (autolearn is disabled for every omp project regardless of this flag) | .omp/RULES.md | .omp/agents/*.md | .omp/mcp.json | .omp/hooks/post/refract-check.ts (agent_end) |
 | Pi Coding Agent (deprecated) | Enabled | AGENTS.md | .agents/skills | /skill:<skill> | Unsupported (Pi has no project permission policy) | AGENTS.md | Unsupported (Pi has no built-in subagents) | Unsupported (Pi has no built-in MCP) | Unsupported (Pi hooks require separately reviewed extensions) |
 
 ## Portable Core

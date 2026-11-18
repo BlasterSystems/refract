@@ -4,7 +4,7 @@ import json
 
 from ..model import CORE_SKILLS, GeneratedFile
 from .base import AdapterContext
-from .shared import CONTEXT7_URL, SECRET_GLOBS
+from .shared import CONTEXT7_URL, SECRET_GLOBS, hook_script_digests, pinned_hook_command
 
 
 class ClaudeAdapter:
@@ -24,15 +24,16 @@ class ClaudeAdapter:
             target = f".claude/skills/{skill}/SKILL.md"
             files[target] = GeneratedFile.text(target, templates.render(source, values))
 
-        # Committed, shared project policy. Claude's default mode already asks
-        # before edits and shell commands; the project layer adds secret denies.
-        # Personal allowlists belong in the uncommitted settings.local.json.
+        # Committed, shared project policy (opt-in). Claude's default mode
+        # already asks before edits and shell commands; the project layer adds
+        # secret denies. Personal allowlists belong in settings.local.json.
         settings: dict[str, object] = {
             "$schema": "https://json.schemastore.org/claude-code-settings.json",
-            "permissions": {
-                "deny": [f"Read(./{pattern})" for pattern in SECRET_GLOBS],
-            },
         }
+        if features.permissions:
+            settings["permissions"] = {
+                "deny": [f"Read(./{pattern})" for pattern in SECRET_GLOBS],
+            }
         if features.hooks:
             settings["hooks"] = {
                 "Stop": [
@@ -40,16 +41,17 @@ class ClaudeAdapter:
                         "hooks": [
                             {
                                 "type": "command",
-                                "command": '"$CLAUDE_PROJECT_DIR"/.refract/bin/agent-check --format json',
+                                "command": pinned_hook_command('"${CLAUDE_PROJECT_DIR:-$PWD}"', hook_script_digests(context)),
                                 "timeout": 120,
                             }
                         ]
                     }
                 ]
             }
-        files[".claude/settings.json"] = GeneratedFile.text(
-            ".claude/settings.json", json.dumps(settings, indent=2)
-        )
+        if features.permissions or features.hooks:
+            files[".claude/settings.json"] = GeneratedFile.text(
+                ".claude/settings.json", json.dumps(settings, indent=2)
+            )
 
         if features.agents:
             target = ".claude/agents/architecture-reviewer.md"

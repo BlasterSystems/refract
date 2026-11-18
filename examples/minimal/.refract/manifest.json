@@ -4,7 +4,7 @@
   "platforms": [
     "pi"
   ],
-  "updated_at": "2026-11-18T21:32:07+00:00",
+  "updated_at": "2026-11-18T21:47:25+00:00",
   "files": {
     ".agents/skills/architecture-decision/SKILL.md": {
       "sha256": "7bd5fe23cdbf5d058e1e645d33b179ebf92571b7850e2c98c53aa635028f5b2e",
@@ -32,12 +32,12 @@
       "mutable": false
     },
     ".refract/bin/validate": {
-      "sha256": "dbcd68a396dfd722751cd6cb20cf29262bddfea6670c09067da6e0c1071f2b3d",
+      "sha256": "b5c393d72b373b119f2443c6da5c878824afbd1b3666b588e6d1ab4877a8b6ad",
       "executable": true,
       "mutable": false
     },
     ".refract/config.json": {
-      "sha256": "b817cad6e91d97f503c14992f0e261f59805101814c706a571d8b5b9489e50e2",
+      "sha256": "2193defabbb71a3a85582d110f749d0568c388e9b15f3d9bc10ba43b137b1179",
       "executable": false,
       "mutable": false
     },
@@ -62,7 +62,7 @@
       "mutable": true
     },
     "docs/PLATFORM_SUPPORT.md": {
-      "sha256": "79b13b537d6f3411963722f2719c76702bbbb810a1b6c3aa8e811d85ea9dfcab",
+      "sha256": "3b83a0d97e572a8ca66fe5a1ccc19600b7d2920df47d0b7ebc1697a43f34ad70",
       "executable": false,
       "mutable": false
     },

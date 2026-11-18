@@ -99,9 +99,13 @@ def project_scope_problems(target: Path, *, max_depth: int = 2) -> list[str]:
     problems: list[str] = []
     if resolved == Path(resolved.anchor):
         problems.append(f"{resolved} is a filesystem root, not a project")
-    if resolved == Path.home().absolute():
+    try:
+        is_home = resolved == Path.home().absolute() or resolved.resolve() == Path.home().resolve()
+    except (OSError, RuntimeError):
+        is_home = False
+    if is_home:
         problems.append(f"{resolved} is the home directory, not a project")
-    if not resolved.is_dir() or (resolved / ".git").exists():
+    if not _is_dir(resolved) or _exists(resolved / ".git"):
         return problems
     nested: list[str] = []
     frontier = [resolved]
@@ -109,13 +113,13 @@ def project_scope_problems(target: Path, *, max_depth: int = 2) -> list[str]:
         next_frontier: list[Path] = []
         for directory in frontier:
             try:
-                children = sorted(child for child in directory.iterdir() if child.is_dir() and not child.is_symlink())
+                children = sorted(child for child in directory.iterdir() if _is_dir(child) and not child.is_symlink())
             except OSError:
                 continue
             for child in children:
                 if child.name.startswith(".") or child.name in {"node_modules", "vendor"}:
                     continue
-                if (child / ".git").exists():
+                if _exists(child / ".git"):
                     nested.append(child.relative_to(resolved).as_posix())
                 else:
                     next_frontier.append(child)
@@ -127,3 +131,19 @@ def project_scope_problems(target: Path, *, max_depth: int = 2) -> list[str]:
             "run refract inside each project instead"
         )
     return problems
+
+
+def _exists(path: Path) -> bool:
+    # Python < 3.13 re-raises PermissionError from Path.exists(); an unreadable
+    # directory is simply not evidence of a nested repository.
+    try:
+        return path.exists()
+    except OSError:
+        return False
+
+
+def _is_dir(path: Path) -> bool:
+    try:
+        return path.is_dir()
+    except OSError:
+        return False

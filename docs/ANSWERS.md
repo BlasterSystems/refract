@@ -20,7 +20,8 @@ Use `--answers FILE` to provide confirmed project facts and feature choices with
     "agents": false,
     "github": true,
     "scheduled_audit": false,
-    "hooks": false
+    "hooks": false,
+    "permissions": false
   }
 }
 ```
@@ -34,7 +35,7 @@ Each feature is rendered in every selected platform's native format, following t
 - `mcp`: native MCP configuration per platform (`.mcp.json`, `.codex/config.toml`, `opencode.json`, `.omp/mcp.json`).
 - `agents`: the read-only architecture reviewer as a native subagent per platform.
 - `hooks`: Git hooks plus deterministic agent end-of-turn hooks. Each agent hook runs `.refract/bin/agent-check`, which executes the project validator.
-- Always generated for a selected platform: its project permission policy (`.claude/settings.json`, `.codex/config.toml`, `opencode.json`, `.omp/settings.json`).
+- `permissions`: restrictive native project policies (`.claude/settings.json`, `.codex/config.toml`, `opencode.json`, `.omp/settings.json`). It is off by default, so existing Claude and Codex settings never conflict during retrofit.
 
 `pi` remains a valid platform but is deprecated.
 

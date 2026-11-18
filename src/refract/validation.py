@@ -14,15 +14,22 @@ VALID_ADR_STATUSES = {"Proposed", "Accepted", "Rejected", "Deprecated", "Superse
 ADR_FILENAME = re.compile(r"^(\d{4})-[a-z0-9][a-z0-9-]*\.md$")
 ADR_REFERENCE = re.compile(r"ADR-(\d{4})")
 PORTABLE_FORBIDDEN = ("mcp__", "Task tool", ".claude/", ".codex/", ".opencode/", ".pi/", ".omp/")
-GLOBAL_SCOPE_FORBIDDEN = ("~/", "$HOME", "%USERPROFILE%")
+# User/global agent configuration directories. Generated agent content must
+# never direct an agent to install skills, agents, hooks, or settings there.
+GLOBAL_SCOPE_PATTERN = re.compile(
+    r"(?:~|\$HOME|\$\{HOME\}|%USERPROFILE%)[/\\]+"
+    r"\.(?:claude|codex|omp|agents|pi|cursor|gemini|config[/\\]+opencode)(?![A-Za-z0-9_-])"
+)
 AGENT_SURFACE_PREFIXES = (
     ".agents/skills/", ".claude/skills/", ".claude/agents/", ".omp/agents/",
     ".opencode/agents/", ".opencode/commands/", ".codex/agents/",
 )
-AGENT_SURFACE_FILES = ("AGENTS.md", "CLAUDE.md", ".omp/RULES.md")
+# AGENTS.md is a user-editable seed; it may legitimately document ~/ paths.
+AGENT_SURFACE_FILES = ("CLAUDE.md", ".omp/RULES.md")
 
 
 def _front_matter(text: str) -> dict[str, str] | None:
+    text = text.replace("\r\n", "\n")
     if not text.startswith("---\n"):
         return None
     end = text.find("\n---", 4)
@@ -32,7 +39,7 @@ def _front_matter(text: str) -> dict[str, str] | None:
     for line in text[4:end].splitlines():
         key, sep, value = line.partition(":")
         if sep and key and not key.startswith((" ", "\t")):
-            fields[key.strip()] = value.strip()
+            fields[key.strip()] = value.strip().strip("\"'")
     return fields
 
 
@@ -40,10 +47,10 @@ def agent_surface_errors(relative: str, text: str) -> list[str]:
     """Platform-specific contracts for instruction, skill, agent, and command files."""
     if relative not in AGENT_SURFACE_FILES and not relative.startswith(AGENT_SURFACE_PREFIXES):
         return []
+    text = text.replace("\r\n", "\n")
     problems = [
-        f"{relative} references user/global scope ({token}); generated agent content must stay project-scoped"
-        for token in GLOBAL_SCOPE_FORBIDDEN
-        if token in text
+        f"{relative} references user/global agent scope ({match.group(0)}); generated agent content must stay project-scoped"
+        for match in GLOBAL_SCOPE_PATTERN.finditer(text)
     ]
     parts = relative.split("/")
     if relative.endswith("/SKILL.md") and len(parts) == 4:

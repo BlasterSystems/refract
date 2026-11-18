@@ -19,21 +19,33 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 VALIDATOR = ROOT / ".refract/bin/validate"
+DRIFT_PREFIXES = ("manifest-owned file content changed", "manifest-owned file mode changed")
 
 
 def run_validator() -> list[str]:
-    result = subprocess.run(
-        [sys.executable, str(VALIDATOR)],
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
-        timeout=120,
-        check=False,
-    )
+    try:
+        result = _run_validator_process()
+    except subprocess.TimeoutExpired:
+        return ["validator timed out after 100 seconds"]
+    except OSError as exc:
+        return [f"validator could not run: {exc}"]
     if result.returncode == 0:
         return []
     lines = [line[2:] for line in result.stdout.splitlines() if line.startswith("- ")]
     return lines or [result.stdout.strip() or result.stderr.strip() or "validator failed"]
+
+
+def _run_validator_process() -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        # -I: never import from the agent-writable script directory or honor
+        # PYTHON* environment overrides; hooks run outside the agent sandbox.
+        [sys.executable, "-I", str(VALIDATOR)],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=100,
+        check=False,
+    )
 
 
 def read_payload() -> dict:
@@ -60,7 +72,10 @@ def stop_decision(errors: list[str], stop_hook_active: bool) -> dict:
     if not errors:
         return {}
     summary = "refract validation failed:\n" + "\n".join(f"- {e}" for e in errors)
-    if stop_hook_active:
+    # Hash/mode drift of manifest-owned files usually means a deliberate human
+    # edit; report it, but never push the agent into reverting it.
+    actionable = [e for e in errors if not e.startswith(DRIFT_PREFIXES)]
+    if stop_hook_active or not actionable:
         return {"systemMessage": summary}
     return {
         "decision": "block",

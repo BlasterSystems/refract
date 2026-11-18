@@ -53,7 +53,7 @@ class AgentGuidedCliTests(unittest.TestCase):
                 features=FeatureSelection(platforms=["pi"]),
             )
             expected = prepare_bootstrap(req).plan_id
-            answers = ["", "", "", "", "", "", ""] + [""] * 5 + ["yes"]
+            answers = ["", "", "", "", "", "", ""] + [""] * 6 + ["yes"]
             output = _TTY()
             with mock.patch("builtins.input", side_effect=answers), mock.patch.object(
                 cli.sys, "stdin", _TTY()
@@ -101,7 +101,7 @@ class AgentGuidedCliTests(unittest.TestCase):
                 features=FeatureSelection(),
             )
             expected = prepare_bootstrap(req).plan_id
-            answers = [""] * 12 + ["no"]
+            answers = [""] * 13 + ["no"]
             output = _TTY()
             with mock.patch("builtins.input", side_effect=answers), mock.patch.object(
                 cli.sys, "stdin", _TTY()
@@ -160,7 +160,7 @@ class AgentGuidedCliTests(unittest.TestCase):
             )
             output = _TTY()
             error_output = _TTY()
-            with mock.patch("builtins.input", side_effect=[""] * 12 + ["yes"]), mock.patch.object(
+            with mock.patch("builtins.input", side_effect=[""] * 13 + ["yes"]), mock.patch.object(
                 cli.sys, "stdin", _TTY()
             ), mock.patch.object(cli.sys, "stdout", output), mock.patch.object(
                 cli.sys, "stderr", error_output
@@ -233,7 +233,7 @@ class AgentGuidedCliTests(unittest.TestCase):
             expected = prepare_bootstrap(req).plan_id
             output = _TTY()
             error_output = _TTY()
-            with mock.patch("builtins.input", side_effect=[""] * 12 + ["yes"]), mock.patch.object(
+            with mock.patch("builtins.input", side_effect=[""] * 13 + ["yes"]), mock.patch.object(
                 cli.sys, "stdin", _TTY()
             ), mock.patch.object(cli.sys, "stdout", output), mock.patch.object(
                 cli.sys, "stderr", error_output
@@ -267,7 +267,7 @@ class AgentGuidedCliTests(unittest.TestCase):
                 expected = prepare_bootstrap(req).plan_id
                 output = _TTY()
                 error_output = _TTY()
-                with mock.patch("builtins.input", side_effect=[""] * 12 + ["yes"]), mock.patch.object(
+                with mock.patch("builtins.input", side_effect=[""] * 13 + ["yes"]), mock.patch.object(
                     cli.sys, "stdin", _TTY()
                 ), mock.patch.object(cli.sys, "stdout", output), mock.patch.object(
                     cli.sys, "stderr", error_output
@@ -322,7 +322,7 @@ class AgentGuidedCliTests(unittest.TestCase):
     def test_expected_plan_does_not_suppress_recomputed_mismatch(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / "project"
-            with mock.patch("builtins.input", side_effect=[""] * 12), mock.patch.object(
+            with mock.patch("builtins.input", side_effect=[""] * 13), mock.patch.object(
                 cli.sys, "stdin", _TTY()
             ), mock.patch.object(cli.sys, "stdout", _TTY()), mock.patch.object(
                 cli.sys, "stderr", _TTY()

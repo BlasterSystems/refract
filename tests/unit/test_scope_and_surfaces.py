@@ -71,7 +71,23 @@ class AgentSurfaceValidationTests(unittest.TestCase):
             apply_plan(build_plan(root, render_project(req)), ["omp"])
             (root / ".omp/RULES.md").write_text("Install skills into ~/.omp/agent/skills\n", encoding="utf-8")
             errors = validate_target(root)
-            self.assertTrue(any("user/global scope" in error for error in errors), errors)
+            self.assertTrue(any("user/global agent scope" in error for error in errors), errors)
+
+    def test_unreadable_child_directory_does_not_abort_scope_scan(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            locked = root / "locked"
+            locked.mkdir()
+            with mock.patch("pathlib.Path.exists", side_effect=PermissionError("denied")):
+                self.assertEqual([], project_scope_problems(root))
+
+    def test_crlf_and_quoted_front_matter_are_accepted(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            files = render_project(request(Path(directory), ["omp"], agents=True))
+            agent = ".omp/agents/architecture-reviewer.md"
+            text = files[agent].content.decode().replace("name: architecture-reviewer", 'name: "architecture-reviewer"')
+            files[agent] = type(files[agent])(agent, text.replace("\n", "\r\n").encode())
+            self.assertEqual([], [e for e in validate_rendered(files) if agent in e])
 
     def test_skill_mirror_drift_and_agent_front_matter_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

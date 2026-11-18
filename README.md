@@ -111,7 +111,7 @@ First-class adapters render each capability (permissions, skill invocation, suba
 - OhMyPi (omp) (`AGENTS.md`, `.agents/skills`, `.omp/settings.json`, `.omp/RULES.md`, `.omp/agents/`, `.omp/mcp.json`, `.omp/hooks/`)
 - Pi Coding Agent: deprecated; portable core only (`AGENTS.md`, `.agents/skills`)
 
-refract writes only inside the target project and refuses home directories or folders that group several repositories (`--allow-unscoped-target` overrides).
+Restrictive permission policies are opt-in (`--permissions`). refract writes only inside the target project and refuses home directories or folders that group several repositories (`--allow-unscoped-target` overrides).
 
 See the [platform support matrix](docs/PLATFORM_SUPPORT.md) for verified versions and support levels.
 

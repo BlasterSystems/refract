@@ -51,7 +51,7 @@ Adopt Option 1. The parity contract is:
 
 | Capability | Claude Code | Codex | OpenCode | OMP |
 |---|---|---|---|---|
-| Permissions (default) | `.claude/settings.json` (secret denies; native ask mode) | `.codex/config.toml` `approval_policy=on-request`, `sandbox_mode=workspace-write`, no network | `opencode.json` ask/ask + `.env` read deny | `.omp/settings.json` `tools.approvalMode=always-ask`, `autolearn.enabled=false` |
+| Permissions (`--permissions`) | `.claude/settings.json` (secret denies; native ask mode) | `.codex/config.toml` `approval_policy=on-request`, `sandbox_mode=workspace-write`, no network | `opencode.json` ask/ask + `.env` read deny | `.omp/settings.json` `tools.approvalMode=always-ask` |
 | Skill invocation | `/<skill>` | native skills | `.opencode/commands/<skill>.md` generated per skill | `/skill:<skill>` |
 | Subagents (`--agents`) | `.claude/agents` | `.codex/agents` | `.opencode/agents` | `.omp/agents` |
 | MCP (`--mcp`) | `.mcp.json` | `.codex/config.toml` | `opencode.json` | `.omp/mcp.json` |
@@ -61,7 +61,12 @@ All agent hooks call one deterministic script, `.refract/bin/agent-check`. It ru
 
 Scope guard:
 - `init` and `retrofit` refuse the home directory, the filesystem root, and any non-repository folder that contains nested git repositories, unless `--allow-unscoped-target` is passed.
-- Validators reject home-relative paths (`~/`, `$HOME`) in generated agent instructions, skills, agents and commands.
+- Validators reject references to user-level agent configuration directories (for example `~/.omp/`, `$HOME/.claude/`) in generated skills, agents, commands and rules. The user-editable `AGENTS.md` is exempt.
+- omp projects always receive `.omp/settings.json` with `autolearn.enabled=false`. This is scope protection, not a permission, so it ships even without `--permissions`.
+
+Restrictive permission policies are opt-in (`--permissions`, AGENTS.md rule 3). Without the flag, no new settings file collides with a project's existing Claude or Codex configuration during retrofit.
+
+Hook roots are resolved by walking up from the hook's working directory to the nearest folder holding `.refract/bin/agent-check`. This works for non-git and monorepo-subdirectory projects. The Claude Code and Codex Stop hooks pin the SHA-256 of `agent-check` and `validate` in their protected hook configuration and run both in isolated Python mode (`-I`).
 - Validators reject skill mirrors that drift from the portable copy.
 
 Pi is deprecated. Selecting it emits a warning, and it will be removed in the next major release per `docs/RELEASING.md`.
@@ -77,7 +82,9 @@ Pi is deprecated. Selecting it emits a warning, and it will be removed in the ne
 ### Negative
 
 - More generated files per platform, with a larger golden tree and examples.
-- `.claude/settings.json` is now always generated. omp also merges this file into its project settings layer, but the Claude-only keys there do not collide with omp setting ids.
+- `.claude/settings.json` is generated when `--permissions` or `--hooks` is selected. omp also merges this file into its project settings layer, but the Claude-only keys there do not collide with omp setting ids.
+- The OpenCode plugin and omp hook live in agent-writable directories and are not hash-pinned. Neither platform sandboxes the agent, so a hook cannot widen access the agent already has.
+- Residual: a time-of-check/time-of-use window between hashing and executing the hook scripts.
 - Codex loads project `.codex/` configuration, hooks included, only for trusted projects.
 
 ### Risks and mitigations

@@ -43,7 +43,7 @@ def _validate_answers(data: dict[str, Any]) -> None:
         value = project.get(key)
         if value is not None and not isinstance(value, str):
             raise ValueError(f"answers project.{key} must be a string or null")
-    for key in ("mcp", "agents", "github", "scheduled_audit", "hooks"):
+    for key in ("mcp", "agents", "github", "scheduled_audit", "hooks", "permissions"):
         value = features.get(key)
         if value is not None and not isinstance(value, bool):
             raise ValueError(f"answers features.{key} must be a boolean")
@@ -146,6 +146,11 @@ def _request_from_args(args: argparse.Namespace) -> BootstrapRequest:
         ),
         "scheduled_audit": scheduled_audit,
         "hooks": bool(args.hooks or proposed_features.get("hooks", False) or _answer(answers, "features", "hooks", False)),
+        "permissions": bool(
+            args.permissions
+            or proposed_features.get("permissions", False)
+            or _answer(answers, "features", "permissions", False)
+        ),
     }
 
     agent_preview = args.agent_guided and args.dry_run
@@ -167,7 +172,10 @@ def _request_from_args(args: argparse.Namespace) -> BootstrapRequest:
                 "scheduled_audit": _prompt_bool(
                     "Enable scheduled documentation audit", proposed_selection["scheduled_audit"]
                 ),
-                "hooks": _prompt_bool("Enable Git hooks", proposed_selection["hooks"]),
+                "hooks": _prompt_bool("Enable Git and agent hooks", proposed_selection["hooks"]),
+                "permissions": _prompt_bool(
+                    "Enable restrictive project permission policies", proposed_selection["permissions"]
+                ),
             }
             if proposed_selection["scheduled_audit"]:
                 proposed_selection["github"] = True
@@ -496,6 +504,11 @@ def _add_generation_arguments(parser: argparse.ArgumentParser) -> None:
         "--hooks",
         action="store_true",
         help="generate opt-in Git hooks and deterministic agent end-of-turn validation hooks",
+    )
+    parser.add_argument(
+        "--permissions",
+        action="store_true",
+        help="generate restrictive native project permission policies (ask before edit/shell, deny .env reads)",
     )
     parser.add_argument(
         "--allow-unscoped-target",

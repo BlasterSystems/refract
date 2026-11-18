@@ -122,6 +122,7 @@ def render_project(request: BootstrapRequest, template_root: Path | None = None)
                 "github": request.features.github,
                 "scheduled_audit": request.features.scheduled_audit,
                 "hooks": request.features.hooks,
+                "permissions": request.features.permissions,
             },
             "effective_by_platform": {
                 platform: effective_features(platform, request.features)

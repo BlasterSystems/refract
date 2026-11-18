@@ -21,13 +21,13 @@ class OmpAdapter:
                 ".omp/RULES.md", templates.render("adapters/omp/RULES.md", context.values)
             ),
         }
-        # Project settings layer: ask before write/exec tools (parity with the
-        # other platforms) and keep omp's experimental auto-learn from minting
-        # user-scope managed skills out of this project's sessions.
-        settings = {
-            "tools": {"approvalMode": "always-ask"},
-            "autolearn": {"enabled": False},
-        }
+        # Project settings layer. Auto-learn is always disabled: it mints
+        # user-scope managed skills from this project's sessions, which then
+        # load into every other project (scope protection, not a permission).
+        # The ask-before-write/exec policy is opt-in like other platforms.
+        settings: dict[str, object] = {"autolearn": {"enabled": False}}
+        if features.permissions:
+            settings["tools"] = {"approvalMode": "always-ask"}
         files[".omp/settings.json"] = GeneratedFile.text(".omp/settings.json", json.dumps(settings, indent=2))
         if features.agents:
             target = ".omp/agents/architecture-reviewer.md"

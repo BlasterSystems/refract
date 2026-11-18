@@ -14,6 +14,7 @@ def request(
     github: bool = False,
     scheduled_audit: bool = False,
     hooks: bool = False,
+    permissions: bool = False,
     ticket_prefix: str | None = None,
 ) -> BootstrapRequest:
     return BootstrapRequest(
@@ -36,5 +37,6 @@ def request(
             github=github or scheduled_audit,
             scheduled_audit=scheduled_audit,
             hooks=hooks,
+            permissions=permissions,
         ),
     )

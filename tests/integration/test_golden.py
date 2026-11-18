@@ -39,6 +39,7 @@ class GoldenTreeTests(unittest.TestCase):
                 github=requested["github"],
                 scheduled_audit=requested.get("scheduled_audit", False),
                 hooks=requested["hooks"],
+                permissions=requested.get("permissions", False),
             ),
         )
         desired = render_project(req)
@@ -63,6 +64,7 @@ class GoldenTreeTests(unittest.TestCase):
                     agents=True,
                     github=True,
                     hooks=True,
+                    permissions=True,
                 )
             )
             actual = "\n".join(sorted(files)) + "\n"

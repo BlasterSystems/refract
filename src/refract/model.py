@@ -72,6 +72,7 @@ class FeatureSelection:
     github: bool = False
     scheduled_audit: bool = False
     hooks: bool = False
+    permissions: bool = False
 
     def validate(self) -> list[str]:
         unknown = sorted(set(self.platforms) - set(SUPPORTED_PLATFORMS))

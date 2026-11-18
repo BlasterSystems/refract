@@ -9,13 +9,17 @@ Capability parity is defined by ADR-0010 and generated from `src/refract/capabil
 | Instructions | `CLAUDE.md` importing `AGENTS.md` | `AGENTS.md` | `AGENTS.md` | `AGENTS.md` |
 | Skills | `.claude/skills` mirror | `.agents/skills` | `.agents/skills` | `.agents/skills` |
 | Skill invocation | `/<skill>` | native skills | `.opencode/commands/<skill>.md` | `/skill:<skill>` |
-| Permissions (default) | `.claude/settings.json`: deny `.env` reads; native ask-before-edit/shell mode | `.codex/config.toml`: `on-request`, `workspace-write`, no network | `opencode.json`: edit/bash ask, `.env` reads denied | `.omp/settings.json`: `tools.approvalMode=always-ask`, `autolearn.enabled=false` |
+| Permissions (`--permissions`) | `.claude/settings.json`: deny `.env` reads; native ask-before-edit/shell mode | `.codex/config.toml`: `on-request`, `workspace-write`, no network | `opencode.json`: edit/bash ask, `.env` reads denied | `.omp/settings.json`: `tools.approvalMode=always-ask` |
 | Sticky rules | `CLAUDE.md` | `AGENTS.md` | `AGENTS.md` | `.omp/RULES.md` |
 | Subagents (`--agents`) | `.claude/agents/*.md` | `.codex/agents/*.toml` | `.opencode/agents/*.md` | `.omp/agents/*.md` |
 | MCP (`--mcp`) | `.mcp.json` | `.codex/config.toml` | `opencode.json` | `.omp/mcp.json` |
 | Agent hooks (`--hooks`) | `Stop` hook in `.claude/settings.json` | `Stop` hook in `.codex/hooks.json` | `.opencode/plugins/refract-check.js` (`session.idle`) | `.omp/hooks/post/refract-check.ts` (`agent_end`) |
 
 Every agent hook runs the same deterministic script, `.refract/bin/agent-check`. It executes the project validator and reports the result. It never invokes an LLM. On a validation failure the Claude Code and Codex Stop hooks block once, so the agent fixes the problem before finishing. On a turn a hook has already continued they only report, which prevents fix loops. The OpenCode and omp hooks report.
+
+Permission policies are opt-in. Without `--permissions`, OpenCode keeps its baseline ask-before-edit/shell configuration and the other platforms keep their own defaults. omp projects always receive `.omp/settings.json` with `autolearn.enabled=false`, which stops omp from minting user-scope skills from project sessions.
+
+Agent hooks find the project root by walking up from their working directory, so non-git and monorepo-subdirectory projects work. The Claude Code and Codex Stop hooks pin the SHA-256 of `agent-check` and `validate` and skip the check if either file was modified. They also run Python in isolated mode, so modules planted beside the scripts are ignored. Hash or mode drift of managed files is reported, never blocked on, so an agent is not pushed to revert a deliberate edit.
 
 Platform notes:
 
@@ -27,7 +31,7 @@ Platform notes:
 
 ## Project scope and user-level skills
 
-refract writes only inside the target project. `init` and `retrofit` refuse the home directory, the filesystem root, and any non-repository folder that contains nested git repositories, unless `--allow-unscoped-target` is passed. Run refract inside each project instead. The validators reject generated agent instructions, skills, agents and commands that reference home-relative paths (`~/`, `$HOME`).
+refract writes only inside the target project. `init` and `retrofit` refuse the home directory, the filesystem root, and any non-repository folder that contains nested git repositories, unless `--allow-unscoped-target` is passed. Run refract inside each project instead. The validators reject generated skills, agents, commands and rules that reference user-level agent configuration directories such as `~/.omp/` or `$HOME/.claude/`. The user-editable `AGENTS.md` is exempt.
 
 Skills that live in user scope load into every project on the machine. The generated omp settings disable auto-learn per project, but refract never deletes user-level files. To clean up after an earlier parent-folder or global install, review and remove the stray entries yourself, for example:
 
@@ -44,4 +48,4 @@ Tests validate official file locations, agent front matter, skill-mirror identit
 
 ## Security defaults
 
-No MCP server, Git hook, repository-host workflow, broad permission grant, or issue tracker is enabled without selection. Hooks never invoke an LLM or perform bootstrap mutation. Every platform's generated project policy asks before edits and shell commands and denies `.env` reads (see the parity table). Pi extension-based capabilities are never described as native. The external security-audit skill is documented and installed on demand (ADR-0006); it is never generated, auto-installed, or manifest-owned.
+No MCP server, Git hook, repository-host workflow, broad permission grant, or issue tracker is enabled without selection. Hooks never invoke an LLM or perform bootstrap mutation. With `--permissions`, every platform's generated project policy asks before edits and shell commands and denies `.env` reads (see the parity table). Pi extension-based capabilities are never described as native. The external security-audit skill is documented and installed on demand (ADR-0006); it is never generated, auto-installed, or manifest-owned.

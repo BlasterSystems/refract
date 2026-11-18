@@ -22,10 +22,12 @@
       "agents": false,
       "github": false,
       "scheduled_audit": false,
-      "hooks": false
+      "hooks": false,
+      "permissions": false
     },
     "effective_by_platform": {
       "pi": {
+        "permissions": false,
         "agents": false,
         "mcp": false,
         "hooks": false

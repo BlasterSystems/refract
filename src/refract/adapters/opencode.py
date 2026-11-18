@@ -7,6 +7,10 @@ from .base import AdapterContext
 from .shared import CONTEXT7_URL, SECRET_GLOBS, skill_description
 
 
+# Skills that only inspect and report run in OpenCode's read-only plan agent.
+ADVISORY_SKILLS = {"refract", "docs-check"}
+
+
 def _frontmatter_value(value: str) -> str:
     # JSON strings are valid YAML double-quoted scalars.
     return json.dumps(value, ensure_ascii=False)
@@ -22,9 +26,10 @@ class OpenCodeAdapter:
             "permission": {
                 "edit": "ask",
                 "bash": "ask",
-                "read": {"*": "allow", **{f"*{pattern}": "deny" for pattern in SECRET_GLOBS}},
             },
         }
+        if features.permissions:
+            config["permission"]["read"] = {"*": "allow", **{f"*{pattern}": "deny" for pattern in SECRET_GLOBS}}  # type: ignore[index]
         if features.mcp:
             config["mcp"] = {
                 "context7": {"type": "remote", "url": CONTEXT7_URL, "enabled": True}
@@ -39,8 +44,9 @@ class OpenCodeAdapter:
                 context.templates.render(f"core/skills/{skill}/SKILL.md", context.values)
             )
             target = f".opencode/commands/{skill}.md"
+            agent = "agent: plan\n" if skill in ADVISORY_SKILLS else ""
             body = (
-                f"---\ndescription: {_frontmatter_value(description)}\n---\n\n"
+                f"---\ndescription: {_frontmatter_value(description)}\n{agent}---\n\n"
                 f"Load and follow the `{skill}` skill for this request.\n\n$ARGUMENTS"
             )
             files[target] = GeneratedFile.text(target, body)

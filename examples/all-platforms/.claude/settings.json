@@ -12,7 +12,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.refract/bin/agent-check --format json",
+            "command": "python3 -I -c 'import hashlib,json,os,subprocess,sys\nr=os.path.abspath(sys.argv[1] or os.curdir)\nwhile not os.path.isfile(os.path.join(r,\".refract/bin/agent-check\")) and os.path.dirname(r)!=r:\n r=os.path.dirname(r)\npins=json.loads(sys.argv[2])\ndef ok(rel,digest):\n p=os.path.join(r,rel)\n return os.path.isfile(p) and not os.path.islink(p) and hashlib.sha256(open(p,\"rb\").read()).hexdigest()==digest\nif not all(ok(k,v) for k,v in pins.items()):\n print(json.dumps({\"systemMessage\":\"refract hook skipped: hook scripts do not match the generated hashes; re-run refract\"}))\n sys.exit(0)\nsys.exit(subprocess.call([sys.executable,\"-I\",os.path.join(r,\".refract/bin/agent-check\"),\"--format\",\"json\"]))' \"${CLAUDE_PROJECT_DIR:-$PWD}\" '{\".refract/bin/agent-check\":\"4cd9f093c25c9eead5321137ceaa273b7da1f1e1496da7e5e39b9e2641bf6975\",\".refract/bin/validate\":\"b5c393d72b373b119f2443c6da5c878824afbd1b3666b588e6d1ab4877a8b6ad\"}'",
             "timeout": 120
           }
         ]
