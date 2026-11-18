@@ -48,18 +48,39 @@ class OpenCodeContractTests(unittest.TestCase):
                 check=False,
             )
             self.assertEqual(0, result.returncode, result.stdout)
-            sources = json.loads(result.stdout)
-            generated = next(
-                entry["info"]
-                for entry in sources
-                if entry.get("type") == "document"
-                and entry.get("path", "").endswith("opencode.json")
-            )
-            effects = {
-                item["action"]: item["effect"] for item in generated["permissions"]
-            }
-            self.assertEqual("ask", effects["edit"])
-            self.assertEqual("ask", effects["shell"])
+            payload = json.loads(result.stdout)
+            if isinstance(payload, dict):
+                # Current opencode (>= 1.19) prints the merged effective
+                # configuration document directly.
+                self.assertEqual(
+                    "ask", payload["permission"]["edit"],
+                    f"unexpected effective config: {result.stdout}",
+                )
+                self.assertEqual(
+                    "ask", payload["permission"]["bash"],
+                    f"unexpected effective config: {result.stdout}",
+                )
+            elif isinstance(payload, list):
+                generated = next(
+                    (
+                        entry["info"]
+                        for entry in payload
+                        if entry.get("type") == "document"
+                        and entry.get("path", "").endswith("opencode.json")
+                    ),
+                    None,
+                )
+                self.assertIsNotNone(
+                    generated,
+                    f"no opencode.json document entry in: {result.stdout}",
+                )
+                effects = {
+                    item["action"]: item["effect"] for item in generated["permissions"]
+                }
+                self.assertEqual("ask", effects["edit"])
+                self.assertEqual("ask", effects["shell"])
+            else:
+                self.fail(f"unrecognized `opencode debug config` payload: {result.stdout}")
             # OpenCode v2 removed `debug skill` and `debug agent` and does not
             # list project agents; the agents/commands/skills surface is
             # verified on the filesystem instead.

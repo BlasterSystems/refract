@@ -93,10 +93,10 @@ class PlatformContractTests(unittest.TestCase):
             result = subprocess.run(
                 ["codex", "mcp", "list", "--json"], cwd=root,
                 env={**os.environ, "CODEX_HOME": str(root / ".codex")},
-                text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 timeout=30, check=False,
             )
-            self.assertEqual(0, result.returncode, result.stdout)
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
             servers = json.loads(result.stdout)
             self.assertTrue(any(server["name"] == "context7" for server in servers))
 

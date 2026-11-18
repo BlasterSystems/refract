@@ -86,3 +86,23 @@ Priority: **high** — blocks the local release gate for any dev machine with cu
 ## Jira overlap findings
 
 N/A — doc-only decision (no Jira project resolved). If a Jira target is chosen later, check open epics + JQL `text ~ "contract"` / `~ "opencode"` / `~ "codex"` (paginate `search/jql` with `nextPageToken`) before creating anything.
+
+## Implementation (2026-11-18)
+
+- [x] Codex test — `stderr=subprocess.PIPE` (was `STDOUT`); rc assertion message now includes both streams. `tests/contracts/test_platforms.py:93-101`.
+- [x] OpenCode test — shape-tolerant parsing: `dict` → effective config (`permission.edit/bash == "ask"`), `list` → legacy source-entry lookup (unchanged semantics), anything else → `self.fail` with the raw payload. `tests/contracts/test_opencode.py:50-83`. Filesystem assertions untouched.
+- [x] Support evidence — `docs/PLATFORM_SUPPORT.md` stamp → 2026-11-18; claude 2.1.325, codex 0.169.0, opencode 1.19.5; Pi/omp explicitly marked last-reviewed 2026-11-09 (no CLI diagnostics pin them). Verified the matrix lives only in the root doc — template and example copies carry no dates (grep), so no template/example churn.
+- [x] No product/template/renderer changes; examples untouched; no manifest refresh needed.
+
+## Verification (2026-11-18)
+
+- Contract modules: `contracts.test_opencode` + `contracts.test_platforms` → 9/9 OK (includes the two previously failing tests and `test_claude_parses_project_mcp`).
+- Full suite: `PYTHONPATH=src python3 -m unittest discover -s tests` → **98/98 OK** (first fully green run; was 96 + 2 errors).
+- `refract validate --target .` ✅ · `.refract/bin/validate` ✅ · `scripts/sync-version.py --check` ✅ (0.2.0).
+
+## Review
+
+- **Summary:** two test-harness fixes (stream separation, shape tolerance) + support-evidence stamp. Zero product changes; renderer output byte-identical.
+- **Decisions:** no version pinning (per research doc); loud failure with raw payload on unrecognized shapes; stamp scoped to what the diagnostics actually exercised.
+- **Limitations:** opencode can change shape again — the failure now names the payload, making it a one-line fix. Pi/omp rows rest on the 2026-11-09 review; no CLI diagnostics exist to re-verify them.
+- **Deploy notes:** none (tests + docs only).
