@@ -1,6 +1,31 @@
 # Refract
 
-Bootstrap greenfield or existing projects with provider-neutral instructions for Claude Code, Codex, Pi, and OpenCode. Integrations and privileged behavior remain opt-in.
+Bootstrap greenfield or existing projects with provider-neutral instructions for Claude Code, Codex, Pi, OpenCode, and OhMyPi (omp). Integrations and privileged behavior remain opt-in.
+
+## How it works
+
+Both project types converge on the same managed, validated, ownership-tracked state:
+
+```mermaid
+flowchart TD
+  subgraph greenfield["Greenfield · init"]
+    G1["new repo"] --> G2["pick platforms + features"]
+    G2 --> G3["render full scaffold"]
+  end
+  subgraph brownfield["Brownfield · retrofit"]
+    B1["existing repo + conventions"] --> B2["bounded read-only inspection"]
+    B2 --> B3["ownership-aware plan"]
+    B3 --> B4{"file managed?"}
+    B4 -- "unmanaged" --> B5["refuse overwrite → conflict surfaced"]
+    B4 -- "manifest-owned" --> B6["stage only if prior state matches"]
+  end
+  G3 --> V["validate: syntax · token · portable core · ADRs"]
+  B6 --> V
+  V --> A["human confirms → staged apply / rollback"]
+  B5 --> A
+  A --> M["manifest hashes → idempotent re-runs, drift alarms"]
+  M -. "re-run later" .-> B2
+```
 
 ## Use with an agent
 
