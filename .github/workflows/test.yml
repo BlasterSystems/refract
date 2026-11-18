@@ -34,3 +34,18 @@ jobs:
         env:
           PYTHONPATH: src
         run: python -m refract validate --target .
+
+  test-gate:
+    name: test-gate
+    needs: test
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail unless every test matrix leg succeeded
+        run: |
+          result="${{ needs.test.result }}"
+          if [ "$result" != "success" ]; then
+            echo "test matrix result: $result"
+            exit 1
+          fi
+          echo "All test matrix legs passed."
