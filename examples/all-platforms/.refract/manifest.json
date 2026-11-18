@@ -8,7 +8,7 @@
     "opencode",
     "omp"
   ],
-  "updated_at": "2026-11-18T10:25:54+00:00",
+  "updated_at": "2026-11-18T11:43:42+00:00",
   "files": {
     ".agents/skills/architecture-decision/SKILL.md": {
       "sha256": "7bd5fe23cdbf5d058e1e645d33b179ebf92571b7850e2c98c53aa635028f5b2e",
@@ -101,7 +101,7 @@
       "mutable": false
     },
     ".refract/bin/docs-check": {
-      "sha256": "31a23e8189eb5077217248240fbd04a0f5ac53a255c50a13920aa55e9c517c00",
+      "sha256": "3f07e588e95f28b46596390486eccf4e5afa9e505daaea0ed059818edb34e8b1",
       "executable": true,
       "mutable": false
     },

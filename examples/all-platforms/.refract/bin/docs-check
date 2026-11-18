@@ -20,6 +20,8 @@ def git_names(arguments: list[str]) -> tuple[list[str], str | None]:
 
 
 def changed_files(base: str | None) -> tuple[list[str], str | None]:
+    if base and base.startswith("-"):
+        return [], f"invalid --base {base!r}: Git revisions must not start with '-'"
     if not (ROOT / ".git").exists():
         return [], "not a Git repository"
     collected: list[str] = []

@@ -237,6 +237,25 @@ class CliIntegrationTests(unittest.TestCase):
             self.assertEqual(2, check.returncode, check.stdout)
             self.assertIn("could not establish a reliable diff", check.stdout)
 
+    def test_docs_check_rejects_option_like_base(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            injected = Path(directory) / "injected"
+            result = run_cli("init", "--platform", "pi", "--yes", "--target", str(target))
+            self.assertEqual(0, result.returncode, result.stdout)
+            check = subprocess.run(
+                [str(target / ".refract/bin/docs-check"), f"--base=--output={injected}", "--strict"],
+                cwd=target,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                timeout=30,
+                check=False,
+            )
+            self.assertEqual(2, check.returncode, check.stdout)
+            self.assertIn("invalid --base", check.stdout)
+            self.assertFalse(injected.exists())
+
 
 if __name__ == "__main__":
     unittest.main()
