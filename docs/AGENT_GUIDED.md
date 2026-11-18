@@ -12,7 +12,7 @@ The agent-guided workflow adds LLM assistance without making the LLM a trusted w
 ## Inspect
 
 ```bash
-agentic-bootstrap inspect --target /path/to/project
+agentprism inspect --target /path/to/project
 ```
 
 The JSON artifact reports evidence paths, hashes, confidence, exclusions, file/byte/entry/depth limits, and truncation. Raw snippets are omitted by default. `--include-snippets` requires an explicit decision because repository text may be sent to a remote model provider.
@@ -21,11 +21,11 @@ Inspection artifacts are evidence, not authorization. The scanner cannot restric
 
 ## Typed proposal
 
-An optional proposal uses `agentic-bootstrap-intent/v1`:
+An optional proposal uses `agentprism-intent/v1`:
 
 ```json
 {
-  "schema": "agentic-bootstrap-intent/v1",
+  "schema": "agentprism-intent/v1",
   "project": {
     "name": "example-service",
     "test_command": "python -m unittest"
@@ -46,7 +46,7 @@ The artifact is an unverified proposal. Unknown fields and arbitrary paths, cont
 ## Preview and handoff
 
 ```bash
-agentic-bootstrap retrofit \
+agentprism retrofit \
   --agent-guided \
   --agent-intent /outside/project/intent.json \
   --dry-run \
@@ -59,7 +59,7 @@ Preview writes only to stdout. Existing repository file contents are withheld fr
 The agent must stop after showing the preview. A human then runs the corresponding command separately in an interactive trusted terminal:
 
 ```bash
-agentic-bootstrap retrofit \
+agentprism retrofit \
   --agent-guided \
   --agent-intent /outside/project/intent.json \
   --expected-plan PLAN_SHA256 \
@@ -70,7 +70,7 @@ The deterministic command asks the human to confirm facts and sensitive features
 
 ## Embedding facade
 
-Trusted applications may import `inspect_project`, `prepare_bootstrap`, and `apply_bootstrap` from `agentic_bootstrap`. The facade accepts typed bootstrap requests only and does not accept desired-file maps. `apply_bootstrap` returns a schema-versioned result containing status, errors, and rollback status rather than treating a public plan identifier as authorization. An untrusted agent must not call the apply facade; the initial agent workflow uses the interactive CLI handoff.
+Trusted applications may import `inspect_project`, `prepare_bootstrap`, and `apply_bootstrap` from `agentprism`. The facade accepts typed bootstrap requests only and does not accept desired-file maps. `apply_bootstrap` returns a schema-versioned result containing status, errors, and rollback status rather than treating a public plan identifier as authorization. An untrusted agent must not call the apply facade; the initial agent workflow uses the interactive CLI handoff.
 
 ## Boundaries
 

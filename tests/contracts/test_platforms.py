@@ -9,9 +9,9 @@ import tomllib
 import unittest
 from pathlib import Path
 
-from agentic_bootstrap.apply import apply_plan
-from agentic_bootstrap.planner import build_plan
-from agentic_bootstrap.renderer import render_project
+from agentprism.apply import apply_plan
+from agentprism.planner import build_plan
+from agentprism.renderer import render_project
 from tests.helpers import request
 
 
@@ -20,7 +20,7 @@ class PlatformContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             files = render_project(request(Path(directory), ["claude"], mcp=True, agents=True))
             self.assertIn("CLAUDE.md", files)
-            self.assertIn(".claude/skills/agentic-bootstrap/SKILL.md", files)
+            self.assertIn(".claude/skills/agentprism/SKILL.md", files)
             self.assertIn(".claude/skills/docs-check/SKILL.md", files)
             self.assertIn(".claude/skills/semantic-versioning/SKILL.md", files)
             self.assertIn(".claude/agents/architecture-reviewer.md", files)
@@ -31,7 +31,7 @@ class PlatformContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             files = render_project(request(Path(directory), ["codex"], mcp=True, agents=True))
             self.assertIn("AGENTS.md", files)
-            self.assertIn(".agents/skills/agentic-bootstrap/SKILL.md", files)
+            self.assertIn(".agents/skills/agentprism/SKILL.md", files)
             self.assertIn(".agents/skills/docs-check/SKILL.md", files)
             self.assertIn(".agents/skills/semantic-versioning/SKILL.md", files)
             self.assertIn(".codex/config.toml", files)
@@ -42,11 +42,11 @@ class PlatformContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             files = render_project(request(Path(directory), ["pi"], mcp=True, agents=True))
             self.assertIn("AGENTS.md", files)
-            self.assertIn(".agents/skills/agentic-bootstrap/SKILL.md", files)
+            self.assertIn(".agents/skills/agentprism/SKILL.md", files)
             self.assertIn(".agents/skills/docs-check/SKILL.md", files)
             self.assertIn(".agents/skills/semantic-versioning/SKILL.md", files)
             self.assertFalse(any(path.startswith(".pi/") for path in files))
-            config = json.loads(files[".agentic/config.json"].content)
+            config = json.loads(files[".agentprism/config.json"].content)
             self.assertTrue(config["features"]["requested"]["mcp"])
             self.assertTrue(config["features"]["requested"]["agents"])
             self.assertFalse(config["features"]["effective_by_platform"]["pi"]["mcp"])
@@ -58,7 +58,7 @@ class PlatformContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             files = render_project(request(Path(directory), ["omp"], mcp=True, agents=True))
             self.assertIn("AGENTS.md", files)
-            self.assertIn(".agents/skills/agentic-bootstrap/SKILL.md", files)
+            self.assertIn(".agents/skills/agentprism/SKILL.md", files)
             self.assertEqual(
                 [".omp/RULES.md"],
                 [path for path in files if path.startswith(".omp/")],

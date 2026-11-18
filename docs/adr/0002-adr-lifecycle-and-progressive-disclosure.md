@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-30
-- **Decision owners:** Agentic Bootstrap maintainers
+- **Decision owners:** AgentPrism maintainers
 - **Scope:** Documentation architecture
 - **Tags:** adr, context, progressive-disclosure
 - **Supersedes:** None

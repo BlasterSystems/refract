@@ -47,10 +47,10 @@ Routine refactors and local implementation details do not require ADRs.
 Run applicable commands:
 
 ```bash
-.agentic/bin/validate
+.agentprism/bin/validate
 Not configured
 Not configured
-.agentic/bin/docs-check
+.agentprism/bin/docs-check
 ```
 
 Skip commands marked “Not configured”; record the missing configuration instead of executing that text.

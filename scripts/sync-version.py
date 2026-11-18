@@ -14,7 +14,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from agentic_bootstrap import __version__  # noqa: E402
+from agentprism import __version__  # noqa: E402
 
 
 def _regular_file_stat(path: Path) -> os.stat_result:
@@ -28,17 +28,17 @@ def _regular_file_stat(path: Path) -> os.stat_result:
 
 
 def synchronize(root: Path, version: str, *, check: bool) -> int:
-    agentic = root / ".agentic"
+    metadata_dir = root / ".agentprism"
     try:
-        agentic_metadata = agentic.lstat()
+        metadata_stat = metadata_dir.lstat()
     except FileNotFoundError:
-        print(f"{agentic} does not exist", file=sys.stderr)
+        print(f"{metadata_dir} does not exist", file=sys.stderr)
         return 1
-    if not stat.S_ISDIR(agentic_metadata.st_mode):
-        print(f"{agentic} must be a real directory", file=sys.stderr)
+    if not stat.S_ISDIR(metadata_stat.st_mode):
+        print(f"{metadata_dir} must be a real directory", file=sys.stderr)
         return 1
 
-    path = agentic / "config.json"
+    path = metadata_dir / "config.json"
     try:
         original = _regular_file_stat(path)
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -61,7 +61,7 @@ def synchronize(root: Path, version: str, *, check: bool) -> int:
         with tempfile.NamedTemporaryFile(
             mode="w",
             encoding="utf-8",
-            dir=agentic,
+            dir=metadata_dir,
             prefix=f".{path.name}.",
             suffix=".tmp",
             delete=False,
@@ -94,7 +94,7 @@ def synchronize(root: Path, version: str, *, check: bool) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Synchronize repository-derived version metadata with agentic_bootstrap.__version__."
+        description="Synchronize repository-derived version metadata with agentprism.__version__."
     )
     parser.add_argument(
         "--check",

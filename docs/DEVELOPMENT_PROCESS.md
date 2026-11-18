@@ -22,7 +22,7 @@ Keep one writer for overlapping files. Preserve unmanaged files. Render JSON/TOM
 
 ```bash
 PYTHONPATH=src python3 -m unittest discover -s tests -v
-PYTHONPATH=src python3 -m agentic_bootstrap validate --target .
+PYTHONPATH=src python3 -m agentprism validate --target .
 ```
 
 When adapters change, generate temporary fixtures and run platform contract diagnostics where available.

@@ -5,7 +5,7 @@ description: Check whether code, configuration, architecture, or integration cha
 
 # Documentation Check
 
-Run `.agentic/bin/docs-check` and review its bounded heuristic report.
+Run `.agentprism/bin/docs-check` and review its bounded heuristic report.
 
 ## Review manually
 

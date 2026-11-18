@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-30
-- **Decision owners:** Agentic Bootstrap maintainers
+- **Decision owners:** AgentPrism maintainers
 - **Scope:** Security and generation
 - **Tags:** safety, manifest, integrations, retrofit
 - **Supersedes:** None
@@ -35,7 +35,7 @@ Record generated hashes, classify each operation, stage and validate output, and
 
 ## Decision
 
-Use `.agentic/manifest.json` for ownership, modes, mutability policy, and hashes. Classify operations as create, generated update, unchanged, unmanaged skip, conflict, stale-claim pruning, or obsolete removal. Abort on conflicts and revalidate stale plans immediately before apply. Mutable documentation seeds are preserved after customization while structural validation remains enforced. Make MCP, agents, GitHub workflows, scheduled audits, and hooks explicit flags.
+Use `.agentprism/manifest.json` for ownership, modes, mutability policy, and hashes. Classify operations as create, generated update, unchanged, unmanaged skip, conflict, stale-claim pruning, or obsolete removal. Abort on conflicts and revalidate stale plans immediately before apply. Mutable documentation seeds are preserved after customization while structural validation remains enforced. Make MCP, agents, GitHub workflows, scheduled audits, and hooks explicit flags.
 
 ## Consequences
 

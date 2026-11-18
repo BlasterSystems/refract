@@ -3,15 +3,15 @@
 This is the exact renderer output when all platforms and optional features are enabled. It is checked by `tests/golden/all-platforms/tree.txt`.
 
 ```text
-.agentic/bin/docs-check
-.agentic/bin/validate
-.agentic/config.json
-.agents/skills/agentic-bootstrap/SKILL.md
+.agentprism/bin/docs-check
+.agentprism/bin/validate
+.agentprism/config.json
+.agents/skills/agentprism/SKILL.md
 .agents/skills/architecture-decision/SKILL.md
 .agents/skills/docs-check/SKILL.md
 .agents/skills/semantic-versioning/SKILL.md
 .claude/agents/architecture-reviewer.md
-.claude/skills/agentic-bootstrap/SKILL.md
+.claude/skills/agentprism/SKILL.md
 .claude/skills/architecture-decision/SKILL.md
 .claude/skills/docs-check/SKILL.md
 .claude/skills/semantic-versioning/SKILL.md
@@ -40,4 +40,4 @@ setup-hooks.sh
 tasks/task-template.md
 ```
 
-`.agentic/manifest.json` is written only after a successful apply and is not renderer output. The project-scoped `agentic-bootstrap` skill is advisory and does not install a user-scoped skill or authorize apply. New projects do not receive `.codex.md` or `.claude/claude.json`.
+`.agentprism/manifest.json` is written only after a successful apply and is not renderer output. The project-scoped `agentprism` skill is advisory and does not install a user-scoped skill or authorize apply. New projects do not receive `.codex.md` or `.claude/claude.json`.

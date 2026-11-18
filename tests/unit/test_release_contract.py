@@ -13,8 +13,8 @@ import tomllib
 import unittest
 from pathlib import Path
 
-from agentic_bootstrap import __version__
-from agentic_bootstrap.manifest import Manifest
+from agentprism import __version__
+from agentprism.manifest import Manifest
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -37,7 +37,7 @@ class ReleaseContractTests(unittest.TestCase):
         changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
         self.assertIn(f"## [{__version__}]", changelog)
 
-        root_config = json.loads((ROOT / ".agentic/config.json").read_text(encoding="utf-8"))
+        root_config = json.loads((ROOT / ".agentprism/config.json").read_text(encoding="utf-8"))
         self.assertEqual(__version__, root_config["generator_version"])
         sync = ROOT / "scripts/sync-version.py"
         self.assertTrue(os.access(sync, os.X_OK))
@@ -51,11 +51,11 @@ class ReleaseContractTests(unittest.TestCase):
         for relative in ("examples/minimal", "examples/all-platforms"):
             example = ROOT / relative
             manifest = json.loads(
-                (example / ".agentic/manifest.json").read_text(encoding="utf-8")
+                (example / ".agentprism/manifest.json").read_text(encoding="utf-8")
             )
             self.assertEqual(__version__, manifest["generator_version"])
             validation = subprocess.run(
-                [str(example / ".agentic/bin/validate")], cwd=example,
+                [str(example / ".agentprism/bin/validate")], cwd=example,
                 text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 timeout=30, check=False,
             )
@@ -65,15 +65,15 @@ class ReleaseContractTests(unittest.TestCase):
         module = load_sync_version_module()
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            agentic = root / ".agentic"
-            agentic.mkdir()
-            config = agentic / "config.json"
+            metadata_dir = root / ".agentprism"
+            metadata_dir.mkdir()
+            config = metadata_dir / "config.json"
             config.write_text('{"generator_version": "0.0.0"}\n', encoding="utf-8")
             config.chmod(0o640)
 
             external = root / "external.txt"
             external.write_text("external\n", encoding="utf-8")
-            predictable = agentic / "config.json.tmp"
+            predictable = metadata_dir / "config.json.tmp"
             predictable.symlink_to(external)
 
             output = io.StringIO()
@@ -88,17 +88,17 @@ class ReleaseContractTests(unittest.TestCase):
             self.assertEqual(0o640, stat.S_IMODE(config.stat().st_mode))
             self.assertEqual("external\n", external.read_text(encoding="utf-8"))
             self.assertTrue(predictable.is_symlink())
-            self.assertEqual([], list(agentic.glob(".config.json.*.tmp")))
+            self.assertEqual([], list(metadata_dir.glob(".config.json.*.tmp")))
 
     def test_sync_version_rejects_symlink_destination(self) -> None:
         module = load_sync_version_module()
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            agentic = root / ".agentic"
-            agentic.mkdir()
+            metadata_dir = root / ".agentprism"
+            metadata_dir.mkdir()
             external = root / "external.json"
             external.write_text('{"generator_version": "0.0.0"}\n', encoding="utf-8")
-            (agentic / "config.json").symlink_to(external)
+            (metadata_dir / "config.json").symlink_to(external)
 
             output = io.StringIO()
             with contextlib.redirect_stdout(output), contextlib.redirect_stderr(output):
@@ -123,7 +123,7 @@ class ReleaseContractTests(unittest.TestCase):
 
     def test_shared_release_skill_is_identical_and_confirmation_gated(self) -> None:
         template = (
-            ROOT / "src/agentic_bootstrap/templates/core/skills/semantic-versioning/SKILL.md"
+            ROOT / "src/agentprism/templates/core/skills/semantic-versioning/SKILL.md"
         ).read_text(encoding="utf-8")
         self.assertEqual(
             template,

@@ -110,8 +110,8 @@ Add an optional provider-neutral skill and stable machine-readable protocol that
 - Final independent review found no remaining blocker and confirmed the trusted-terminal confirmation and plan-identifier binding requirements are decision-ready.
 - Human accepted ADR-0005 on 2026-07-31 and authorized implementation of all phases.
 - Full suite: `PYTHONPATH=src python3 -m unittest discover -s tests -v` — 97 tests passed, including installed Claude 2.1.170, Codex 0.145.0, and OpenCode 1.2.27 diagnostics plus Pi static/native-path contracts.
-- Validators: `PYTHONPATH=src python3 -m agentic_bootstrap validate --target .` and `.agentic/bin/validate` passed.
-- Documentation review: `.agentic/bin/docs-check` reported no heuristic gaps; manual review covered CLI/API, architecture, threat boundaries, support claims, generated output, examples, and ADR indexing.
+- Validators: `PYTHONPATH=src python3 -m agentprism validate --target .` and `.agentprism/bin/validate` passed.
+- Documentation review: `.agentprism/bin/docs-check` reported no heuristic gaps; manual review covered CLI/API, architecture, threat boundaries, support claims, generated output, examples, and ADR indexing.
 - Dry-run and fixtures: canonical all-platform dry-run, agent-guided retrofit preview/no-write smoke, direct Pi init, generated validator, and target validation passed.
 - Packaging: `python3 -m pip wheel . --no-deps` and isolated-wheel `inspect`, `init`, generated-skill presence, and `validate` smoke passed. `python3 -m build` was unavailable because the host `build` module has no executable entry point; the PEP 517 pip wheel succeeded instead.
 - Installed platform versions observed: Claude Code 2.1.170, Codex CLI 0.145.0, OpenCode 1.2.27, and Pi 0.83.0. Pi has no separate automated CLI diagnostic in this repository; its native AGENTS/skills contract is statically tested.

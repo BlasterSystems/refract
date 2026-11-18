@@ -14,7 +14,7 @@ npx skills add addyosmani/agent-skills --skill planning-and-task-breakdown
 npx skills add https://github.com/emiliosheinz/agent-skills --skill create-tickets
 ```
 
-- The installed skills are unmanaged project content: never add them to `.agentic/` ownership or commit them.
+- The installed skills are unmanaged project content: never add them to `.agentprism/` ownership or commit them.
 - A per-skill install of `planning-and-task-breakdown` omits the upstream repository's shared `references/` directory; the skill works standalone, but its definition-of-done reference is unavailable (upstream issue #361).
 - Both skills are agent-neutral markdown; no platform-specific configuration is required.
 

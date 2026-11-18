@@ -16,6 +16,6 @@ if [[ -n "$CURRENT" && "$CURRENT" != ".githooks" && "$FORCE" != true ]]; then
   exit 2
 fi
 
-chmod +x .githooks/pre-commit .agentic/bin/validate .agentic/bin/docs-check
+chmod +x .githooks/pre-commit .agentprism/bin/validate .agentprism/bin/docs-check
 git config core.hooksPath .githooks
 echo "Git hooks configured at .githooks"

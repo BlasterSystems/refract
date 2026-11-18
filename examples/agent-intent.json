@@ -1,5 +1,5 @@
 {
-  "schema": "agentic-bootstrap-intent/v1",
+  "schema": "agentprism-intent/v1",
   "project": {
     "name": "example-service",
     "description": "Processes example requests",

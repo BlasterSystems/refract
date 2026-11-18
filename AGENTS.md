@@ -1,4 +1,4 @@
-# agentic-bootstrap Project Instructions
+# agentprism Project Instructions
 
 ## Objective
 
@@ -11,7 +11,7 @@ Build and maintain a provider-neutral bootstrap that prepares greenfield and exi
 PYTHONPATH=src python3 -m unittest discover -s tests -v
 
 # Validate this repository
-PYTHONPATH=src python3 -m agentic_bootstrap validate --target .
+PYTHONPATH=src python3 -m agentprism validate --target .
 
 # Preview an all-platform project in a canonical temporary directory
 (
@@ -19,7 +19,7 @@ PYTHONPATH=src python3 -m agentic_bootstrap validate --target .
   preview_target="$(mktemp -d)"
   trap 'rmdir "$preview_target"' EXIT
   preview_target="$(cd "$preview_target" && pwd -P)"
-  scripts/agentic-bootstrap.sh init --platform all --dry-run --yes --target "$preview_target"
+  scripts/agentprism.sh init --platform all --dry-run --yes --target "$preview_target"
 )
 ```
 

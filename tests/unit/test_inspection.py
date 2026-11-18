@@ -6,8 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from agentic_bootstrap.inspection import inspect_project
-from agentic_bootstrap.paths import UnsafePathError
+from agentprism.inspection import inspect_project
+from agentprism.paths import UnsafePathError
 
 
 class InspectionTests(unittest.TestCase):
