@@ -145,7 +145,8 @@ refract init --platform all --dry-run --yes --target /path/to/project
 refract init --platform omp --yes --target /path/to/project
 
 # Add the portable core and selected adapters to an existing project
-refract retrofit --platform claude,codex,opencode,omp \
+# (--keep-existing keeps your own AGENTS.md, skills, and settings; see docs/MIGRATION.md)
+refract retrofit --platform claude,codex,opencode,omp --keep-existing \
   --dry-run --yes --target /path/to/project
 
 # Inspect bounded evidence without changing the project

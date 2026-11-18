@@ -27,3 +27,4 @@ Read only the section relevant to the current task.
 ## Evaluations
 
 - [LLM Wiki evaluation](LLM_WIKI_EVALUATION.md) — fit assessment, recommendation, and optional pilot plan.
+- [Migrating an existing agent setup](MIGRATION.md) — keep-existing retrofit, migration findings, and post-adoption steps.

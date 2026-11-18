@@ -16,6 +16,7 @@ class Action(str, Enum):
     UPDATE_GENERATED = "UPDATE_GENERATED"
     NO_CHANGE = "NO_CHANGE"
     SKIP_UNMANAGED = "SKIP_UNMANAGED"
+    SKIP_KEPT = "SKIP_KEPT"
     CONFLICT = "CONFLICT"
     REMOVE_OBSOLETE = "REMOVE_OBSOLETE"
     PRUNE_MISSING = "PRUNE_MISSING"
@@ -81,12 +82,47 @@ def _is_executable(path: Path) -> bool:
     return bool(os.lstat(path).st_mode & stat.S_IXUSR)
 
 
+def skill_group(relative: str) -> str | None:
+    """Skill name for every generated path that renders the same skill."""
+    parts = relative.split("/")
+    if len(parts) >= 4 and parts[1] == "skills" and parts[0] in {".agents", ".claude"}:
+        return parts[2]
+    if len(parts) == 3 and parts[:2] == [".opencode", "commands"] and parts[2].endswith(".md"):
+        return parts[2][:-3]
+    return None
+
+
+def _unmanaged_existing(root: Path, desired: dict[str, GeneratedFile], manifest: Manifest) -> set[str]:
+    found: set[str] = set()
+    for relative, generated in desired.items():
+        if relative in manifest.files:
+            continue
+        try:
+            path = assert_safe_target_path(root, relative)
+            mode = os.lstat(path).st_mode
+        except (UnsafePathError, OSError):
+            continue
+        if stat.S_ISREG(mode) and sha256_path(path) != sha256_bytes(generated.content):
+            found.add(relative)
+    return found
+
+
 def build_plan(
     root: Path,
     desired: dict[str, GeneratedFile],
     *,
     remove_obsolete: bool = False,
+    keep_existing: bool = False,
 ) -> Plan:
+    """Plan an ownership-aware write.
+
+    With ``keep_existing``, an unmanaged file at a generated path is kept as
+    user-owned (SKIP_UNMANAGED) instead of blocking the apply as a conflict.
+    Kept skills stay consistent across platforms: the other generated copies
+    of a kept skill are not created (SKIP_KEPT), so every agent sees one
+    version. Modified refract-owned files, symlinks, and non-regular files
+    still conflict.
+    """
     root = Path(os.path.normpath(str(root.expanduser().absolute())))
     operations: list[Operation] = []
     root_existed = root.exists() or root.is_symlink()
@@ -124,6 +160,23 @@ def build_plan(
         except (UnsafePathError, ManifestError, OSError) as exc:
             manifest_error = str(exc)
             operations.append(Operation(MANIFEST_PATH, Action.CONFLICT, detail=manifest_error))
+
+    kept: set[str] = set()
+    if keep_existing and not manifest_error:
+        kept = _unmanaged_existing(root, normalized_desired, manifest)
+        kept_skills = {group for group in map(skill_group, kept) if group}
+        for relative in sorted(normalized_desired):
+            if relative in kept or skill_group(relative) not in kept_skills or relative in manifest.files:
+                continue
+            if not _exists(root / relative):
+                operations.append(
+                    Operation(
+                        relative,
+                        Action.SKIP_KEPT,
+                        normalized_desired.pop(relative),
+                        f"not generated: the project keeps its own '{skill_group(relative)}' skill",
+                    )
+                )
 
     for relative, generated in sorted(normalized_desired.items()):
         try:
@@ -221,8 +274,26 @@ def build_plan(
                 )
             else:
                 operations.append(Operation(relative, Action.CONFLICT, generated, "generated file content or mode was modified"))
+        elif relative in kept:
+            operations.append(
+                Operation(
+                    relative,
+                    Action.SKIP_UNMANAGED,
+                    generated,
+                    "existing unmanaged file kept as project-owned (--keep-existing)",
+                    expected_hash=current_hash,
+                    expected_executable=_is_executable(path),
+                )
+            )
         else:
-            operations.append(Operation(relative, Action.CONFLICT, generated, "unmanaged destination exists"))
+            operations.append(
+                Operation(
+                    relative,
+                    Action.CONFLICT,
+                    generated,
+                    "unmanaged destination exists (use --keep-existing to keep it)",
+                )
+            )
 
     if not manifest_error:
         for relative in sorted(set(manifest.files) - set(normalized_desired)):

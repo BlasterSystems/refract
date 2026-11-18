@@ -311,7 +311,7 @@ def _resulting_ownership(plan: Plan, desired: Mapping[str, GeneratedFile], remov
     by_path = {operation.path: operation for operation in plan.operations}
     for relative, generated in sorted(desired.items()):
         operation = by_path.get(relative)
-        if operation is None or operation.action in {Action.CONFLICT, Action.SKIP_UNMANAGED}:
+        if operation is None or operation.action in {Action.CONFLICT, Action.SKIP_UNMANAGED, Action.SKIP_KEPT}:
             continue
         if operation.action == Action.NO_CHANGE and operation.expected_hash:
             digest = operation.expected_hash
@@ -337,6 +337,7 @@ def plan_document(
     plan: Plan,
     *,
     remove_obsolete: bool,
+    keep_existing: bool = False,
 ) -> dict[str, Any]:
     root = Path(os.path.normpath(str(plan.root.expanduser().absolute())))
     desired_entries = []
@@ -376,6 +377,7 @@ def plan_document(
         "operations": operations,
         "resulting_ownership": _resulting_ownership(plan, desired, remove_obsolete),
         "remove_obsolete": remove_obsolete,
+        "keep_existing": keep_existing,
         "manifest_claim": {
             "present": plan.manifest_hash is not None,
             "sha256": plan.manifest_hash,
