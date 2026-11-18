@@ -15,6 +15,7 @@ Read this index first and load only records relevant to the current scope.
 | [ADR-0009](0009-pre-exposure-repository-hardening.md) | Proposed | Repository operations | security, ci, supply-chain, dependencies | Harden the public repository before increased exposure: security policy, SHA-pinned CI, Dependabot, and local tool state hygiene | — |
 | [ADR-0010](0010-native-capability-parity.md) | Accepted | Generator architecture and platform support | platforms, adapters, parity, omp, hooks, permissions, scope | Render every capability natively on Claude, Codex, OpenCode, and omp from one registry; project-scope guard; deprecate Pi | ADR-0008 |
 | [ADR-0011](0011-portable-agentic-workflow-skills.md) | Accepted | Generated portable core | skills, workflow, deployment, process, portability | Ship generic research, implement, quality, commit, and tag-driven deploy skills with a project-owned deployment seed | — |
+| [ADR-0012](0012-keep-existing-retrofit-mode.md) | Accepted | Retrofit planning and ownership | retrofit, ownership, migration, skills, safety | Opt-in --keep-existing keeps unmanaged files and whole skill groups; retrofit reports migration findings | — |
 
 Valid statuses: `Proposed`, `Accepted`, `Rejected`, `Deprecated`, `Superseded`.
 

@@ -10,6 +10,7 @@ from typing import Any
 from . import __version__
 from .detection import detect_project
 from .capabilities import capability_warnings
+from .migration import existing_setup_findings, plan_findings
 from .facade import PreparedBootstrap, apply_bootstrap, inspect_project, prepare_bootstrap
 from .inspection import DEFAULT_MAX_BYTES, DEFAULT_MAX_FILES
 from .paths import project_scope_problems
@@ -283,7 +284,7 @@ def _display_agent_review(prepared: PreparedBootstrap, warnings: list[str]) -> N
     if claim["present"]:
         print("WARNING: The existing manifest is a repository-supplied, unauthenticated ownership claim.")
     for warning in warnings:
-        print(f"WARNING: {warning}")
+        print(f"WARNING: {_terminal_safe_text(warning)}")
     diffs = prepared.review_diffs(include_existing_content=True)
     if diffs:
         print("Reviewable generated-file diffs:")
@@ -329,9 +330,11 @@ def _run_generation(args: argparse.Namespace) -> int:
     if json_mode and not (args.yes or args.dry_run or args.agent_guided):
         raise ValueError("--plan-format json requires --yes, --dry-run, or --agent-guided")
 
-    prepared = prepare_bootstrap(request, remove_obsolete=args.remove_obsolete)
+    prepared = prepare_bootstrap(
+        request, remove_obsolete=args.remove_obsolete, keep_existing=args.keep_existing
+    )
     plan = prepared.plan
-    warnings = _capability_warnings(request)
+    warnings = _capability_warnings(request) + plan_findings(plan) + existing_setup_findings(request.target)
 
     if args.agent_guided and args.expected_plan and prepared.plan_id != args.expected_plan:
         raise ValueError(
@@ -344,7 +347,7 @@ def _run_generation(args: argparse.Namespace) -> int:
         else:
             print(_terminal_safe_text(plan.format()))
             for warning in warnings:
-                print(f"WARNING: {warning}", file=sys.stderr)
+                print(f"WARNING: {_terminal_safe_text(warning)}", file=sys.stderr)
     if plan.conflicts:
         if json_mode:
             print(json.dumps(_payload(prepared, args, status="conflict", applied=False, warnings=warnings), indent=2))
@@ -524,6 +527,11 @@ def _add_generation_arguments(parser: argparse.ArgumentParser) -> None:
         "--yes",
         action="store_true",
         help="accept detected/default answers and apply without prompting in direct trusted-caller mode",
+    )
+    parser.add_argument(
+        "--keep-existing",
+        action="store_true",
+        help="keep existing unmanaged files at generated paths as project-owned instead of stopping on conflicts",
     )
     parser.add_argument(
         "--remove-obsolete",

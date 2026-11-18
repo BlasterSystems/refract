@@ -90,7 +90,7 @@ class ProtocolTests(unittest.TestCase):
     def test_public_facade_does_not_accept_desired_file_maps(self) -> None:
         self.assertIs(refract.prepare_bootstrap, prepare_bootstrap)
         parameters = inspect.signature(prepare_bootstrap).parameters
-        self.assertEqual({"request", "remove_obsolete"}, set(parameters))
+        self.assertEqual({"request", "remove_obsolete", "keep_existing"}, set(parameters))
 
     def test_plan_identifier_is_deterministic_and_binds_root_and_owned_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

@@ -29,6 +29,7 @@ class PreparedBootstrap:
     plan_id: str
     artifact: PlanArtifact
     remove_obsolete: bool = False
+    keep_existing: bool = False
 
     def review_diffs(self, *, include_existing_content: bool = False) -> dict[str, str]:
         """Return diffs; repository-owned before-content requires trusted-terminal consent."""
@@ -115,13 +116,17 @@ class PreparedBootstrap:
         return payload
 
 
-def prepare_bootstrap(request: BootstrapRequest, *, remove_obsolete: bool = False) -> PreparedBootstrap:
+def prepare_bootstrap(
+    request: BootstrapRequest, *, remove_obsolete: bool = False, keep_existing: bool = False
+) -> PreparedBootstrap:
     desired = render_project(request)
     errors = validate_rendered(desired)
     if errors:
         raise ValueError("rendered output is invalid: " + "; ".join(errors))
-    plan = build_plan(request.target, desired, remove_obsolete=remove_obsolete)
-    document = plan_document(request, desired, plan, remove_obsolete=remove_obsolete)
+    plan = build_plan(request.target, desired, remove_obsolete=remove_obsolete, keep_existing=keep_existing)
+    document = plan_document(
+        request, desired, plan, remove_obsolete=remove_obsolete, keep_existing=keep_existing
+    )
     artifact = PlanArtifact.create(document)
     return PreparedBootstrap(
         request=request,
@@ -131,6 +136,7 @@ def prepare_bootstrap(request: BootstrapRequest, *, remove_obsolete: bool = Fals
         plan_id=artifact.identifier,
         artifact=artifact,
         remove_obsolete=remove_obsolete,
+        keep_existing=keep_existing,
     )
 
 
@@ -138,7 +144,11 @@ def apply_bootstrap(prepared: PreparedBootstrap, *, expected_plan_id: str | None
     """Recompute trusted rendering and return a schema-versioned apply result."""
     expected = prepared.plan_id if expected_plan_id is None else expected_plan_id
     try:
-        fresh = prepare_bootstrap(prepared.request, remove_obsolete=prepared.remove_obsolete)
+        fresh = prepare_bootstrap(
+            prepared.request,
+            remove_obsolete=prepared.remove_obsolete,
+            keep_existing=prepared.keep_existing,
+        )
         if fresh.plan_id != expected:
             raise ValueError(f"plan identifier mismatch: expected {expected}, recomputed {fresh.plan_id}")
         apply_plan(

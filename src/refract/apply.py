@@ -106,7 +106,7 @@ def _preflight(plan: Plan, remove_obsolete: bool) -> None:
             raise ApplyError("stale plan: ownership manifest changed after planning")
 
     for operation in plan.operations:
-        if operation.action in {Action.MANIFEST_CREATE, Action.MANIFEST_UPDATE, Action.CONFLICT}:
+        if operation.action in {Action.MANIFEST_CREATE, Action.MANIFEST_UPDATE, Action.CONFLICT, Action.SKIP_KEPT}:
             continue
         if operation.path == MANIFEST_PATH:
             continue

@@ -86,4 +86,4 @@ tasks/task-template.md
 
 ## Retrofit conflicts
 
-A generated path that already holds an unmanaged file, such as a hand-written skill named `research` or `commit`, an existing `docs/DEPLOYMENT.md`, or (with `--github`) an existing `.github/PULL_REQUEST_TEMPLATE.md`, is reported as a conflict. The apply then stops without changing anything; refract never overwrites it. A keep-existing retrofit mode is planned to resolve such paths individually (ADR-0011).
+A generated path that already holds an unmanaged file, such as a hand-written skill named `research` or `commit`, an existing `docs/DEPLOYMENT.md`, or (with `--github`) an existing `.github/PULL_REQUEST_TEMPLATE.md`, is reported as a conflict. The apply then stops without changing anything; refract never overwrites it. Run the retrofit with `--keep-existing` to keep such files as project-owned. Kept skills replace refract's copies on every platform (ADR-0012, `docs/MIGRATION.md`).
