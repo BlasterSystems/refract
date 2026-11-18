@@ -4,10 +4,35 @@
   "platforms": [
     "pi"
   ],
-  "updated_at": "2026-11-18T21:56:18+00:00",
+  "updated_at": "2026-11-18T22:11:55+00:00",
   "files": {
     ".agents/skills/architecture-decision/SKILL.md": {
       "sha256": "7bd5fe23cdbf5d058e1e645d33b179ebf92571b7850e2c98c53aa635028f5b2e",
+      "executable": false,
+      "mutable": false
+    },
+    ".agents/skills/code-review/SKILL.md": {
+      "sha256": "4c83f5e1fca658ef0bec6da08db8e41e2e9f58141a846f57f35afe9947a4ab27",
+      "executable": false,
+      "mutable": false
+    },
+    ".agents/skills/commit/SKILL.md": {
+      "sha256": "0b2e7f521881b2b3e6b0cfe5ef478479a32051445368bcc40ac94e506342ff42",
+      "executable": false,
+      "mutable": false
+    },
+    ".agents/skills/confidence-check/SKILL.md": {
+      "sha256": "c6f55dd9671acc2435ef7bcddd88ff560e6959a42d0d5f258280dc718c0b1b9e",
+      "executable": false,
+      "mutable": false
+    },
+    ".agents/skills/deploy-dev/SKILL.md": {
+      "sha256": "7c2213b695469b5ee7ee02ea42bb1870cd4107def964d65fd085cc7311d324fc",
+      "executable": false,
+      "mutable": false
+    },
+    ".agents/skills/deploy-prd/SKILL.md": {
+      "sha256": "942e4464e94156e4fc908c50b147197ed1e64465180625821a7f38eb6485c79c",
       "executable": false,
       "mutable": false
     },
@@ -16,8 +41,28 @@
       "executable": false,
       "mutable": false
     },
+    ".agents/skills/hotfix/SKILL.md": {
+      "sha256": "577fdbaab80988dece33f88a27b5eef296bf276a652581c0dca821b6798bd363",
+      "executable": false,
+      "mutable": false
+    },
+    ".agents/skills/implement/SKILL.md": {
+      "sha256": "607f6f0cb1b26711a5ab9f5d24c7d92b27be8eddc8d575bfc9d24bfb21fc16fc",
+      "executable": false,
+      "mutable": false
+    },
     ".agents/skills/refract/SKILL.md": {
       "sha256": "10cf044272179b39196f5000222ea5af331f26583f7ad869a29cdcd4e0c459e1",
+      "executable": false,
+      "mutable": false
+    },
+    ".agents/skills/research/SKILL.md": {
+      "sha256": "64c1e8bd2a78ce17df6162e45f409ef8adadac07ef694ac44d2712c7e13af25a",
+      "executable": false,
+      "mutable": false
+    },
+    ".agents/skills/security-check/SKILL.md": {
+      "sha256": "017e3e00482da409957457c54e25bf47d78dc9e76446c16d5bf8d20e99c404b3",
       "executable": false,
       "mutable": false
     },
@@ -42,7 +87,7 @@
       "mutable": false
     },
     "AGENTS.md": {
-      "sha256": "d35810e10a6227ada70a3365bd07f75f2911dbc49f08a96dc329d5274258c12a",
+      "sha256": "839e7721178ca4c45616bf197c4034644ffe26ef20a3051ace0a211509017eaf",
       "executable": false,
       "mutable": true
     },
@@ -56,8 +101,13 @@
       "executable": false,
       "mutable": true
     },
+    "docs/DEPLOYMENT.md": {
+      "sha256": "ea95738fa8b52a550f6e9c9790f6d0465cff41ed1c8a5cfa0492719d8997b8e7",
+      "executable": false,
+      "mutable": true
+    },
     "docs/DEVELOPMENT_PROCESS.md": {
-      "sha256": "2eec083d3d7381dd38895534077c60f968e2c42d04df0576c839066045d5725c",
+      "sha256": "dcece77ba958c3151e122b93e0c8c3bdf56c7ee69d25eb66a62f5f2d8ab2e5ac",
       "executable": false,
       "mutable": true
     },
@@ -82,7 +132,7 @@
       "mutable": true
     },
     "docs/TASK_BREAKDOWN.md": {
-      "sha256": "d147129ca2db78986f397e2028478e05572c11e3cb25fae14a279390e4f76cb9",
+      "sha256": "74a293c8e1f01bd1f8715ff9817f09c8c72fa48080b2a44732efd30cdf61e837",
       "executable": false,
       "mutable": true
     },
@@ -96,8 +146,13 @@
       "executable": false,
       "mutable": true
     },
+    "docs/branches/README.md": {
+      "sha256": "258542f720999b770dd00a07a1090ba0e0f7a72f1f3cd2f9acac0b131bd8ff0c",
+      "executable": false,
+      "mutable": true
+    },
     "tasks/task-template.md": {
-      "sha256": "c8500ba2a29407627df2dbe18ceb894796c457b7f65a9a58fb66ea24508bab0b",
+      "sha256": "5abed133d5d8d25a951a7007b6df8f820238db772548ced17b4a513d7dbbcd7d",
       "executable": false,
       "mutable": true
     }

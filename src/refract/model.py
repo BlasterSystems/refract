@@ -8,7 +8,22 @@ SUPPORTED_PLATFORMS = ("claude", "codex", "pi", "opencode", "omp")
 
 # Portable skills rendered to .agents/skills and mirrored where a platform
 # does not read that directory natively.
-CORE_SKILLS = ("refract", "architecture-decision", "docs-check", "semantic-versioning")
+CORE_SKILLS = (
+    "refract",
+    "architecture-decision",
+    "docs-check",
+    "semantic-versioning",
+    # Agentic workflow (docs/DEVELOPMENT_PROCESS.md, ADR-0011).
+    "research",
+    "confidence-check",
+    "implement",
+    "security-check",
+    "code-review",
+    "commit",
+    "deploy-dev",
+    "deploy-prd",
+    "hotfix",
+)
 
 
 @dataclass(frozen=True)

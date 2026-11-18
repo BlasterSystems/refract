@@ -115,6 +115,19 @@ Restrictive permission policies are opt-in (`--permissions`). refract writes onl
 
 See the [platform support matrix](docs/PLATFORM_SUPPORT.md) for verified versions and support levels.
 
+## Agentic workflow skills
+
+Every generated project ships a portable, provider-neutral skill chain (ADR-0011), invocable by name on each supported agent:
+
+| Stage | Skills |
+|---|---|
+| Plan before code | `research` (evidence-grounded plan in `tasks/`; tickets only after approval), `confidence-check` |
+| Build one ticket | `implement` (task file, branch, tests, validation, pull request; never deploys) |
+| Quality gates | `security-check`, `code-review`, `commit` (conventional commit plus a living `docs/branches/` document) |
+| Ship | `deploy-dev`, `deploy-prd`, `hotfix`: tag-driven, explicit-request-only, and inactive until `docs/DEPLOYMENT.md` is configured |
+
+The skills contain no project keys, hosts, languages, or tracker APIs. Project specifics live in project-owned seeds (`docs/DEPLOYMENT.md`, `docs/DEVELOPMENT_PROCESS.md`, `tasks/task-template.md`), which refract never overwrites after you edit them.
+
 ## Quick start
 
 Requires Python 3.11+.

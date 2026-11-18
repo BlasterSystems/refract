@@ -9,6 +9,7 @@ import unittest
 from pathlib import Path
 
 from refract.apply import apply_plan
+from refract.model import CORE_SKILLS
 from refract.planner import build_plan
 from refract.renderer import render_project
 from tests.helpers import request
@@ -101,10 +102,7 @@ class OpenCodeContractTests(unittest.TestCase):
             skills = {
                 path.parent.name for path in (root / ".agents/skills").glob("*/SKILL.md")
             }
-            self.assertEqual(
-                {"refract", "architecture-decision", "docs-check", "semantic-versioning"},
-                skills,
-            )
+            self.assertEqual(set(CORE_SKILLS), skills)
 
 
 if __name__ == "__main__":

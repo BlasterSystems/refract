@@ -28,8 +28,23 @@ Describe the required outcome.
 
 - Item
 
+## Implementation plan
+
+### Files to modify or create
+
+- `path` - change
+
+### Key changes
+
+- Change
+
+### Test approach
+
+- Test
+
 ## Plan
 
+- [ ] Run the confidence-check readiness gate
 - [ ] Understand requirements and inspect relevant code
 - [ ] Confirm architecture impact
 - [ ] Implement the smallest complete change
@@ -43,6 +58,13 @@ Describe the required outcome.
 - **Relevant ADRs:** None
 - **Proposed ADR:** None
 
+## Deployment
+
+- **Deploy-affecting:** Yes / No (see `docs/DEPLOYMENT.md`)
+- **Artifact invariant:** None
+- **Functional probe:** None
+- **Rollback:** None
+
 ## Validation evidence
 
 - Configuration validation:
@@ -53,6 +75,16 @@ Describe the required outcome.
 ## Review
 
 - Correctness:
-- Security:
-- Compatibility:
+- Security (security-check result):
+- Data isolation and authorization:
+- Compatibility and migrations:
+- Tests:
+- Documentation and ADRs:
 - Residual risks:
+
+## Completion summary
+
+- **Technical decisions:**
+- **Known limitations:**
+- **Deployment notes:**
+- **Follow-ups:**
