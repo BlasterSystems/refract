@@ -123,7 +123,7 @@ Every generated project ships a portable, provider-neutral skill chain (ADR-0011
 |---|---|
 | Plan before code | `research` (evidence-grounded plan in `tasks/`; tickets only after approval), `confidence-check` |
 | Build one ticket | `implement` (task file, branch, tests, validation, pull request; never deploys) |
-| Quality gates | `security-check`, `code-review`, `commit` (conventional commit plus a living `docs/branches/` document) |
+| Quality gates | `security-check`, `quality-review`, `commit` (conventional commit plus a living `docs/branches/` document) |
 | Ship | `deploy-dev`, `deploy-prd`, `hotfix`: tag-driven, explicit-request-only, and inactive until `docs/DEPLOYMENT.md` is configured |
 
 The skills contain no project keys, hosts, languages, or tracker APIs. Project specifics live in project-owned seeds (`docs/DEPLOYMENT.md`, `docs/DEVELOPMENT_PROCESS.md`, `tasks/task-template.md`), which refract never overwrites after you edit them.

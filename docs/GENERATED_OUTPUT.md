@@ -4,7 +4,6 @@ This is the exact renderer output when all platforms and optional features are e
 
 ```text
 .agents/skills/architecture-decision/SKILL.md
-.agents/skills/code-review/SKILL.md
 .agents/skills/commit/SKILL.md
 .agents/skills/confidence-check/SKILL.md
 .agents/skills/deploy-dev/SKILL.md
@@ -12,6 +11,7 @@ This is the exact renderer output when all platforms and optional features are e
 .agents/skills/docs-check/SKILL.md
 .agents/skills/hotfix/SKILL.md
 .agents/skills/implement/SKILL.md
+.agents/skills/quality-review/SKILL.md
 .agents/skills/refract/SKILL.md
 .agents/skills/research/SKILL.md
 .agents/skills/security-check/SKILL.md
@@ -19,7 +19,6 @@ This is the exact renderer output when all platforms and optional features are e
 .claude/agents/architecture-reviewer.md
 .claude/settings.json
 .claude/skills/architecture-decision/SKILL.md
-.claude/skills/code-review/SKILL.md
 .claude/skills/commit/SKILL.md
 .claude/skills/confidence-check/SKILL.md
 .claude/skills/deploy-dev/SKILL.md
@@ -27,6 +26,7 @@ This is the exact renderer output when all platforms and optional features are e
 .claude/skills/docs-check/SKILL.md
 .claude/skills/hotfix/SKILL.md
 .claude/skills/implement/SKILL.md
+.claude/skills/quality-review/SKILL.md
 .claude/skills/refract/SKILL.md
 .claude/skills/research/SKILL.md
 .claude/skills/security-check/SKILL.md
@@ -45,7 +45,6 @@ This is the exact renderer output when all platforms and optional features are e
 .omp/settings.json
 .opencode/agents/architecture-reviewer.md
 .opencode/commands/architecture-decision.md
-.opencode/commands/code-review.md
 .opencode/commands/commit.md
 .opencode/commands/confidence-check.md
 .opencode/commands/deploy-dev.md
@@ -53,12 +52,14 @@ This is the exact renderer output when all platforms and optional features are e
 .opencode/commands/docs-check.md
 .opencode/commands/hotfix.md
 .opencode/commands/implement.md
+.opencode/commands/quality-review.md
 .opencode/commands/refract.md
 .opencode/commands/research.md
 .opencode/commands/security-check.md
 .opencode/commands/semantic-versioning.md
 .opencode/plugins/refract-check.js
 .refract/bin/agent-check
+.refract/bin/deploy-ready
 .refract/bin/docs-check
 .refract/bin/validate
 .refract/config.json
@@ -82,3 +83,7 @@ tasks/task-template.md
 ```
 
 `.refract/manifest.json` is written only after a successful apply and is not renderer output. The project-scoped `refract` skill is advisory and does not install a user-scoped skill or authorize apply. New projects do not receive `.codex.md` or `.claude/claude.json`.
+
+## Retrofit conflicts
+
+A generated path that already holds an unmanaged file, such as a hand-written skill named `research` or `commit`, an existing `docs/DEPLOYMENT.md`, or (with `--github`) an existing `.github/PULL_REQUEST_TEMPLATE.md`, is reported as a conflict. The apply then stops without changing anything; refract never overwrites it. A keep-existing retrofit mode is planned to resolve such paths individually (ADR-0011).

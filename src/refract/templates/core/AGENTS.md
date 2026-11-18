@@ -23,7 +23,7 @@ Treat values marked “Not configured” or “Not detected” as unknown. Inspe
 7. Never expose credentials or weaken security controls to make a task pass.
 8. For agent-guided bootstrap maintenance, read `docs/AGENT_GUIDED.md`; agents may preview but must hand apply to a human terminal.
 9. For versions, releases, or tags, read `docs/RELEASING.md` and use the `semantic-versioning` skill.
-10. Follow the skill workflow in `docs/DEVELOPMENT_PROCESS.md`: `research` before code for new features, `implement` for one ticket, `security-check` and `code-review` before merge, `commit` for commits. Deploy only through `deploy-dev` and `deploy-prd`, and only when asked.
+10. Follow the skill workflow in `docs/DEVELOPMENT_PROCESS.md`: `research` before code for new features, `implement` for one ticket, `security-check` and `quality-review` before merge, `commit` for commits. Deploy only through `deploy-dev` and `deploy-prd`, and only when asked.
 11. Install skills, agents, hooks, and settings for this project inside this repository only, never in user-level or global agent directories.
 
 ## Progressive Disclosure

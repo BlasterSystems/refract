@@ -95,7 +95,7 @@ def render_project(request: BootstrapRequest, template_root: Path | None = None)
             target, templates.render(f"core/skills/{skill}/SKILL.md", values)
         )
 
-    for name in ("validate", "docs-check"):
+    for name in ("validate", "docs-check", "deploy-ready"):
         target = f".refract/bin/{name}"
         files[target] = GeneratedFile.text(
             target, templates.render(f"core/bin/{name}.py", values), executable=True

@@ -18,7 +18,7 @@ CORE_SKILLS = (
     "confidence-check",
     "implement",
     "security-check",
-    "code-review",
+    "quality-review",
     "commit",
     "deploy-dev",
     "deploy-prd",

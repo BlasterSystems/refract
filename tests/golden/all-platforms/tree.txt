@@ -1,5 +1,4 @@
 .agents/skills/architecture-decision/SKILL.md
-.agents/skills/code-review/SKILL.md
 .agents/skills/commit/SKILL.md
 .agents/skills/confidence-check/SKILL.md
 .agents/skills/deploy-dev/SKILL.md
@@ -7,6 +6,7 @@
 .agents/skills/docs-check/SKILL.md
 .agents/skills/hotfix/SKILL.md
 .agents/skills/implement/SKILL.md
+.agents/skills/quality-review/SKILL.md
 .agents/skills/refract/SKILL.md
 .agents/skills/research/SKILL.md
 .agents/skills/security-check/SKILL.md
@@ -14,7 +14,6 @@
 .claude/agents/architecture-reviewer.md
 .claude/settings.json
 .claude/skills/architecture-decision/SKILL.md
-.claude/skills/code-review/SKILL.md
 .claude/skills/commit/SKILL.md
 .claude/skills/confidence-check/SKILL.md
 .claude/skills/deploy-dev/SKILL.md
@@ -22,6 +21,7 @@
 .claude/skills/docs-check/SKILL.md
 .claude/skills/hotfix/SKILL.md
 .claude/skills/implement/SKILL.md
+.claude/skills/quality-review/SKILL.md
 .claude/skills/refract/SKILL.md
 .claude/skills/research/SKILL.md
 .claude/skills/security-check/SKILL.md
@@ -40,7 +40,6 @@
 .omp/settings.json
 .opencode/agents/architecture-reviewer.md
 .opencode/commands/architecture-decision.md
-.opencode/commands/code-review.md
 .opencode/commands/commit.md
 .opencode/commands/confidence-check.md
 .opencode/commands/deploy-dev.md
@@ -48,12 +47,14 @@
 .opencode/commands/docs-check.md
 .opencode/commands/hotfix.md
 .opencode/commands/implement.md
+.opencode/commands/quality-review.md
 .opencode/commands/refract.md
 .opencode/commands/research.md
 .opencode/commands/security-check.md
 .opencode/commands/semantic-versioning.md
 .opencode/plugins/refract-check.js
 .refract/bin/agent-check
+.refract/bin/deploy-ready
 .refract/bin/docs-check
 .refract/bin/validate
 .refract/config.json

@@ -14,14 +14,14 @@ The portable project skills implement this process. Invoke them by name on any s
 | Readiness | `confidence-check` | Readiness result in the task file |
 | One ticket | `implement` | Task file, branch, tested change, pull request |
 | Security | `security-check` | CRITICAL / WARNING / INFO report |
-| Review | `code-review` | Reuse, quality, and efficiency findings |
+| Review | `quality-review` | Reuse, quality, and efficiency findings |
 | Commit | `commit` | Conventional commit and updated branch document |
 | Deploy | `deploy-dev`, `deploy-prd` | Tag, pipeline result, verification evidence |
 | Emergency | `hotfix` | Minimal fix through the full checks |
 | Decisions | `architecture-decision` | Indexed ADR |
 | Release version | `semantic-versioning` | Release commit and annotated tag |
 
-Deploy skills act only on explicit request and only after `docs/DEPLOYMENT.md` is configured.
+Deploy skills act only on explicit request and only after `.refract/bin/deploy-ready` passes.
 
 ## 1. Understand
 

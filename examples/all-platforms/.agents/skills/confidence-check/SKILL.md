@@ -5,7 +5,7 @@ description: Readiness gate before implementation - confirm requirements, blast 
 
 # Confidence Check
 
-Run before implementation starts, and whenever scope changes mid-task. Record the result in the task file.
+Run before implementation starts, and whenever scope changes mid-task. Report the result; the calling workflow (for example `implement`) records it in the task file.
 
 ## Checklist
 
@@ -20,7 +20,7 @@ Run before implementation starts, and whenever scope changes mid-task. Record th
 ## Red flags: pause and ask
 
 - Unclear acceptance criteria.
-- More than about five files touched: consider splitting into smaller pull requests.
+- A change that spans several independent concerns: propose splitting it into smaller pull requests.
 - No obvious test strategy.
 - A scoped query or write without its isolation filter: stop and flag it immediately.
 - A durable or cross-cutting decision without an ADR.

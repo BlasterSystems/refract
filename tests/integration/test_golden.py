@@ -75,6 +75,7 @@ class GoldenTreeTests(unittest.TestCase):
                 ".refract/bin/docs-check",
                 ".refract/bin/validate",
                 ".refract/bin/agent-check",
+                ".refract/bin/deploy-ready",
                 "setup-hooks.sh",
             }
             for path, generated in files.items():

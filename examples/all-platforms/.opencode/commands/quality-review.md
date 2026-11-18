@@ -3,6 +3,6 @@ description: "Review a diff through three lenses - reuse, quality, and efficienc
 agent: plan
 ---
 
-Load and follow the `code-review` skill for this request.
+Load and follow the `quality-review` skill for this request.
 
 $ARGUMENTS

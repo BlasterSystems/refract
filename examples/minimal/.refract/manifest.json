@@ -4,35 +4,30 @@
   "platforms": [
     "pi"
   ],
-  "updated_at": "2026-11-18T22:11:55+00:00",
+  "updated_at": "2026-11-18T22:17:48+00:00",
   "files": {
     ".agents/skills/architecture-decision/SKILL.md": {
       "sha256": "7bd5fe23cdbf5d058e1e645d33b179ebf92571b7850e2c98c53aa635028f5b2e",
       "executable": false,
       "mutable": false
     },
-    ".agents/skills/code-review/SKILL.md": {
-      "sha256": "4c83f5e1fca658ef0bec6da08db8e41e2e9f58141a846f57f35afe9947a4ab27",
-      "executable": false,
-      "mutable": false
-    },
     ".agents/skills/commit/SKILL.md": {
-      "sha256": "0b2e7f521881b2b3e6b0cfe5ef478479a32051445368bcc40ac94e506342ff42",
+      "sha256": "5449d4390e7a837ad89f4ec5c26fb67b6170e5b2bac6cf12a13ff230a0c87644",
       "executable": false,
       "mutable": false
     },
     ".agents/skills/confidence-check/SKILL.md": {
-      "sha256": "c6f55dd9671acc2435ef7bcddd88ff560e6959a42d0d5f258280dc718c0b1b9e",
+      "sha256": "c0699c1314eb574f30b1fc1714723083cc0f02986c891aac5ffa560aa2713313",
       "executable": false,
       "mutable": false
     },
     ".agents/skills/deploy-dev/SKILL.md": {
-      "sha256": "7c2213b695469b5ee7ee02ea42bb1870cd4107def964d65fd085cc7311d324fc",
+      "sha256": "26a125554a7f4d747be8f1ae8ddd4191fcbe70c9bd9c2020e1dacd5b7ad96f82",
       "executable": false,
       "mutable": false
     },
     ".agents/skills/deploy-prd/SKILL.md": {
-      "sha256": "942e4464e94156e4fc908c50b147197ed1e64465180625821a7f38eb6485c79c",
+      "sha256": "f473260cbba4e355c8a668698e5092115718f551d9f9325ff6e8698ad08f2cbe",
       "executable": false,
       "mutable": false
     },
@@ -42,12 +37,17 @@
       "mutable": false
     },
     ".agents/skills/hotfix/SKILL.md": {
-      "sha256": "577fdbaab80988dece33f88a27b5eef296bf276a652581c0dca821b6798bd363",
+      "sha256": "452223c77ad4189bdb762f14befb2eeb8224471ed50fbedea9f98ad87174e4f1",
       "executable": false,
       "mutable": false
     },
     ".agents/skills/implement/SKILL.md": {
-      "sha256": "607f6f0cb1b26711a5ab9f5d24c7d92b27be8eddc8d575bfc9d24bfb21fc16fc",
+      "sha256": "8dd837bc1769629d2e4a882365b701dc8d3795f02613185a610ae6f808d1b3c1",
+      "executable": false,
+      "mutable": false
+    },
+    ".agents/skills/quality-review/SKILL.md": {
+      "sha256": "441349b4cee64459dc165ccbe2921bedf56dd2ac9dd1d1cf31d44308e03ec3d2",
       "executable": false,
       "mutable": false
     },
@@ -57,7 +57,7 @@
       "mutable": false
     },
     ".agents/skills/research/SKILL.md": {
-      "sha256": "64c1e8bd2a78ce17df6162e45f409ef8adadac07ef694ac44d2712c7e13af25a",
+      "sha256": "a632528f6ca750442661b03eced5f5541d2cdfd0c72f8d508e8a6c27012d8b1e",
       "executable": false,
       "mutable": false
     },
@@ -69,6 +69,11 @@
     ".agents/skills/semantic-versioning/SKILL.md": {
       "sha256": "6e45cb6f4cced3a19c3f1ba2765491643c0e4d53ebe18ae81a0a90ea5cddb67b",
       "executable": false,
+      "mutable": false
+    },
+    ".refract/bin/deploy-ready": {
+      "sha256": "be8d3398c575c9fcb9592e2d8215cec626725fc9169a5f4eadac18cc8bb48857",
+      "executable": true,
       "mutable": false
     },
     ".refract/bin/docs-check": {
@@ -87,7 +92,7 @@
       "mutable": false
     },
     "AGENTS.md": {
-      "sha256": "839e7721178ca4c45616bf197c4034644ffe26ef20a3051ace0a211509017eaf",
+      "sha256": "61e88379cc7ff501d2d7e5b7fb6df054894d3d158a65bf63c156cecf2dadbf30",
       "executable": false,
       "mutable": true
     },
@@ -102,12 +107,12 @@
       "mutable": true
     },
     "docs/DEPLOYMENT.md": {
-      "sha256": "ea95738fa8b52a550f6e9c9790f6d0465cff41ed1c8a5cfa0492719d8997b8e7",
+      "sha256": "a9dd435000b2358365c413fe49fafe1ebbffa5432569dadc021d0910259fed78",
       "executable": false,
       "mutable": true
     },
     "docs/DEVELOPMENT_PROCESS.md": {
-      "sha256": "dcece77ba958c3151e122b93e0c8c3bdf56c7ee69d25eb66a62f5f2d8ab2e5ac",
+      "sha256": "7479f3f3ab6868f50ae71851518be37815493b3e3f86d5388284599342894f8f",
       "executable": false,
       "mutable": true
     },
@@ -132,7 +137,7 @@
       "mutable": true
     },
     "docs/TASK_BREAKDOWN.md": {
-      "sha256": "74a293c8e1f01bd1f8715ff9817f09c8c72fa48080b2a44732efd30cdf61e837",
+      "sha256": "eac2247d276974f5757f3d4b3bbc9bef75e3dd40cc94d91f82aadb70c48b08c4",
       "executable": false,
       "mutable": true
     },

@@ -33,10 +33,10 @@ Before this decision refract generated only four meta-skills (bootstrap, ADRs, d
 
 Ship nine portable skills and a mutable `docs/DEPLOYMENT.md` seed:
 
-- the workflow skills `research`, `confidence-check`, `implement`, `security-check`, `code-review` and `commit`;
+- the workflow skills `research`, `confidence-check`, `implement`, `security-check`, `quality-review` and `commit`;
 - the release skills `deploy-dev`, `deploy-prd` and `hotfix`.
 
-The deploy skills refuse to act while the seed says `Status: UNCONFIGURED`.
+A deterministic `.refract/bin/deploy-ready` gate fails until the seed declares `Status: CONFIGURED` and no `Not configured` marker remains. The deploy skills run it before any merge, tag or push.
 
 ### Option 2: Copy the reference project's skills
 
@@ -67,16 +67,18 @@ Adopt Option 1.
 ### Negative
 
 - Nine more generated skills: a larger tree, and longer skill catalogs in agents.
-- Existing projects that already have same-named skills (for example a hand-written `research`) report a retrofit conflict until the owner resolves it.
+- Existing projects that already have unmanaged files at generated paths report a retrofit conflict, and the apply stops without changing anything. That covers same-named skills (for example a hand-written `research` or `commit`), `docs/DEPLOYMENT.md`, `docs/branches/README.md`, and `.github/PULL_REQUEST_TEMPLATE.md` with `--github`. Files are never overwritten. A keep-existing retrofit mode (Phase 3 of the parity epic) resolves these per path.
+- An edited `docs/DEVELOPMENT_PROCESS.md` from an older version is preserved. The planner flags customized seeds whose generated version changed, and the `research` and `implement` skills follow their own steps when the process document has no "Skill workflow" section.
 
 ### Risks and mitigations
 
-- An agent deploying without being asked: the deploy skills state that they run only on explicit request, require a configured `docs/DEPLOYMENT.md`, and confirm before merging, tagging or pushing.
+- An agent deploying without being asked: `deploy-dev`, `deploy-prd` and `hotfix` run only on explicit request and confirm before merging, tagging or pushing. Readiness is checked by a script, not by prose. Production merges require green required checks and an approving review, never bypass merges, and tag the recorded commit SHA on the default branch.
+- Unwanted pushes: `commit` refuses the default branch, inspects staged changes and secrets, runs `security-check`, and pushes only when asked.
 - Tag injection: tag names are validated against a configured regex before use.
 
 ## Implementation and validation
 
-1. Skills under `src/refract/templates/core/skills/`, seeds under `templates/core/docs/`, and the pull request template under `templates/integrations/github/`.
+1. Skills under `src/refract/templates/core/skills/`; `templates/core/bin/deploy-ready.py`, seeds under `templates/core/docs/`, and the pull request template under `templates/integrations/github/`.
 2. `CORE_SKILLS` in `src/refract/model.py`; renderer wiring in `src/refract/renderer.py`.
 3. Gates: the unittest suite, `refract validate --target .`, portable-token and skill front-matter validation, the golden tree and examples refresh, and the all-platform dry-run preview.
 

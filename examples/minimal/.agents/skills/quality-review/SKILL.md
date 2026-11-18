@@ -1,9 +1,9 @@
 ---
-name: code-review
+name: quality-review
 description: Review a diff through three lenses - reuse, quality, and efficiency - and report verified, prioritized findings with file references.
 ---
 
-# Code Review
+# Quality Review
 
 Review the current diff (or the pull request the user names) before it is merged. Prefer a fresh, read-only pass that tries to disprove the change's correctness claims. Report findings; do not edit files unless asked.
 
