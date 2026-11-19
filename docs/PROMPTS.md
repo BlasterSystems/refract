@@ -51,13 +51,13 @@ refract retrofit --agent-guided --platform claude,codex,opencode,omp \
   --keep-existing --expected-plan <PLAN_ID> --target .
 ```
 
-Without an installed `refract`, start the command with `uvx --from git+https://github.com/BlasterSystems/refract refract` instead, or with `scripts/refract.sh` from your own clone.
+Without an installed `refract`, start the command with `uvx --from git+https://github.com/BlasterSystems/refract refract` instead, or with `scripts/refract.sh` from your own clone. Keep that clone outside the project: a clone inside it changes what Refract detects, and with it the plan identifier.
 
-Refract first asks you to confirm the project facts, the detected commands, and each privileged feature. It then recomputes the plan and stops if it differs from the preview. Otherwise it shows every operation with its diff, and writes nothing until you answer `y`. Accept the defaults to apply what was previewed.
+Refract first asks you to confirm the project facts, the detected commands, and each privileged feature. It then recomputes the plan and shows every operation with its diff. If the plan differs from the preview, it stops there with a plan identifier mismatch. Otherwise it writes nothing until you answer `y`. Accept the defaults to apply what was previewed.
 
 - **Type the command from this page.** A wrong plan identifier can only make Refract refuse; an agent-written command could add flags or change the target ([ADR-0005](adr/0005-agent-guided-bootstrap-with-deterministic-core.md)).
-- **To correct a fact, preview again with a flag.** This preview reads a bounded sample of the repository and no git history, so a command or the ticket prefix can be missing. Changing an answer at the apply prompts gives a plan identifier mismatch. Ask the agent for a new preview with `--name`, `--description`, `--build-command`, `--test-command`, `--run-command`, or `--ticket-prefix`, and add the same flags to your apply command.
-- **Preview and apply in the same folder.** The plan identifier covers the repository's absolute path, the project facts and features, the files Refract would create or change, and Refract's templates. It does not cover your other files. A preview from a container, a cloud sandbox, or another clone never matches your terminal.
+- **To correct a fact, preview again with a flag.** This preview reads a bounded sample of the repository and no git history, so a command or the ticket prefix can be missing. Changing an answer at the apply prompts gives a plan identifier mismatch. Ask the agent for a new preview with `--name`, `--description`, `--build-command`, `--test-command`, `--run-command`, or `--ticket-prefix`, and add the same flags to your apply command. Flags cannot remove a detected command or change the detected languages; to remove a command, use [Advisory setup](#advisory-setup) with that field set to `null`.
+- **Preview and apply in the same folder, and edit nothing in between.** The plan identifier covers the repository's absolute path, the project facts and features, Refract's templates, and the current state of every file at a path Refract generates, including files of yours that are kept (SKIP_UNMANAGED). Apply first, then act on the agent's suggested fixes to files such as `AGENTS.md` or `CLAUDE.md`. A preview from a container, a cloud sandbox, or another clone never matches your terminal.
 - **Run your own copy of Refract.** Every way of running the same Refract commit gives the same plan identifier, so you never need the copy an agent downloaded. Unpinned runs follow `main`, and every commit there reports the same version until the next release. If you get a mismatch you cannot explain, pin both sides: ask for a new preview with `uvx --from git+https://github.com/BlasterSystems/refract@vX.Y.Z refract` and apply with the same tag.
 - **Prefer an install?** See the [README install options](../README.md#install-options).
 
@@ -158,8 +158,9 @@ must never modify project files, stage, commit, or apply anything; the human app
    `git log --oneline -50` for a ticket prefix. Tell me where each such fact came
    from; I confirm every fact when I apply.
 
-3. From the evidence, write a strict proposal to /tmp/refract-intent.json (outside
-   this repo). Only these fields are accepted; anything else is rejected:
+3. From the evidence, write a strict proposal to a new temporary file outside this
+   repo (for example with `mktemp`) and tell me its path. Only these fields are
+   accepted; anything else is rejected:
 
    {
      "schema": "refract-intent/v1",
@@ -186,20 +187,25 @@ must never modify project files, stage, commit, or apply anything; the human app
    include credentials, file contents, or fields outside the schema. Do not read
    .env, key files, or other known secret locations.
 
-4. Deterministic dry-run preview (writes only to stdout). If the repository already
-   has its own agent files, add --keep-existing:
+4. Deterministic dry-run preview into a second new temporary file outside this
+   repo. If the repository already has its own agent files, add --keep-existing:
 
-   refract retrofit --agent-guided --agent-intent /tmp/refract-intent.json \
-     --dry-run --plan-format json --target .
+   refract retrofit --agent-guided --agent-intent <INTENT_FILE> \
+     --dry-run --plan-format json --target . > <PLAN_FILE>
 
-5. STOP. Report the plan identifier and every planned operation. Flag any update
-   or removal of an existing file for exact diff review in my terminal, plus any
-   conflicts and migration findings. Do not apply.
+   The output is large. Read only its `status`, `plan_id`, `request`, `operations`,
+   and `warnings`. If the command failed without writing JSON, show me its error
+   and stop. If `status` is `conflict`, list each CONFLICT operation with its
+   `detail` and stop.
+
+5. STOP. Report the plan identifier, the facts in `request`, and every planned
+   operation. Flag any update or removal of an existing file for exact diff review
+   in my terminal, plus every warning. Do not apply.
 
 6. Wait for me. I will apply in my own interactive terminal (with the same flags,
    and my own way of running `refract`):
 
-   refract retrofit --agent-guided --agent-intent /tmp/refract-intent.json \
+   refract retrofit --agent-guided --agent-intent <INTENT_FILE> \
      --expected-plan <PLAN_ID> --target .
 ```
 

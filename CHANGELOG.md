@@ -10,7 +10,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Fixed
 
-- `scripts/refract.sh` no longer imports Python modules from the current directory, so a target repository's files cannot shadow the standard library or Refract when the wrapper runs from a clone.
+- `scripts/refract.sh` no longer imports Python modules from the current directory or from an inherited `PYTHONPATH`, so a target repository's files cannot shadow the standard library or Refract when the wrapper runs from a clone. It reports a clear error on Python older than 3.11.
+- An agent-guided apply with a wrong `--expected-plan` now displays the recomputed plan before it stops, as ADR-0005 specifies. It still writes nothing.
 
 ### Documentation
 

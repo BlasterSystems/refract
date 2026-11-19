@@ -281,7 +281,7 @@ def _capability_warnings(request: BootstrapRequest) -> list[str]:
 
 
 def _display_agent_review(
-    prepared: PreparedBootstrap, warnings: list[str], *, include_existing_content: bool = True
+    prepared: PreparedBootstrap, warnings: list[str], *, include_existing_content: bool
 ) -> None:
     print("Agent-guided plan recomputed by the deterministic core.")
     print("Plan identifier provides integrity only; it does not identify or authorize an approver.")
@@ -343,11 +343,6 @@ def _run_generation(args: argparse.Namespace) -> int:
     plan = prepared.plan
     warnings = _capability_warnings(request) + plan_findings(plan) + existing_setup_findings(request.target)
 
-    if args.agent_guided and args.expected_plan and prepared.plan_id != args.expected_plan:
-        raise ValueError(
-            f"plan identifier mismatch: expected {args.expected_plan}, recomputed {prepared.plan_id}; review a new dry-run"
-        )
-
     if not json_mode:
         if args.agent_guided:
             # A dry run is the agent's preview; only the human apply, which requires an
@@ -357,6 +352,12 @@ def _run_generation(args: argparse.Namespace) -> int:
             print(_terminal_safe_text(plan.format()))
             for warning in warnings:
                 print(f"WARNING: {_terminal_safe_line(warning)}", file=sys.stderr)
+    # The recomputed plan is displayed before the identifier is checked (ADR-0005 §8), so a
+    # mismatch still shows the human what the current plan is.
+    if args.agent_guided and args.expected_plan and prepared.plan_id != args.expected_plan:
+        raise ValueError(
+            f"plan identifier mismatch: expected {args.expected_plan}, recomputed {prepared.plan_id}; review a new dry-run"
+        )
     if plan.conflicts:
         if json_mode:
             print(json.dumps(_payload(prepared, args, status="conflict", applied=False, warnings=warnings), indent=2))

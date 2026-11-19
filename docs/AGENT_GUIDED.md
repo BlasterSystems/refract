@@ -67,7 +67,7 @@ refract retrofit \
   --target /path/to/project
 ```
 
-The deterministic command asks the human to confirm facts and sensitive features, recomputes the plan, and stops if it does not match the expected identifier. Otherwise it displays the complete authoritative plan and terminal-safe exact diffs, and asks for final confirmation. Apply and post-apply validation return a schema-versioned deterministic result with rollback status. `--yes` is rejected in agent-guided mode.
+The deterministic command asks the human to confirm facts and sensitive features, recomputes and displays the complete authoritative plan and terminal-safe exact diffs, verifies the expected identifier, and asks for final confirmation. On a mismatch it stops after the display and writes nothing. Apply and post-apply validation return a schema-versioned deterministic result with rollback status. `--yes` is rejected in agent-guided mode.
 
 ## Embedding facade
 

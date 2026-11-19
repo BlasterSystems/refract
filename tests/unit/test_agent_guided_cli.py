@@ -134,7 +134,7 @@ class AgentGuidedCliTests(unittest.TestCase):
             )
             output = _TTY()
             with mock.patch.object(cli.sys, "stdout", output):
-                cli._display_agent_review(prepared, [])
+                cli._display_agent_review(prepared, [], include_existing_content=True)
             displayed = output.getvalue()
             self.assertNotIn("\x1b", displayed)
             self.assertNotIn("\u202e", displayed)
@@ -183,26 +183,48 @@ class AgentGuidedCliTests(unittest.TestCase):
             self.assertIn("\\u202e", error_output.getvalue())
             self.assertFalse(target.exists())
 
+    def test_identifier_mismatch_displays_the_recomputed_plan_and_writes_nothing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "project"
+            output = _TTY()
+            errors = io.StringIO()
+            with mock.patch("builtins.input", side_effect=[""] * 13 + ["yes"]), mock.patch.object(
+                cli.sys, "stdin", _TTY()
+            ), mock.patch.object(cli.sys, "stdout", output), mock.patch.object(cli.sys, "stderr", errors):
+                result = cli.main(
+                    ["init", "--agent-guided", "--platform", "pi", "--expected-plan", "0" * 64, "--target", str(target)]
+                )
+            self.assertNotEqual(0, result)
+            self.assertIn("plan identifier mismatch", output.getvalue() + errors.getvalue())
+            self.assertIn("Complete canonical plan bound by the plan identifier", output.getvalue())
+            self.assertFalse(target.exists())
+
     def test_text_dry_run_withholds_existing_content(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             agents = root / "AGENTS.md"
             agents.write_text("GITHUB_TOKEN=ghp_EXFILTRATED\n", encoding="utf-8")
+            obsolete = root / "old-generated.md"
+            obsolete.write_text("AWS_KEY=EXFILTRATED_TOO\n", encoding="utf-8")
             (root / ".refract").mkdir()
             manifest = Manifest(
                 platforms=["pi"],
-                files={"AGENTS.md": {"sha256": sha256_path(agents), "executable": False, "mutable": False}},
+                files={
+                    "AGENTS.md": {"sha256": sha256_path(agents), "executable": False, "mutable": False},
+                    "old-generated.md": {"sha256": sha256_path(obsolete), "executable": False, "mutable": False},
+                },
             )
             (root / ".refract/manifest.json").write_bytes(manifest.to_bytes())
             output = io.StringIO()
-            with mock.patch.object(cli.sys, "stdout", output), mock.patch.object(cli.sys, "stderr", io.StringIO()):
+            errors = io.StringIO()
+            with mock.patch.object(cli.sys, "stdout", output), mock.patch.object(cli.sys, "stderr", errors):
                 code = cli.main(
-                    ["retrofit", "--agent-guided", "--platform", "pi", "--dry-run", "--target", str(root)]
+                    ["retrofit", "--agent-guided", "--platform", "pi", "--dry-run", "--remove-obsolete", "--target", str(root)]
                 )
-            self.assertEqual(0, code, output.getvalue())
+            self.assertEqual(0, code, output.getvalue() + errors.getvalue())
             self.assertIn("Dry run complete", output.getvalue())
-            self.assertNotIn("ghp_EXFILTRATED", output.getvalue())
-            self.assertIn("existing repository content withheld", output.getvalue())
+            self.assertNotIn("EXFILTRATED", output.getvalue() + errors.getvalue())
+            self.assertEqual(2, output.getvalue().count("existing repository content withheld"))
 
     def test_agent_preview_withholds_existing_content_and_terminal_escapes_it(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -235,7 +257,7 @@ class AgentGuidedCliTests(unittest.TestCase):
             self.assertIn("existing repository content withheld", preview)
             output = _TTY()
             with mock.patch.object(cli.sys, "stdout", output):
-                cli._display_agent_review(prepared, [])
+                cli._display_agent_review(prepared, [], include_existing_content=True)
             displayed = output.getvalue()
             self.assertIn("GITHUB_TOKEN=ghp_EXFILTRATED", displayed)
             self.assertNotIn("\x1b", displayed)
