@@ -9,7 +9,7 @@ Checked against code.claude.com/docs/en/memory.md and skills.md on 2026-11-19. T
   - If one exists, it must contain the line `@AGENTS.md`. Propose adding it near the top as an approved diff. The import never makes Claude read `AGENTS.md` twice, and it also covers older versions.
 - **Skills.** Claude Code discovers skills only under `.claude/skills/<name>/SKILL.md`, never `.agents/skills/`.
   - If `.claude/skills` does not exist, create it as a relative symbolic link to `.agents/skills`.
-  - If the link cannot be created (for example on Windows without developer mode), or `.claude/skills` already exists as a folder, copy each refract skill into it instead. Never touch skills in it that refract did not create.
+  - If the link cannot be created (for example on Windows without developer mode), or `.claude/skills` already exists as a folder, copy each refract skill into it instead. Skills in it that refract did not create are handled by `BOOTSTRAP.md` step 6: one with the same name as a refract skill is set aside, and all others are left alone.
   - Record which option you used in `.refract.md`.
 - **Invocation.** `/<skill>`.
 
