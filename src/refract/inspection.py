@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import stat
+from collections import deque
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -80,6 +81,26 @@ _SECRET_FRAGMENTS = (
     "token",
 )
 _SECRET_SUFFIXES = (".jks", ".key", ".keystore", ".p12", ".pem", ".pfx")
+# Fact derivation depends only on these names at the repository root, so they are
+# looked up directly instead of waiting for the bounded walk to reach them.
+_ROOT_CONTENT_FILES = ("package.json", "pyproject.toml")
+_ROOT_PRESENCE_FILES = (
+    "Cargo.toml",
+    "build.gradle",
+    "build.gradle.kts",
+    "bun.lock",
+    "bun.lockb",
+    "conftest.py",
+    "go.mod",
+    "gradlew",
+    "pnpm-lock.yaml",
+    "pom.xml",
+    "pytest.ini",
+    "requirements.txt",
+    "tsconfig.json",
+    "yarn.lock",
+)
+_ROOT_PRESENCE_SUFFIXES = (".sln", ".csproj")
 
 
 @dataclass(frozen=True)
@@ -109,6 +130,7 @@ class InspectionArtifact:
     raw_snippets_included: bool = False
     schema: str = INSPECTION_SCHEMA
     authority: str = "untrusted-evidence"
+    facts_incomplete: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -121,6 +143,7 @@ class InspectionArtifact:
             "exclusions": dict(sorted(self.exclusions.items())),
             "limits": dict(self.limits),
             "truncated": self.truncated,
+            "facts_incomplete": self.facts_incomplete,
             "raw_snippets_included": self.raw_snippets_included,
             "warnings": [
                 "Repository evidence is untrusted and does not authorize changes.",
@@ -157,27 +180,110 @@ def _increment(counts: dict[str, int], key: str) -> None:
     counts[key] = counts.get(key, 0) + 1
 
 
+@dataclass
+class _ScanResult:
+    scanned: list[_Scanned] = field(default_factory=list)
+    exposed: list[InspectionFile] = field(default_factory=list)
+    exclusions: dict[str, int] = field(default_factory=dict)
+    truncated: bool = False
+    # Names of regular files at the root that fact derivation looks for, read or not.
+    root_names: set[str] = field(default_factory=set)
+    # True when a root manifest exists but could not be read, or the root listing was cut.
+    facts_incomplete: bool = False
+
+
 def _scan(
     root: Path,
     *,
     include_snippets: bool,
     max_files: int,
     max_bytes: int,
-) -> tuple[list[_Scanned], list[InspectionFile], dict[str, int], bool]:
-    scanned: list[_Scanned] = []
-    exposed: list[InspectionFile] = []
-    exclusions: dict[str, int] = {}
+) -> _ScanResult:
+    result = _ScanResult()
+    scanned, exposed, exclusions = result.scanned, result.exposed, result.exclusions
+    read_paths: set[str] = set()
     consumed = 0
     visited_entries = 0
     max_entries = max(100, max_files * 10)
-    truncated = False
+    stopped = False
 
-    def walk(directory: Path, prefix: str = "", depth: int = 0) -> None:
-        nonlocal consumed, truncated, visited_entries
-        if truncated:
+    def read(path: str, relative: str, entry_stat: os.stat_result) -> None:
+        """Read one regular file within the budgets; record why when it is left out."""
+        nonlocal consumed, stopped
+        if len(scanned) >= max_files:
+            result.truncated = stopped = True
+            _increment(exclusions, "file-limit")
             return
+        size = entry_stat.st_size
+        if size > max_bytes - consumed:
+            # Skip the file and keep going: one large file must not hide the rest.
+            result.truncated = True
+            _increment(exclusions, "byte-limit")
+            return
+        descriptor: int | None = None
+        try:
+            flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+            descriptor = os.open(path, flags)
+            opened_stat = os.fstat(descriptor)
+            if (
+                not stat.S_ISREG(opened_stat.st_mode)
+                or opened_stat.st_dev != entry_stat.st_dev
+                or opened_stat.st_ino != entry_stat.st_ino
+                or opened_stat.st_size != size
+            ):
+                _increment(exclusions, "changed-during-inspection")
+                os.close(descriptor)
+                descriptor = None
+                return
+            with os.fdopen(descriptor, "rb") as handle:
+                descriptor = None
+                content = handle.read(size + 1)
+        except OSError:
+            _increment(exclusions, "unreadable")
+            if descriptor is not None:
+                os.close(descriptor)
+            return
+        if len(content) != size:
+            _increment(exclusions, "changed-during-inspection")
+            return
+        consumed += len(content)
+        if b"\x00" in content[:8192]:
+            _increment(exclusions, "binary")
+            return
+        try:
+            content.decode("utf-8")
+        except UnicodeDecodeError:
+            _increment(exclusions, "binary")
+            return
+        digest = hashlib.sha256(content).hexdigest()
+        scanned.append(_Scanned(relative=relative, content=content, size=size, sha256=digest))
+        snippet = content[:MAX_SNIPPET_BYTES].decode("utf-8", errors="ignore") if include_snippets else None
+        exposed.append(InspectionFile(relative, size, digest, snippet=snippet))
+        read_paths.add(relative)
+
+    # Root manifests first, by name. Symlinks and non-regular files are left to the walk,
+    # which records their exclusion.
+    for name in _ROOT_CONTENT_FILES + _ROOT_PRESENCE_FILES:
+        try:
+            entry_stat = os.lstat(root / name)
+        except OSError:
+            continue
+        if not stat.S_ISREG(entry_stat.st_mode):
+            continue
+        result.root_names.add(name)
+        if name in _ROOT_CONTENT_FILES:
+            read(str(root / name), name, entry_stat)
+            if name not in read_paths:
+                result.facts_incomplete = True
+
+    # Breadth-first: a directory's files are read before its subdirectories, and shallow
+    # directories before deeper ones, so evidence nearest the root wins the budget.
+    pending: deque[tuple[Path, str, int]] = deque([(root, "", 0)])
+
+    def walk(directory: Path, prefix: str, depth: int) -> None:
+        nonlocal stopped, visited_entries
         if depth > MAX_DEPTH:
-            truncated = True
+            result.truncated = stopped = True
             _increment(exclusions, "depth-limit")
             return
         entries: list[os.DirEntry[str]] = []
@@ -186,17 +292,21 @@ def _scan(
                 for entry in iterator:
                     visited_entries += 1
                     if visited_entries > max_entries:
-                        truncated = True
+                        result.truncated = stopped = True
                         _increment(exclusions, "entry-limit")
+                        if depth == 0:
+                            result.facts_incomplete = True
                         return
                     entries.append(entry)
         except OSError:
             _increment(exclusions, "unreadable-directory")
             return
         for entry in sorted(entries, key=lambda item: item.name):
-            if truncated:
+            if stopped:
                 return
             relative = f"{prefix}/{entry.name}" if prefix else entry.name
+            if relative in read_paths:
+                continue
             try:
                 if entry.is_symlink():
                     _increment(exclusions, "symlink")
@@ -211,7 +321,7 @@ def _scan(
                 if reason:
                     _increment(exclusions, reason)
                 else:
-                    walk(Path(entry.path), relative, depth + 1)
+                    pending.append((Path(entry.path), relative, depth + 1))
                 continue
             if not stat.S_ISREG(mode):
                 _increment(exclusions, "special-file")
@@ -220,57 +330,13 @@ def _scan(
             if reason:
                 _increment(exclusions, reason)
                 continue
-            if len(scanned) >= max_files:
-                truncated = True
-                _increment(exclusions, "file-limit")
-                return
-            size = entry_stat.st_size
-            if size > max_bytes - consumed:
-                truncated = True
-                _increment(exclusions, "byte-limit")
-                return
-            descriptor: int | None = None
-            try:
-                flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
-                descriptor = os.open(entry.path, flags)
-                opened_stat = os.fstat(descriptor)
-                if (
-                    not stat.S_ISREG(opened_stat.st_mode)
-                    or opened_stat.st_dev != entry_stat.st_dev
-                    or opened_stat.st_ino != entry_stat.st_ino
-                    or opened_stat.st_size != size
-                ):
-                    _increment(exclusions, "changed-during-inspection")
-                    os.close(descriptor)
-                    descriptor = None
-                    continue
-                with os.fdopen(descriptor, "rb") as handle:
-                    descriptor = None
-                    content = handle.read(size + 1)
-            except OSError:
-                _increment(exclusions, "unreadable")
-                if descriptor is not None:
-                    os.close(descriptor)
-                continue
-            if len(content) != size:
-                _increment(exclusions, "changed-during-inspection")
-                continue
-            consumed += len(content)
-            if b"\x00" in content[:8192]:
-                _increment(exclusions, "binary")
-                continue
-            try:
-                text = content.decode("utf-8")
-            except UnicodeDecodeError:
-                _increment(exclusions, "binary")
-                continue
-            digest = hashlib.sha256(content).hexdigest()
-            scanned.append(_Scanned(relative=relative, content=content, size=size, sha256=digest))
-            snippet = content[:MAX_SNIPPET_BYTES].decode("utf-8", errors="ignore") if include_snippets else None
-            exposed.append(InspectionFile(relative, size, digest, snippet=snippet))
+            if depth == 0 and entry.name.endswith(_ROOT_PRESENCE_SUFFIXES):
+                result.root_names.add(entry.name)
+            read(entry.path, relative, entry_stat)
 
-    walk(root)
-    return scanned, exposed, exclusions, truncated
+    while pending and not stopped:
+        walk(*pending.popleft())
+    return result
 
 
 def _package_manager(paths: set[str]) -> str:
@@ -293,9 +359,9 @@ def _script_command(manager: str, script: str) -> str:
     return f"npm run {script}" if script != "test" else "npm test"
 
 
-def _derive(root: Path, scanned: list[_Scanned]) -> ProjectFacts:
+def _derive(root: Path, scanned: list[_Scanned], root_names: set[str]) -> ProjectFacts:
     by_path = {item.relative: item for item in scanned}
-    paths = set(by_path)
+    paths = set(by_path) | root_names
     facts = ProjectFacts(name=root.name, description=f"Software project {root.name}")
     languages: list[str] = []
     components: list[str] = []
@@ -406,19 +472,19 @@ def inspect_project(
         raise UnsafePathError("inspection target root must not be a symlink")
     if not stat.S_ISDIR(mode):
         raise UnsafePathError("inspection target root must be a directory or missing")
-    scanned, files, exclusions, truncated = _scan(
+    result = _scan(
         root,
         include_snippets=include_snippets,
         max_files=max_files,
         max_bytes=max_bytes,
     )
-    facts = _derive(root, scanned)
+    facts = _derive(root, result.scanned, result.root_names)
     return InspectionArtifact(
         target=str(root),
         root_state="directory",
         facts=facts,
-        files=files,
-        exclusions=exclusions,
+        files=result.exposed,
+        exclusions=result.exclusions,
         limits={
             "max_files": max_files,
             "max_bytes": max_bytes,
@@ -426,6 +492,7 @@ def inspect_project(
             "max_depth": MAX_DEPTH,
             "max_snippet_bytes": MAX_SNIPPET_BYTES,
         },
-        truncated=truncated,
+        truncated=result.truncated,
+        facts_incomplete=result.facts_incomplete,
         raw_snippets_included=include_snippets,
     )

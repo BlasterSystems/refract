@@ -24,7 +24,7 @@ trusted-terminal confirmation ──> staged apply/rollback ──> ownership ma
 
 - `model.py`: typed facts, features, and generated files
 - `detection.py`: evidence-based stack and command detection
-- `inspection.py`: bounded, no-follow, read-only evidence collection
+- `inspection.py`: bounded, no-follow, read-only evidence collection; root build manifests are looked up by name, so fact derivation does not depend on walk order or limits
 - `protocol.py`: strict agent intent and canonical plan-integrity schemas
 - `facade.py`: safe inspection, prepare, and apply entry points
 - `renderer.py`: portable core composition

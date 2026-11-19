@@ -12,6 +12,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 - `scripts/refract.sh` no longer imports Python modules from the current directory or from an inherited `PYTHONPATH`, so a target repository's files cannot shadow the standard library or Refract when the wrapper runs from a clone. It reports a clear error on Python older than 3.11.
 - An agent-guided apply with a wrong `--expected-plan` now displays the recomputed plan before it stops, as ADR-0005 specifies. It still writes nothing.
+- Agent-guided previews no longer lose languages and commands in repositories with more than 200 files. `refract inspect` looks up build manifests at the repository root by name, detects lockfiles by presence, reads shallow files before deeper ones, and skips a file that is too large instead of ending the scan. When a root manifest cannot be read, the inspection reports `facts_incomplete` and the plan warns.
 
 ### Documentation
 

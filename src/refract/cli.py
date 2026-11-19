@@ -99,12 +99,25 @@ def _prompt_bool(label: str, default: bool = False) -> bool:
     raise ValueError(f"{label} requires yes or no")
 
 
-def _request_from_args(args: argparse.Namespace) -> BootstrapRequest:
+_INCOMPLETE_FACTS_WARNING = (
+    "inspection could not read every build manifest at the repository root, so the detected "
+    "languages and commands may be incomplete; check them, and pass --build-command, "
+    "--test-command, or --run-command to set a command"
+)
+
+
+def _request_from_args(args: argparse.Namespace) -> tuple[BootstrapRequest, list[str]]:
     target = Path(args.target).expanduser()
     answers = _load_answers(args.answers)
     intent = AgentIntent.load(Path(args.agent_intent)) if args.agent_intent else None
     proposed_project, proposed_features = intent_defaults(intent)
-    detected = inspect_project(target).facts if args.agent_guided else detect_project(target)
+    if args.agent_guided:
+        inspection = inspect_project(target)
+        detected = inspection.facts
+        notes = [_INCOMPLETE_FACTS_WARNING] if inspection.facts_incomplete else []
+    else:
+        detected = detect_project(target)
+        notes = []
 
     def project_value(cli_value: Any, key: str, detected_value: Any) -> Any:
         if cli_value is not None:
@@ -219,7 +232,7 @@ def _request_from_args(args: argparse.Namespace) -> BootstrapRequest:
     errors = facts.validate() + features.validate()
     if errors:
         raise ValueError("; ".join(errors))
-    return BootstrapRequest(target=target, mode=args.command, facts=facts, features=features)
+    return BootstrapRequest(target=target, mode=args.command, facts=facts, features=features), notes
 
 
 def _legacy_plan_payload(
@@ -332,7 +345,7 @@ def _run_generation(args: argparse.Namespace) -> int:
         raise ValueError(
             "; ".join(scope_problems) + " (override with --allow-unscoped-target)"
         )
-    request = _request_from_args(args)
+    request, inspection_notes = _request_from_args(args)
     json_mode = args.plan_format == "json"
     if json_mode and not (args.yes or args.dry_run or args.agent_guided):
         raise ValueError("--plan-format json requires --yes, --dry-run, or --agent-guided")
@@ -341,7 +354,12 @@ def _run_generation(args: argparse.Namespace) -> int:
         request, remove_obsolete=args.remove_obsolete, keep_existing=args.keep_existing
     )
     plan = prepared.plan
-    warnings = _capability_warnings(request) + plan_findings(plan) + existing_setup_findings(request.target)
+    warnings = (
+        inspection_notes
+        + _capability_warnings(request)
+        + plan_findings(plan)
+        + existing_setup_findings(request.target)
+    )
 
     if not json_mode:
         if args.agent_guided:

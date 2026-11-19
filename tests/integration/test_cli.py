@@ -7,6 +7,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from refract.cli import _INCOMPLETE_FACTS_WARNING
+
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts/refract.sh"
 
@@ -140,6 +142,28 @@ class CliIntegrationTests(unittest.TestCase):
             self.assertTrue(payload["human_handoff_required"])
             self.assertEqual("untrusted-preview", payload["authority"])
             self.assertFalse(target.exists())
+
+    def test_agent_guided_preview_reads_root_manifest_in_a_large_repository(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "project"
+            (target / "docs").mkdir(parents=True)
+            for index in range(250):
+                (target / "docs" / f"page-{index:03d}.md").write_text("# page", encoding="utf-8")
+            (target / "package.json").write_text(
+                json.dumps({"scripts": {"build": "tsc", "test": "jest"}}), encoding="utf-8"
+            )
+            args = ("init", "--agent-guided", "--platform", "claude", "--dry-run", "--plan-format", "json", "--target", str(target))
+            payload = json.loads(run_cli(*args).stdout)
+            self.assertEqual("npm run build", payload["request"]["project"]["build_command"])
+            self.assertEqual("npm test", payload["request"]["project"]["test_command"])
+            self.assertNotIn(_INCOMPLETE_FACTS_WARNING, payload["warnings"])
+
+            (target / "package.json").write_text(
+                json.dumps({"scripts": {"build": "tsc"}, "padding": "x" * 1_100_000}), encoding="utf-8"
+            )
+            unreadable = json.loads(run_cli(*args).stdout)
+            self.assertIsNone(unreadable["request"]["project"]["build_command"])
+            self.assertIn(_INCOMPLETE_FACTS_WARNING, unreadable["warnings"])
 
     def test_agent_intent_null_explicitly_clears_detected_command(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
