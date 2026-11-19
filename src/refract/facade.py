@@ -5,14 +5,14 @@ import json
 import os
 import stat
 from collections.abc import Iterator, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
 from .apply import ApplyError, apply_plan
 from .inspection import InspectionArtifact, inspect_project
 from .manifest import sha256_bytes
-from .model import BootstrapRequest, FeatureSelection, GeneratedFile, ProjectFacts
+from .model import SUPPORTED_PLATFORMS, BootstrapRequest, FeatureSelection, GeneratedFile, ProjectFacts
 from .paths import assert_safe_target_path
 from .planner import Action, Plan, build_plan
 from .protocol import PlanArtifact, ResultArtifact, plan_document
@@ -119,24 +119,44 @@ class PreparedBootstrap:
 
 
 _STORED_CONFIG_LIMIT = 1_048_576
+_FEATURE_FLAGS = ("mcp", "agents", "github", "scheduled_audit", "hooks", "permissions")
+
+
+def _read_stored_config(target: Path) -> object:
+    """Parse ``.refract/config.json`` if it is a real regular file of sane size."""
+    path = assert_safe_target_path(target, ".refract/config.json", allow_missing_leaf=False)
+    # Check the type before opening: opening a FIFO would block.
+    before = os.lstat(path)
+    if not stat.S_ISREG(before.st_mode) or before.st_size > _STORED_CONFIG_LIMIT:
+        raise ValueError("stored configuration is not a regular file of acceptable size")
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0))
+    with os.fdopen(descriptor, "rb") as handle:
+        opened = os.fstat(handle.fileno())
+        if not stat.S_ISREG(opened.st_mode) or (opened.st_dev, opened.st_ino) != (before.st_dev, before.st_ino):
+            raise ValueError("stored configuration changed while it was being read")
+        raw = handle.read(_STORED_CONFIG_LIMIT + 1)
+    if len(raw) > _STORED_CONFIG_LIMIT:
+        raise ValueError("stored configuration is too large")
+    return json.loads(raw)
+
+
+def _strings(value: object) -> list[str]:
+    if value is None:
+        return []
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        raise ValueError("expected a list of strings")
+    return list(value)
 
 
 def _stored_request(request: BootstrapRequest) -> BootstrapRequest | None:
-    """The request recorded in ``.refract/config.json``, or None when it cannot be read.
+    """The request recorded in ``.refract/config.json``, or None when it cannot be used.
 
     The file is repository content. It is used only to render what an earlier release
-    would have generated, for comparison by hash; nothing from it is written.
+    would have generated, for comparison by hash; nothing from it is written. It must be
+    the inverse of the configuration that ``renderer.render_project`` writes.
     """
     try:
-        path = assert_safe_target_path(request.target, ".refract/config.json", allow_missing_leaf=False)
-        descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
-        with os.fdopen(descriptor, "rb") as handle:
-            if not stat.S_ISREG(os.fstat(handle.fileno()).st_mode):
-                return None
-            raw = handle.read(_STORED_CONFIG_LIMIT + 1)
-        if len(raw) > _STORED_CONFIG_LIMIT:
-            return None
-        config = json.loads(raw)
+        config = _read_stored_config(request.target)
         project = config["project"]
         requested = config["features"]["requested"]
         commands = project.get("commands") or {}
@@ -146,38 +166,40 @@ def _stored_request(request: BootstrapRequest) -> BootstrapRequest | None:
             facts=ProjectFacts(
                 name=project["name"],
                 description=project.get("description") or "",
-                languages=list(project.get("languages") or []),
+                languages=_strings(project.get("languages")),
                 build_command=commands.get("build"),
                 test_command=commands.get("test"),
                 run_command=commands.get("run"),
                 ticket_prefix=project.get("ticket_prefix"),
-                components=list(project.get("components") or []),
+                components=_strings(project.get("components")),
             ),
             features=FeatureSelection(
-                platforms=list(requested["platforms"]),
-                **{
-                    name: bool(requested.get(name, False))
-                    for name in ("mcp", "agents", "github", "scheduled_audit", "hooks", "permissions")
-                },
+                platforms=_strings(requested["platforms"]),
+                **{name: bool(requested.get(name, False)) for name in _FEATURE_FLAGS},
             ),
         )
-        stored.facts.validate()
         stored.features.normalized_platforms()
-        return stored
     except (OSError, ValueError, TypeError, KeyError, AttributeError):
         return None
+    return None if stored.facts.validate() else stored
 
 
 def _earlier_generations(request: BootstrapRequest, version: str) -> Iterator[Mapping[str, GeneratedFile]]:
     """What the current templates render with an earlier version string.
 
-    Rendered from the facts and features the project was generated with, when they can
-    be read, and from the current request. The planner compares editable seeds with both.
+    Rendered from the facts the project was generated with, when they can be read, and
+    from the current request; each with its own features and with every feature on, so
+    that a seed of a feature that was dropped since is covered too. The planner compares
+    editable seeds with all of them. One failing candidate does not stop the others.
     """
+    every_feature = FeatureSelection(platforms=list(SUPPORTED_PLATFORMS), **{name: True for name in _FEATURE_FLAGS})
     stored = _stored_request(request)
-    if stored is not None:
-        yield render_project(stored, generator_version=version)
-    yield render_project(request, generator_version=version)
+    for candidate in ([stored] if stored is not None else []) + [request]:
+        for features in (candidate.features, every_feature):
+            try:
+                yield render_project(replace(candidate, features=features), generator_version=version)
+            except (OSError, ValueError, TypeError, KeyError, AttributeError):
+                continue
 
 
 def prepare_bootstrap(

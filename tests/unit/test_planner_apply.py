@@ -3,12 +3,13 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 from unittest import mock
 
 from refract.apply import ApplyError, apply_plan
-from refract.facade import apply_bootstrap, prepare_bootstrap
+from refract.facade import _stored_request, apply_bootstrap, prepare_bootstrap
 from refract.manifest import UNKNOWN_SEED_BASE, Manifest, sha256_bytes, sha256_path
 from refract.model import SEED_PATHS, SUPPORTED_PLATFORMS, BootstrapRequest, GeneratedFile
 from refract.planner import Action, build_plan
@@ -483,7 +484,8 @@ class PlannerApplyTests(unittest.TestCase):
         everything = request(Path("unused"), platforms=list(SUPPORTED_PLATFORMS), mcp=True, agents=True,
                              github=True, scheduled_audit=True, hooks=True, permissions=True)
         editable = {path for path, generated in render_project(everything).items() if generated.mutable}
-        self.assertEqual(SEED_PATHS, editable)
+        # A subset, not equality: a path that stops being a seed must stay listed.
+        self.assertLessEqual(editable, SEED_PATHS)
 
     def test_tracked_unedited_seed_with_a_changed_mode_is_updated_not_conflicted(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -542,6 +544,72 @@ class PlannerApplyTests(unittest.TestCase):
                 self.assertEqual(
                     edit_seed, (root / "AGENTS.md").read_text(encoding="utf-8") == "our edits\n"
                 )
+
+    def test_stored_request_is_the_inverse_of_the_rendered_configuration(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "project"
+            variants = [
+                request(root, github=True, hooks=True, ticket_prefix="ABC"),
+                request(root, platforms=["claude"], mcp=True, agents=True, scheduled_audit=True, permissions=True),
+            ]
+            variants[1].facts.description = ""
+            variants[1].facts.build_command = None
+            variants[1].facts.run_command = "make run"
+            for req in variants:
+                config = root / ".refract/config.json"
+                config.parent.mkdir(parents=True, exist_ok=True)
+                config.write_bytes(render_project(req)[".refract/config.json"].content)
+                stored = _stored_request(req)
+                self.assertIsNotNone(stored)
+                self.assertEqual(req.facts, stored.facts)
+                self.assertEqual(req.features.normalized_platforms(), stored.features.normalized_platforms())
+                for flag in ("mcp", "agents", "github", "scheduled_audit", "hooks", "permissions"):
+                    self.assertEqual(getattr(req.features, flag), getattr(stored.features, flag), flag)
+                # Every file renders the same from the stored request as from the original.
+                self.assertEqual(render_project(req), render_project(stored))
+
+    @unittest.skipUnless(hasattr(os, "mkfifo"), "needs named pipes")
+    def test_stored_facts_reader_does_not_block_on_a_named_pipe(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "project"
+            (root / ".refract").mkdir(parents=True)
+            os.mkfifo(root / ".refract/config.json")
+            outcome: list[object] = []
+            worker = threading.Thread(target=lambda: outcome.append(_stored_request(request(root))), daemon=True)
+            worker.start()
+            worker.join(timeout=10)
+            self.assertFalse(worker.is_alive(), "reading the stored configuration blocked")
+            self.assertEqual([None], outcome)
+
+    def test_invalid_stored_facts_do_not_stop_recognition_from_the_current_facts(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "project"
+            req = self._project(root, version="0.0.1")
+            self._as_older_manifest(root)
+            config = root / ".refract/config.json"
+            data = json.loads(config.read_text(encoding="utf-8"))
+            data["project"]["languages"] = [1]
+            config.write_text(json.dumps(data), encoding="utf-8")
+            self.assertIsNone(_stored_request(req))
+            operation = self._operations(prepare_bootstrap(req).plan)["AGENTS.md"]
+            self.assertEqual(Action.UPDATE_GENERATED, operation.action)
+
+    def test_untracked_unedited_seed_of_a_feature_dropped_earlier_is_still_removable(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "project"
+            self._project(root, version="0.0.1", github=True)
+            # The feature was dropped before the upgrade, so the stored facts no longer have it.
+            without = request(root)
+            apply_plan(
+                build_plan(root, render_project(without, generator_version="0.0.1")),
+                without.features.normalized_platforms(),
+            )
+            self.assertTrue((root / self.PULL_REQUEST).is_file())
+            self._as_older_manifest(root)
+            prepared = prepare_bootstrap(without, remove_obsolete=True)
+            self.assertEqual(Action.REMOVE_OBSOLETE, self._operations(prepared.plan)[self.PULL_REQUEST].action)
+            self.assertTrue(apply_bootstrap(prepared).applied)
+            self.assertFalse((root / self.PULL_REQUEST).exists())
 
     def test_unreadable_stored_facts_leave_seeds_preserved(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
