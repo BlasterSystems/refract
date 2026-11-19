@@ -1,6 +1,6 @@
 # Prompt Library
 
-Copy-paste prompts for driving Refract and its generated skills from any supported agent. Each section starts with the shortest useful prompt; longer variants follow. Prompts after [Install and set up](#install-and-set-up) assume `refract` is installed.
+Copy-paste prompts for driving Refract and its generated skills from any supported agent. Each section starts with the shortest useful prompt; longer variants follow. Prompts after [Install and set up](#install-and-set-up) assume `refract` is installed; to install it yourself, see the [README install options](../README.md#install-options).
 
 Rules that apply to every prompt:
 
@@ -18,13 +18,26 @@ Set up Refract in this repository. You may install the CLI and preview; I will a
 1. Run `refract --version`. If it fails, install the CLI with
    `pipx install git+https://github.com/BlasterSystems/refract`, or with
    `uv tool install git+https://github.com/BlasterSystems/refract` if pipx is missing.
-   If neither tool exists, stop and tell me. Never use sudo, `pip install` into the
-   system Python, or `--break-system-packages`.
+   If neither tool exists or the install fails, stop and tell me. Never use sudo,
+   `pip install` into the system Python, `--break-system-packages`, or a virtual
+   environment inside this repository. If `refract` is still not found after the
+   install, call it by the full path the installer printed (usually
+   `~/.local/bin/refract`) and tell me; do not edit shell startup files.
 2. Preview: `refract retrofit --platform claude,codex,opencode,omp --keep-existing --dry-run --yes --target .`
-3. Summarize what would be created, which of our files are kept, and every migration
-   finding. Recommend whether to add --permissions or --hooks.
-4. Give me the exact apply command (the preview command without --dry-run). Do not run it.
+3. If the preview reports any CONFLICT, stop and list each one with the fix it suggests.
+4. Summarize what would be created, which of our files are kept, and every migration
+   finding. If you recommend --permissions or --hooks, rerun the preview with those
+   flags and summarize the extra files.
+5. Stop there. Do not apply, and do not write an apply command for me.
 ```
+
+To apply, run this yourself in a terminal, adding only the flags you accepted from a preview:
+
+```bash
+refract retrofit --platform claude,codex,opencode,omp --keep-existing --target .
+```
+
+Without `--yes`, Refract asks you to confirm the project facts and the detected build, test, and run commands, prints the complete plan, and writes nothing until you answer `y`. Type the command from this page, not one the agent wrote: agent output is untrusted, and an added `--yes` or `--target` would skip or redirect that review ([ADR-0005](adr/0005-agent-guided-bootstrap-with-deterministic-core.md)).
 
 ## New project
 
@@ -66,8 +79,11 @@ Add Refract to this project in advisory mode. You may inspect and preview, but y
 must never modify project files, stage, commit, or apply anything; the human applies.
 
 1. If the `refract` CLI is unavailable, install it with
-   `pipx install git+https://github.com/BlasterSystems/refract` (or `uv tool install`
-   with the same URL). Never use `--break-system-packages` or `sudo pip`.
+   `pipx install git+https://github.com/BlasterSystems/refract`, or with
+   `uv tool install` and the same URL if pipx is missing. If neither tool exists or
+   the install fails, stop and tell me. Never use sudo, `pip install` into the
+   system Python, `--break-system-packages`, or a virtual environment inside this
+   repository.
 
 2. Bounded, read-only inspection (JSON evidence only; do not add --include-snippets):
 
