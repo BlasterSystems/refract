@@ -1,6 +1,6 @@
 {
   "schema": "refract-manifest/v1",
-  "generator_version": "0.3.0",
+  "generator_version": "0.3.1",
   "platforms": [
     "claude",
     "codex",
@@ -8,7 +8,7 @@
     "opencode",
     "omp"
   ],
-  "updated_at": "2026-11-19T08:32:25+00:00",
+  "updated_at": "2026-11-19T11:17:21+00:00",
   "files": {
     ".agents/skills/architecture-decision/SKILL.md": {
       "sha256": "7bd5fe23cdbf5d058e1e645d33b179ebf92571b7850e2c98c53aa635028f5b2e",
@@ -306,12 +306,12 @@
       "mutable": false
     },
     ".refract/config.json": {
-      "sha256": "09550ec5610ec40f072279857bef6c8e8d65def71b252d4bb9f3013703322305",
+      "sha256": "d6da1e863d9bd933dbe456ec9c20cffd3b7aed70d8d09711dbafaa1e893daaea",
       "executable": false,
       "mutable": false
     },
     "AGENTS.md": {
-      "sha256": "6dfe3f796fa1d207375b78aba0af53e3654fefe7a710fde0186d2ebae2248b12",
+      "sha256": "6c1aa6a6b1d44d7e45d65ae9818a01a09660242d14234806aa806042cc986669",
       "executable": false,
       "mutable": true
     },
@@ -341,7 +341,7 @@
       "mutable": true
     },
     "docs/PLATFORM_SUPPORT.md": {
-      "sha256": "69fb7a33bc3cfef578b1ef1154c0a9f19ba15704f188c0ca4124a429caafdac2",
+      "sha256": "bc5122e19060b5584cdd8ad53447e562e0f7afd83872db445d3cb119019ecc7d",
       "executable": false,
       "mutable": false
     },

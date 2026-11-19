@@ -60,7 +60,7 @@ class Manifest:
             return cls()
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
+        except (OSError, RecursionError, json.JSONDecodeError) as exc:
             raise ManifestError(f"invalid ownership manifest: {exc}") from exc
         if not isinstance(data, dict) or data.get("schema") != MANIFEST_SCHEMA:
             raise ManifestError("existing .refract/manifest.json is not an owned v1 manifest")

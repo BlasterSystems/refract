@@ -179,7 +179,7 @@ def _stored_request(request: BootstrapRequest) -> BootstrapRequest | None:
             ),
         )
         stored.features.normalized_platforms()
-    except (OSError, ValueError, TypeError, KeyError, AttributeError):
+    except (OSError, ValueError, TypeError, KeyError, AttributeError, RecursionError):
         return None
     return None if stored.facts.validate() else stored
 

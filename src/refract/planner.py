@@ -13,7 +13,7 @@ from .model import SEED_PATHS, GeneratedFile
 from .paths import UnsafePathError, assert_safe_root_parent, assert_safe_target_path, normalize_relative_path
 
 
-_RELEASE_VERSION = re.compile(r"\d+\.\d+\.\d+")
+_RELEASE_VERSION = re.compile(r"\d{1,9}\.\d{1,9}\.\d{1,9}")
 
 
 class Action(str, Enum):
@@ -237,7 +237,7 @@ def build_plan(
                     for rendered in earlier_generations(manifest.generator_version):
                         for path, item in rendered.items():
                             earlier_hashes.setdefault(path, set()).add(sha256_bytes(item.content))
-                except (OSError, ValueError, KeyError, TypeError, AttributeError):
+                except (OSError, ValueError, KeyError, TypeError, AttributeError, RecursionError):
                     pass
         return current_hash in earlier_hashes.get(relative, set())
 
