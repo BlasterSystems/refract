@@ -3,13 +3,13 @@ from __future__ import annotations
 import os
 import re
 import stat
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
 from .manifest import MANIFEST_PATH, UNKNOWN_SEED_BASE, Manifest, ManifestError, sha256_bytes, sha256_path
-from .model import GeneratedFile
+from .model import SEED_PATHS, GeneratedFile
 from .paths import UnsafePathError, assert_safe_root_parent, assert_safe_target_path, normalize_relative_path
 
 
@@ -165,7 +165,7 @@ def build_plan(
     *,
     remove_obsolete: bool = False,
     keep_existing: bool = False,
-    previous_generation: Callable[[str], Mapping[str, GeneratedFile]] | None = None,
+    earlier_generations: Callable[[str], Iterable[Mapping[str, GeneratedFile]]] | None = None,
 ) -> Plan:
     """Plan an ownership-aware write.
 
@@ -221,19 +221,32 @@ def build_plan(
     untracked_seeds = manifest_hash is not None and not manifest_error and not manifest.tracks_generated_seeds
     if untracked_seeds:
         manifest_metadata_changed = True
-    earlier_generation: dict[str, str] | None = None
+    earlier_hashes: dict[str, set[str]] | None = None
 
-    def generated_by_earlier_version(relative: str, current_hash: str) -> bool:
-        nonlocal earlier_generation
-        if earlier_generation is None:
-            earlier_generation = {}
-            if previous_generation is not None and _RELEASE_VERSION.fullmatch(manifest.generator_version):
+    def shown_generated(relative: str, current_hash: str, previous: Mapping[str, object]) -> bool:
+        """True when a seed's content is shown to be refract's own output (ADR-0013)."""
+        nonlocal earlier_hashes
+        if not untracked_seeds:
+            return current_hash == previous.get("sha256")
+        # The recorded hash may be an edited file's, so only content can show it: what the
+        # current templates render with the manifest's version string.
+        if earlier_hashes is None:
+            earlier_hashes = {}
+            if earlier_generations is not None and _RELEASE_VERSION.fullmatch(manifest.generator_version):
                 try:
-                    rendered = previous_generation(manifest.generator_version)
-                except (OSError, ValueError, KeyError):
-                    rendered = {}
-                earlier_generation = {path: sha256_bytes(item.content) for path, item in rendered.items()}
-        return earlier_generation.get(relative) == current_hash
+                    for rendered in earlier_generations(manifest.generator_version):
+                        for path, item in rendered.items():
+                            earlier_hashes.setdefault(path, set()).add(sha256_bytes(item.content))
+                except (OSError, ValueError, KeyError, TypeError, AttributeError):
+                    pass
+        return current_hash in earlier_hashes.get(relative, set())
+
+    def is_seed(relative: str, previous: Mapping[str, object] | None) -> bool:
+        # Only refract decides what is a seed; the manifest's claim alone is not enough.
+        return bool(previous and previous.get("mutable", False)) and relative in SEED_PATHS
+
+    def seed_base(previous: Mapping[str, object]) -> str:
+        return UNKNOWN_SEED_BASE if untracked_seeds else str(previous["sha256"])
 
     kept: set[str] = set()
     if keep_existing and not manifest_error:
@@ -286,35 +299,29 @@ def build_plan(
         # generated file is itself mutable; otherwise a forged claim could keep
         # repository content at a control path and launder it as generated.
         # An editable seed is replaced only when its content is shown to be refract's own
-        # output (ADR-0013). Otherwise it is kept, and it never blocks the apply.
-        claims_seed = bool(previous and previous.get("mutable", False)) and not is_protected(relative)
-        if claims_seed and current_hash != desired_hash:
-            if untracked_seeds:
-                # The recorded hash may be an edited file's, so it is not consulted.
-                if generated_by_earlier_version(relative, current_hash):
-                    operations.append(
-                        Operation(
-                            relative,
-                            Action.UPDATE_GENERATED,
-                            generated,
-                            expected_hash=current_hash,
-                            expected_executable=_is_executable(path),
-                        )
-                    )
-                elif generated.mutable:
-                    operations.append(
-                        _preserved_seed(relative, generated, path, current_hash, UNKNOWN_SEED_BASE, desired_hash)
-                    )
-                else:
-                    operations.append(
-                        Operation(relative, Action.CONFLICT, generated, "generated file content or mode was modified")
-                    )
-                continue
-            if generated.mutable and current_hash != previous.get("sha256"):
+        # output. Otherwise it is kept, and it never blocks the apply. File mode does not
+        # decide: an update restores it.
+        if is_seed(relative, previous) and current_hash != desired_hash:
+            if shown_generated(relative, current_hash, previous):
                 operations.append(
-                    _preserved_seed(relative, generated, path, current_hash, previous["sha256"], desired_hash)
+                    Operation(
+                        relative,
+                        Action.UPDATE_GENERATED,
+                        generated,
+                        expected_hash=current_hash,
+                        expected_executable=_is_executable(path),
+                    )
                 )
-                continue
+            elif generated.mutable:
+                operations.append(
+                    _preserved_seed(relative, generated, path, current_hash, seed_base(previous), desired_hash)
+                )
+            else:
+                # No longer a seed: an edited copy is handled like any modified generated file.
+                operations.append(
+                    Operation(relative, Action.CONFLICT, generated, "generated file content or mode was modified")
+                )
+            continue
         if current_hash == desired_hash:
             if previous:
                 if previous.get("sha256") != current_hash:
@@ -409,35 +416,40 @@ def build_plan(
             previous = manifest.files[relative]
             regular = path.is_file() and not path.is_symlink()
             current_hash = sha256_path(path) if regular else None
-            unchanged = (
-                regular
-                and current_hash == previous.get("sha256")
-                and _is_executable(path) == previous.get("executable")
-            )
-            claims_seed = bool(previous.get("mutable", False)) and not is_protected(relative)
-            if regular and claims_seed and (untracked_seeds or not unchanged):
-                # Not shown to be unedited: the project keeps the file, refract keeps the
-                # claim, and neither --remove-obsolete nor a conflict touches it.
-                operations.append(
-                    Operation(
-                        relative,
-                        Action.NO_CHANGE,
-                        None,
-                        "obsolete editable seed is kept because it may hold project edits; delete the file to drop it",
-                        expected_hash=current_hash,
-                        expected_executable=_is_executable(path),
-                        seed_base=UNKNOWN_SEED_BASE if untracked_seeds else previous["sha256"],
+            if regular and is_seed(relative, previous):
+                if shown_generated(relative, current_hash, previous):
+                    removable = True
+                else:
+                    # Not shown to be unedited: the project keeps the file, refract keeps
+                    # the claim, and neither --remove-obsolete nor a conflict touches it.
+                    operations.append(
+                        Operation(
+                            relative,
+                            Action.NO_CHANGE,
+                            None,
+                            "obsolete editable seed is kept because it may hold project edits;"
+                            " delete the file to drop it",
+                            expected_hash=current_hash,
+                            expected_executable=_is_executable(path),
+                            seed_base=seed_base(previous),
+                        )
                     )
+                    continue
+            else:
+                removable = (
+                    regular
+                    and current_hash == previous.get("sha256")
+                    and _is_executable(path) == previous.get("executable")
                 )
-            elif unchanged:
+            if removable:
                 operations.append(
                     Operation(
                         relative,
                         Action.REMOVE_OBSOLETE,
                         None,
                         "requires --remove-obsolete",
-                        expected_hash=previous.get("sha256"),
-                        expected_executable=previous.get("executable"),
+                        expected_hash=current_hash,
+                        expected_executable=_is_executable(path),
                     )
                 )
             else:

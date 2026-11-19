@@ -10,7 +10,7 @@ from unittest import mock
 from refract.apply import ApplyError, apply_plan
 from refract.facade import apply_bootstrap, prepare_bootstrap
 from refract.manifest import UNKNOWN_SEED_BASE, Manifest, sha256_bytes, sha256_path
-from refract.model import BootstrapRequest, GeneratedFile
+from refract.model import SEED_PATHS, SUPPORTED_PLATFORMS, BootstrapRequest, GeneratedFile
 from refract.planner import Action, build_plan
 from refract.renderer import render_project
 from tests.helpers import request
@@ -269,7 +269,7 @@ class PlannerApplyTests(unittest.TestCase):
 
     @staticmethod
     def _earlier(req: BootstrapRequest):  # type: ignore[no-untyped-def]
-        return lambda version: render_project(req, generator_version=version)
+        return lambda version: [render_project(req, generator_version=version)]
 
     def test_tracked_edited_seed_survives_reruns_that_rewrite_the_manifest(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -363,7 +363,7 @@ class PlannerApplyTests(unittest.TestCase):
             edited = seed.read_bytes()
             # The older release recorded the edited content as if it had generated it.
             self._as_older_manifest(root, **{"AGENTS.md": sha256_bytes(edited)})
-            plan = build_plan(root, render_project(req), previous_generation=self._earlier(req))
+            plan = build_plan(root, render_project(req), earlier_generations=self._earlier(req))
             operation = self._operations(plan)["AGENTS.md"]
             self.assertEqual(Action.NO_CHANGE, operation.action)
             self.assertIn("no record of the generated version", operation.detail)
@@ -374,14 +374,14 @@ class PlannerApplyTests(unittest.TestCase):
             self.assertTrue(manifest.tracks_generated_seeds)
             self.assertEqual(UNKNOWN_SEED_BASE, manifest.files["AGENTS.md"]["sha256"])
             # The state and its way out stay visible on every later run.
-            again = build_plan(root, render_project(req), previous_generation=self._earlier(req))
+            again = build_plan(root, render_project(req), earlier_generations=self._earlier(req))
             self.assertFalse(again.changes)
             self.assertIn("delete it and re-run", self._operations(again)["AGENTS.md"].detail)
             apply_plan(again, req.features.normalized_platforms())
             self.assertEqual(edited, seed.read_bytes())
             # Deleting the file is how the project takes the generated version.
             seed.unlink()
-            recreated = build_plan(root, render_project(req), previous_generation=self._earlier(req))
+            recreated = build_plan(root, render_project(req), earlier_generations=self._earlier(req))
             self.assertEqual(Action.CREATE, self._operations(recreated)["AGENTS.md"].action)
             apply_plan(recreated, req.features.normalized_platforms())
             self.assertFalse(build_plan(root, render_project(req)).changes)
@@ -393,7 +393,7 @@ class PlannerApplyTests(unittest.TestCase):
                 req = self._project(root, version="0.0.1")
                 # An edit recorded by the older release and later reverted leaves another hash.
                 self._as_older_manifest(root, **({"AGENTS.md": recorded} if recorded else {}))
-                plan = build_plan(root, render_project(req), previous_generation=self._earlier(req))
+                plan = build_plan(root, render_project(req), earlier_generations=self._earlier(req))
                 self.assertEqual([], plan.conflicts)
                 self.assertEqual(Action.UPDATE_GENERATED, self._operations(plan)["AGENTS.md"].action)
                 apply_plan(plan, req.features.normalized_platforms())
@@ -405,9 +405,9 @@ class PlannerApplyTests(unittest.TestCase):
             req = self._project(root, version="0.0.1")
             self._as_older_manifest(root)
             # A changed template or fact, or no renderer: the content cannot be shown to be generated.
-            for unproven_generation in (None, lambda version: {}):
+            for unproven_generation in (None, lambda version: []):
                 operation = self._operations(
-                    build_plan(root, render_project(req), previous_generation=unproven_generation)
+                    build_plan(root, render_project(req), earlier_generations=unproven_generation)
                 )["AGENTS.md"]
                 self.assertEqual(Action.NO_CHANGE, operation.action)
                 self.assertEqual(UNKNOWN_SEED_BASE, operation.seed_base)
@@ -461,7 +461,7 @@ class PlannerApplyTests(unittest.TestCase):
                 desired = render_project(req)
                 desired["AGENTS.md"] = GeneratedFile.text("AGENTS.md", "now fully generated\n")
                 self.assertFalse(desired["AGENTS.md"].mutable)
-                operation = self._operations(build_plan(root, desired, previous_generation=self._earlier(req)))[
+                operation = self._operations(build_plan(root, desired, earlier_generations=self._earlier(req)))[
                     "AGENTS.md"
                 ]
                 self.assertEqual(Action.CONFLICT if edit_seed else Action.UPDATE_GENERATED, operation.action)
@@ -478,6 +478,82 @@ class PlannerApplyTests(unittest.TestCase):
             plan = build_plan(root, render_project(req))
             self.assertEqual([], plan.conflicts)
             self.assertEqual(Action.UPDATE_GENERATED, self._operations(plan)[".refract/config.json"].action)
+
+    def test_seed_paths_list_matches_what_the_renderer_marks_editable(self) -> None:
+        everything = request(Path("unused"), platforms=list(SUPPORTED_PLATFORMS), mcp=True, agents=True,
+                             github=True, scheduled_audit=True, hooks=True, permissions=True)
+        editable = {path for path, generated in render_project(everything).items() if generated.mutable}
+        self.assertEqual(SEED_PATHS, editable)
+
+    def test_tracked_unedited_seed_with_a_changed_mode_is_updated_not_conflicted(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "project"
+            self._project(root)
+            seed = root / "AGENTS.md"
+            seed.chmod(0o755)
+            second = request(root)
+            second.facts.description = "second description"
+            plan = build_plan(root, render_project(second))
+            self.assertEqual([], plan.conflicts)
+            self.assertEqual(Action.UPDATE_GENERATED, self._operations(plan)["AGENTS.md"].action)
+            apply_plan(plan, second.features.normalized_platforms())
+            self.assertFalse(os.access(seed, os.X_OK))
+            self.assertFalse(build_plan(root, render_project(second)).changes)
+
+    def test_manifest_cannot_claim_an_obsolete_generated_file_as_a_seed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "project"
+            self._project(root, github=True)
+            (root / self.WORKFLOW).write_text("tampered\n", encoding="utf-8")
+            data = json.loads((root / ".refract/manifest.json").read_text(encoding="utf-8"))
+            data["files"][self.WORKFLOW]["mutable"] = True
+            (root / ".refract/manifest.json").write_text(json.dumps(data), encoding="utf-8")
+            operation = self._operations(build_plan(root, render_project(request(root)), remove_obsolete=True))[
+                self.WORKFLOW
+            ]
+            self.assertEqual(Action.CONFLICT, operation.action)
+            self.assertEqual("obsolete generated path was modified", operation.detail)
+
+    def test_untracked_seeds_are_recognized_from_the_stored_facts_when_facts_changed(self) -> None:
+        for edit_seed in (False, True):
+            with self.subTest(edited=edit_seed), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory) / "project"
+                self._project(root, version="0.0.1", github=True)
+                self._as_older_manifest(root)
+                if edit_seed:
+                    for relative in ("AGENTS.md", self.PULL_REQUEST):
+                        (root / relative).write_text("our edits\n", encoding="utf-8")
+                # The first run after the upgrade also changes facts and drops a feature.
+                changed = request(root)
+                changed.facts.description = "another description"
+                changed.facts.languages = ["Go"]
+                changed.facts.test_command = "go test ./..."
+                prepared = prepare_bootstrap(changed, remove_obsolete=True)
+                self.assertEqual([], prepared.plan.conflicts)
+                operations = self._operations(prepared.plan)
+                if edit_seed:
+                    self.assertEqual(UNKNOWN_SEED_BASE, operations["AGENTS.md"].seed_base)
+                    self.assertEqual(UNKNOWN_SEED_BASE, operations[self.PULL_REQUEST].seed_base)
+                else:
+                    self.assertEqual(Action.UPDATE_GENERATED, operations["AGENTS.md"].action)
+                    self.assertEqual(Action.REMOVE_OBSOLETE, operations[self.PULL_REQUEST].action)
+                self.assertTrue(apply_bootstrap(prepared).applied)
+                self.assertEqual(edit_seed, (root / self.PULL_REQUEST).exists())
+                self.assertEqual(
+                    edit_seed, (root / "AGENTS.md").read_text(encoding="utf-8") == "our edits\n"
+                )
+
+    def test_unreadable_stored_facts_leave_seeds_preserved(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "project"
+            self._project(root, version="0.0.1")
+            self._as_older_manifest(root)
+            (root / ".refract/config.json").write_text("{not json", encoding="utf-8")
+            changed = request(root)
+            changed.facts.description = "another description"
+            operation = self._operations(prepare_bootstrap(changed).plan)["AGENTS.md"]
+            self.assertEqual(Action.NO_CHANGE, operation.action)
+            self.assertEqual(UNKNOWN_SEED_BASE, operation.seed_base)
 
     def test_manifest_states_seed_tracking_only_when_it_holds(self) -> None:
         self.assertIn(b'"seed_hashes": "generated"', Manifest().to_bytes())
