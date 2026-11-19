@@ -40,6 +40,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # check.sh diffs the strict docs check against origin/main.
+          fetch-depth: 0
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
@@ -52,11 +55,12 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Fail unless every test matrix leg succeeded
+      - name: Fail unless every test matrix leg and the gate succeeded
         run: |
-          result="${{ needs.test.result }}"
-          if [ "$result" != "success" ]; then
-            echo "test matrix result: $result"
-            exit 1
-          fi
-          echo "All test matrix legs passed."
+          for result in "${{ needs.test.result }}" "${{ needs.gate.result }}"; do
+            if [ "$result" != "success" ]; then
+              echo "required job result: $result"
+              exit 1
+            fi
+          done
+          echo "All test matrix legs and the gate passed."

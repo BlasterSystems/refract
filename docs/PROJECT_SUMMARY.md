@@ -1,6 +1,6 @@
 # Refract Project Summary
 
-**Current release:** 0.3.0  
+**Current release:** 0.3.1  
 **Status:** Implemented; acceptance is enforced by the test and validation suites.
 
 ## Objective
