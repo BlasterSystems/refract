@@ -4,9 +4,12 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-19
+
 ### Security
 
 - An agent-guided dry run in text format no longer prints the contents of existing managed files in its diffs. It withholds them as the JSON format does; only the interactive apply shows them.
+- Release-gate audit (quick profile, partial coverage) of `v0.3.0..main` found two low-severity issues, fixed here: a hostile `.refract/config.json` could crash planning with a raw `RecursionError`, and an unbounded manifest `generator_version` was amplified through repeated rendering. Accepted residual: `docs-check` skips `.refract/`, so edits to `.refract/config.json` no longer trigger its configuration-documentation heuristic.
 
 ### Fixed
 

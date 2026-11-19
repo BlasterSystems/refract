@@ -12,7 +12,7 @@ from refract.apply import ApplyError, apply_plan
 from refract.facade import _stored_request, apply_bootstrap, prepare_bootstrap
 from refract.manifest import UNKNOWN_SEED_BASE, Manifest, sha256_bytes, sha256_path
 from refract.model import SEED_PATHS, SUPPORTED_PLATFORMS, BootstrapRequest, GeneratedFile
-from refract.planner import Action, build_plan
+from refract.planner import _RELEASE_VERSION, Action, build_plan
 from refract.renderer import render_project
 from tests.helpers import request
 
@@ -593,6 +593,33 @@ class PlannerApplyTests(unittest.TestCase):
             self.assertIsNone(_stored_request(req))
             operation = self._operations(prepare_bootstrap(req).plan)["AGENTS.md"]
             self.assertEqual(Action.UPDATE_GENERATED, operation.action)
+
+    def test_hostile_stored_facts_crash_cleanly_not_with_a_traceback(self) -> None:
+        # Release-gate audit (0.3.1): ~1 MiB of nested "[" sent json.loads into a
+        # RecursionError that escaped every catch tuple on the planning path.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "project"
+            req = self._project(root, version="0.0.1")
+            self._as_older_manifest(root)
+            (root / ".refract/config.json").write_text("[" * 1_048_575, encoding="utf-8")
+            self.assertIsNone(_stored_request(req))
+            operation = self._operations(prepare_bootstrap(req).plan)["AGENTS.md"]
+            self.assertEqual(Action.UPDATE_GENERATED, operation.action)
+
+    def test_unbounded_manifest_version_stops_rendering_earlier_generations(self) -> None:
+        # Release-gate audit (0.3.1): a hostile generator_version of unbounded digits
+        # passed the release gate and was rendered into every candidate, multiplying
+        # allocation and hashing. The gate now bounds each component to nine digits.
+        self.assertIsNone(_RELEASE_VERSION.fullmatch("9" * 10 + ".0.0"))
+        self.assertIsNone(_RELEASE_VERSION.fullmatch("1.2." + "9" * 10))
+        self.assertEqual(_RELEASE_VERSION.fullmatch("10.20.30").group(0), "10.20.30")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "project"
+            req = self._project(root, version="0.0.1")
+            self._as_older_manifest(root, version="9" * 40 + ".0.0")
+            operation = self._operations(prepare_bootstrap(req).plan)["AGENTS.md"]
+            # Not shown to be generated under a version that cannot match: preserved.
+            self.assertEqual(Action.NO_CHANGE, operation.action)
 
     def test_untracked_unedited_seed_of_a_feature_dropped_earlier_is_still_removable(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
