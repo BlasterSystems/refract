@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import tempfile
 import unittest
@@ -29,6 +30,29 @@ class CliIntegrationTests(unittest.TestCase):
             result = run_cli("init", "--platform", "all", "--yes", "--dry-run", "--target", str(target))
             self.assertEqual(0, result.returncode, result.stdout)
             self.assertFalse(target.exists())
+
+    def test_wrapper_ignores_python_modules_in_the_working_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            marker = target / "imported"
+            planted = f"open({str(marker)!r}, 'w').close()\n"
+            (target / "token.py").write_text(planted, encoding="utf-8")
+            (target / "refract").mkdir()
+            (target / "refract" / "__init__.py").write_text(planted, encoding="utf-8")
+            (target / "refract" / "__main__.py").write_text(planted, encoding="utf-8")
+            for inherited in (None, "/nonexistent:", ".", "src"):
+                environment = {key: value for key, value in os.environ.items() if key != "PYTHONPATH"}
+                if inherited is not None:
+                    environment["PYTHONPATH"] = inherited
+                result = subprocess.run(
+                    [str(SCRIPT), "init", "--platform", "claude", "--yes", "--dry-run", "--target", "."],
+                    cwd=target, env=environment, text=True, timeout=60, check=False,
+                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                )
+                self.assertEqual(0, result.returncode, result.stdout)
+                self.assertIn("Dry run complete", result.stdout)
+            self.assertFalse(marker.exists(), "wrapper imported a module from the target directory")
+            self.assertFalse((target / "__pycache__").exists())
 
     def test_cli_exposes_additive_read_only_inspect_command(self) -> None:
         help_result = run_cli("--help")
