@@ -16,7 +16,8 @@ Read this index first and load only records relevant to the current scope.
 | [ADR-0010](0010-native-capability-parity.md) | Accepted | Generator architecture and platform support | platforms, adapters, parity, omp, hooks, permissions, scope | Render every capability natively on Claude, Codex, OpenCode, and omp from one registry; project-scope guard; deprecate Pi | ADR-0008 |
 | [ADR-0011](0011-portable-agentic-workflow-skills.md) | Accepted | Generated portable core | skills, workflow, deployment, process, portability | Ship generic research, implement, quality, commit, and tag-driven deploy skills with a project-owned deployment seed | — |
 | [ADR-0012](0012-keep-existing-retrofit-mode.md) | Accepted | Retrofit planning and ownership | retrofit, ownership, migration, skills, safety | Opt-in --keep-existing keeps unmanaged files and whole skill groups; retrofit reports migration findings | — |
-| [ADR-0013](0013-editable-seed-ownership.md) | Proposed | Ownership manifest and planning of editable seeds | ownership, manifest, seeds, retrofit, safety | Replace or remove an editable seed only when it is shown to be generated; otherwise keep it without blocking | — |
+| [ADR-0013](0013-editable-seed-ownership.md) | Accepted | Ownership manifest and planning of editable seeds | ownership, manifest, seeds, retrofit, safety | Replace or remove an editable seed only when it is shown to be generated; otherwise keep it without blocking | — |
+| [ADR-0014](0014-consolidated-facts-and-self-describing-handoff.md) | Accepted | Fact resolution and validation, stored configuration, kept files, and the agent-guided handoff | agents, facts, handoff, retrofit, safety, configuration | One fact pipeline for both modes, stored configuration as a source, and a handoff file so the human retypes only the plan identifier | — |
 
 Valid statuses: `Proposed`, `Accepted`, `Rejected`, `Deprecated`, `Superseded`.
 
