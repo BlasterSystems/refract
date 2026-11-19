@@ -56,13 +56,13 @@ Adopt option 4.
 
 1. **A seed hash is the hash of a generated version.** For an editable seed the manifest records the hash of the generated version its content started from, never the hash of an edited file. The manifest states this with `"seed_hashes": "generated"`.
 2. **A seed is shown to be generated** when its content equals the version Refract generates now, or, under a manifest that tracks seed hashes, the recorded hash. File mode does not decide: an update restores it.
-3. **A seed that is not shown to be generated is preserved.** Its recorded hash is carried forward unchanged. It never blocks an apply.
+3. **A seed that is not shown to be generated is preserved.** Its recorded hash is carried forward unchanged. It is never a conflict. Like every seed, it is still checked by post-apply validation.
 4. **A seed that matches the generated version again is tracked as generated again.**
 5. **A manifest without the key is not trusted for seeds.** It was written by 0.3.0 or earlier. Under it:
-   - A seed is shown to be generated only when its content equals the current version, or what the current templates render with that manifest's version string, from either the facts stored in `.refract/config.json` or the current facts. The stored facts are repository content and are used only for this comparison.
+   - A seed is shown to be generated only when its content equals the current version, or what the current templates render with that manifest's version string, from either the facts stored in `.refract/config.json` or the current facts, each with its own features and with every feature enabled. The stored facts are repository content and are used only for this comparison.
    - Any other seed is preserved and recorded with an all-zero hash that means "base unknown". Its note says, on every run, to delete the file and re-run to take the generated version.
    - The manifest is rewritten with the key on the first apply.
-6. **An obsolete seed that is not shown to be unedited is kept.** Refract keeps the manifest claim, does not remove the file even with `--remove-obsolete`, and does not report a conflict. Deleting the file drops it. An obsolete seed that is shown to be unedited is removed only with `--remove-obsolete`, as before.
+6. **An obsolete seed that is not shown to be unedited is kept.** Refract keeps the manifest claim, does not remove the file even with `--remove-obsolete`, and does not report a conflict. Deleting the file and re-running drops it. An obsolete seed that is shown to be unedited is removed only with `--remove-obsolete`, as before.
 7. **A seed that became a fully generated file** is updated when it is shown to be generated and is a conflict otherwise, as for any modified generated file.
 8. **Only Refract decides what is a seed.** A manifest's claim counts only for the paths Refract generates, or has generated, as editable seeds (`model.SEED_PATHS`). For any other path the manifest is read as before.
 
@@ -79,7 +79,7 @@ Decision 6 changes one outcome that ADR-0005 decision 10 left in place: an edite
 
 ### Negative
 
-- Under an older manifest, an unedited seed is recognized only while its template is unchanged since that release. After a template change it is kept with the "base unknown" note until the project deletes it or brings it in line. No seed template changed between 0.3.0 and this fix.
+- Under an older manifest, an unedited seed is recognized only while its template is unchanged since that release. After a template change it is kept with the "base unknown" note until the project deletes it or brings it in line. That state lasts until then, because the all-zero hash is written to the manifest. No seed template changed between 0.3.0 and this fix.
 - The note that a generated seed changed stays on every run until the file matches the generated version. There is no way yet to acknowledge it and keep the edits.
 - The manifest gains one key, and all zeros becomes a reserved hash value.
 
@@ -108,7 +108,8 @@ Evidence:
 
 ## Revisit triggers
 
-- Projects need to hand an edited seed back to themselves, so that Refract stops claiming it.
+- Projects need to hand an edited seed back to themselves, so that Refract stops claiming and validating it.
+- A release changes a seed template while 0.3.0 manifests are still in use. Refract could then ship the hashes of earlier generated versions to recognize unedited seeds by content.
 - Projects need to acknowledge a changed generated seed while keeping their edits.
 - An editable seed stops embedding the generator version, which would make unedited seeds recognizable in more cases.
 

@@ -242,7 +242,9 @@ def build_plan(
         return current_hash in earlier_hashes.get(relative, set())
 
     def is_seed(relative: str, previous: Mapping[str, object] | None) -> bool:
-        # Only refract decides what is a seed; the manifest's claim alone is not enough.
+        # Only refract decides what is a seed. A manifest is repository-supplied, so its
+        # "mutable" claim counts only for a listed seed path; otherwise a forged claim
+        # could keep repository content at any generated path.
         return bool(previous and previous.get("mutable", False)) and relative in SEED_PATHS
 
     def seed_base(previous: Mapping[str, object]) -> str:
@@ -294,10 +296,6 @@ def build_plan(
         desired_hash = sha256_bytes(generated.content)
         if previous and bool(previous.get("mutable", False)) != generated.mutable:
             manifest_metadata_changed = True
-        # Only refract decides what is a user-editable seed. A manifest is
-        # repository-supplied, so its "mutable" claim is honoured only when the
-        # generated file is itself mutable; otherwise a forged claim could keep
-        # repository content at a control path and launder it as generated.
         # An editable seed is replaced only when its content is shown to be refract's own
         # output. Otherwise it is kept, and it never blocks the apply. File mode does not
         # decide: an update restores it.
@@ -428,7 +426,7 @@ def build_plan(
                             Action.NO_CHANGE,
                             None,
                             "obsolete editable seed is kept because it may hold project edits;"
-                            " delete the file to drop it",
+                            " delete the file and re-run to drop it",
                             expected_hash=current_hash,
                             expected_executable=_is_executable(path),
                             seed_base=seed_base(previous),
