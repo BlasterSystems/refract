@@ -23,7 +23,7 @@ Treat values marked “Not configured” or “Not detected” as unknown. Inspe
 7. Never expose credentials or weaken security controls to make a task pass.
 8. To re-run or upgrade this project's agent setup, use the `refract` skill. `.refract.md` records what refract set up and from which release.
 9. For versions, releases, or tags, read `docs/RELEASING.md` and use the `semantic-versioning` skill.
-10. Follow the skill workflow in `docs/DEVELOPMENT_PROCESS.md`: `research` before code for new features, `implement` for one ticket, `security-check` and `quality-review` before merge, `commit` for commits. Deploy only through `deploy-dev` and `deploy-prd`, and only when asked.
+10. Follow the skill workflow in `docs/DEVELOPMENT_PROCESS.md`: `research` before code for new features, `implement` for one ticket, `security-check` and an independent adversarial review (`quality-review`) before every merge, `commit` for commits. Deploy only through `deploy-dev` and `deploy-prd`, and only when asked.
 11. Install skills, agents, hooks, and settings for this project inside this repository only, never in user-level or global agent directories.
 
 ## Progressive Disclosure

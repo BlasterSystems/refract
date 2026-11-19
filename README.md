@@ -3,7 +3,7 @@
 A development process for AI-assisted projects, delivered as skills and documentation that your coding agent installs itself:
 - portable `AGENTS.md` instructions with progressive disclosure
 - indexed architecture decision records (ADRs)
-- a research → implement → review → commit → deploy skill workflow
+- a research → implement → adversarial review → commit → deploy skill workflow
 - native setup for Claude Code, OpenAI Codex, OpenCode, and OhMyPi (omp)
 
 There is no CLI and nothing to install. You paste one prompt into your agent, and it sets up the project with you.

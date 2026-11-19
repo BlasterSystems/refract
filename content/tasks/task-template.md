@@ -80,6 +80,7 @@ Describe the required outcome.
 - Compatibility and migrations:
 - Tests:
 - Documentation and ADRs:
+- Adversarial review (`quality-review` verdict; fresh context or self-review):
 - Residual risks:
 
 ## Completion summary

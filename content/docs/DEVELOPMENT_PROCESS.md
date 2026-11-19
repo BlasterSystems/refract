@@ -14,7 +14,7 @@ The portable project skills implement this process. Invoke them by name on any s
 | Readiness | `confidence-check` | Readiness result in the task file |
 | One ticket | `implement` | Task file, branch, tested change, pull request |
 | Security | `security-check` | CRITICAL / WARNING / INFO report |
-| Review | `quality-review` | Reuse, quality, and efficiency findings |
+| Adversarial review | `quality-review` | Independent review that tries to break the change: verdict, verified findings, claims that survived |
 | Commit | `commit` | Conventional commit and updated branch document |
 | Deploy | `deploy-dev`, `deploy-prd` | Tag, pipeline result, verification evidence |
 | Emergency | `hotfix` | Minimal fix through the full checks |
@@ -76,7 +76,12 @@ Skip commands marked “Not configured”; record the missing configuration inst
 
 Review the diff for correctness, security, compatibility, test coverage, documentation, and unnecessary complexity. Update the task file with evidence and residual risks.
 
-Open a pull request for reviewable changes. Before merge, significant changes require an independent adversarial review: a fresh read-only pass that tries to disprove correctness, security, compatibility, and scope claims.
+Open a pull request for reviewable changes. **Every pull request gets an independent adversarial review before merge**, using the `quality-review` skill:
+- It runs in a fresh, read-only context that does not share the author's reasoning.
+- It assumes the change is wrong, and tries to disprove its correctness, security, compatibility, and scope claims.
+- It reports only findings it has verified.
+
+Scale the depth to the size and risk of the change, but never skip it. A self-review is not independent: if no fresh context is available, a human reviews before merge. Every `BLOCK` finding is resolved before merge.
 
 For security-sensitive changes or open vulnerability questions, use the security-audit skill in guidance mode; see `docs/SECURITY_AUDIT.md`.
 

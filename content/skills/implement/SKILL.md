@@ -24,10 +24,10 @@ Resolve the ticket key and tracker the same way as the `research` skill: explici
 9. **Tests** for every behaviour change, following project conventions and coverage gates.
 10. **Validate**: the `process-check` skill, the configured test and build commands, and the `docs-check` skill.
 11. **Security check**: apply the `security-check` skill to the diff. Fix every CRITICAL finding before committing.
-    Then review the diff with the `quality-review` skill.
+    Then get an independent adversarial review of the diff with the `quality-review` skill, run in a fresh read-only context. Resolve every `BLOCK` finding.
 12. **Review section** in the task file: summary, decisions, limitations, deploy notes, validation evidence.
 13. **Commit** with the `commit` skill on the feature branch. For an epic run, commit once per finished ticket on one branch; never batch several tickets into one commit.
-14. **Pull request**: push and open a pull request whose title references the ticket and whose body links the ticket and the task file. Significant changes get an independent adversarial review before merge.
+14. **Pull request**: push and open a pull request whose title references the ticket and whose body links the ticket and the task file. Record the adversarial review verdict in the pull request, and never merge with an unresolved `BLOCK` finding.
 15. **Never deploy from this skill.** Deployments use the `deploy-dev` and `deploy-prd` skills when the user asks.
 16. **On merge**: complete the ticket lifecycle with an evidence comment (commands and observed results). A pull request that covers several tickets reconciles every one of them.
 
