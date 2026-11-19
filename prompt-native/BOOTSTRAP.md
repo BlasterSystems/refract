@@ -41,7 +41,10 @@ Never invent a command. "Not configured" is a correct answer.
 - **Platforms**: one or more of `claude`, `codex`, `opencode`, `omp`. Propose the ones whose configuration already exists, plus the agent you are running in.
 - **Features**, each off by default:
   - **permissions**: a committed policy that asks before edits and commands and blocks reading `.env` where the platform can.
-  - **hooks**: run the test command at the end of each agent turn.
+  - **hooks**: run the test command at the end of each agent turn. When it fails, the agent is sent back once to fix it.
+    - Requires a configured test command.
+    - Before asking, check whether the project has any tests yet. Many runners fail when there are none; for example, `python -m unittest` and `pytest` exit with code 5. Until a first test exists, the hook would block every turn.
+    - If there are no tests yet, say this, and recommend leaving hooks off until a first test exists.
   - **subagents**: a read-only architecture reviewer.
   - **MCP**: the Context7 documentation server, a network service.
 
@@ -119,7 +122,7 @@ Compute each hash after writing, with `sha256sum <file>` (on macOS, `shasum -a 2
 ## 8. Check and report
 
 1. Follow `.agents/skills/process-check/SKILL.md` in the target, and fix any problem caused by this run.
-2. If hooks were selected and the user confirms, run the test command once, so the user knows whether the hook will block.
+2. If hooks were selected and the user confirms, run the test command once. If it fails, tell the user that the hook will send the agent back at the end of every turn until it passes, and give the exit code.
 3. Report to the user:
    - every file created, changed, linked, or skipped, with the reason
    - the features turned on

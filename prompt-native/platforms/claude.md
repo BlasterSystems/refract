@@ -1,6 +1,6 @@
 # Claude Code
 
-Checked against code.claude.com/docs/en/memory.md and skills.md on 2026-11-19.
+Checked against code.claude.com/docs/en/memory.md and skills.md on 2026-11-19. Tested with Claude Code 2.1.328 on a greenfield run: `AGENTS.md` loaded with no `CLAUDE.md`, and skills were found through the `.claude/skills` link.
 
 ## Always
 

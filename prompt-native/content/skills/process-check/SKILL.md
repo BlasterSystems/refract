@@ -16,7 +16,9 @@ A read-only checklist. Report every failure with its file and line; do not fix a
 
 ## Portable core stays provider-neutral
 
-5. `AGENTS.md`, `docs/`, `tasks/`, and `.agents/skills/` do not mention `mcp__`, `Task tool`, `.claude/`, `.codex/`, `.opencode/`, or `.omp/`. Platform-specific instructions belong in the platform files.
+5. `AGENTS.md`, `docs/`, `tasks/`, and `.agents/skills/` do not mention `mcp__`, `Task tool`, `.claude/`, `.codex/`, `.opencode/`, or `.omp/`. Platform-specific instructions belong in the platform files. Two files are exempt, because they name platform folders by design:
+   - `docs/PLATFORM_SUPPORT.md`, the support table.
+   - This checklist, `.agents/skills/process-check/SKILL.md`.
 
 ## Skills and agents
 
