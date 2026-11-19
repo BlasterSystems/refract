@@ -309,13 +309,17 @@ def _root_state(root: Path) -> dict[str, Any]:
 def _resulting_ownership(plan: Plan, desired: Mapping[str, GeneratedFile], remove_obsolete: bool) -> dict[str, Any]:
     result: dict[str, Any] = {}
     by_path = {operation.path: operation for operation in plan.operations}
-    for relative, generated in sorted(desired.items()):
-        operation = by_path.get(relative)
-        if operation is None or operation.action in {Action.CONFLICT, Action.SKIP_UNMANAGED, Action.SKIP_KEPT}:
-            continue
+    for operation in plan.operations:
         if operation.seed_base is not None:
             # apply.py writes the same entry for a preserved seed.
-            result[relative] = preserved_seed_entry(operation.seed_base, executable=generated.executable)
+            result[operation.path] = preserved_seed_entry(
+                plan.previous_manifest.files[operation.path], operation.seed_base
+            )
+    for relative, generated in sorted(desired.items()):
+        operation = by_path.get(relative)
+        if relative in result:
+            continue
+        if operation is None or operation.action in {Action.CONFLICT, Action.SKIP_UNMANAGED, Action.SKIP_KEPT}:
             continue
         if operation.action == Action.NO_CHANGE and operation.expected_hash:
             digest = operation.expected_hash
