@@ -46,7 +46,7 @@ These two files must contain the same version:
    scripts/refract.sh init --platform all --yes --remove-obsolete \
      --target examples/all-platforms --name all-platforms-example \
      --description "All adapters and optional integrations" \
-     --mcp --agents --github --hooks
+     --mcp --agents --github --hooks --permissions
    ```
 
 8. Run the release gate:

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S python3 -I
 from __future__ import annotations
 
 import hashlib
@@ -7,6 +7,7 @@ import os
 import re
 import sys
 import tomllib
+import unicodedata
 from pathlib import Path, PurePosixPath
 
 # REFRACT_ROOT is set by the pinned agent hook launcher, which runs a verified
@@ -103,7 +104,12 @@ def error(message: str) -> None:
 
 
 def safe_path(relative: str) -> Path | None:
-    if not isinstance(relative, str) or not relative or "\\" in relative or "\x00" in relative:
+    if (
+        not isinstance(relative, str)
+        or not relative
+        or "\\" in relative
+        or any(unicodedata.category(char)[0] == "C" or unicodedata.category(char) in {"Zl", "Zp"} for char in relative)
+    ):
         error(f"unsafe manifest path: {relative!r}")
         return None
     pure = PurePosixPath(relative)
@@ -314,6 +320,10 @@ validate_adrs()
 if ERRORS:
     print("Configuration validation failed:")
     for item in ERRORS:
-        print(f"- {item}")
+        # One finding per line: escape control characters from repository paths.
+        print("- " + "".join(
+            f"\\u{ord(c):04x}" if unicodedata.category(c)[0] == "C" or unicodedata.category(c) in {"Zl", "Zp"} else c
+            for c in item
+        ))
     sys.exit(1)
 print("Configuration validation passed")

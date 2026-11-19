@@ -226,8 +226,13 @@ def build_plan(
         desired_hash = sha256_bytes(generated.content)
         if previous and bool(previous.get("mutable", False)) != generated.mutable:
             manifest_metadata_changed = True
+        # Only refract decides what is a user-editable seed. A manifest is
+        # repository-supplied, so its "mutable" claim is honoured only when the
+        # generated file is itself mutable; otherwise a forged claim could keep
+        # repository content at a control path and launder it as generated.
         if (
             previous
+            and generated.mutable
             and previous.get("mutable", False)
             and current_hash != previous.get("sha256")
         ):

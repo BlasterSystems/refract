@@ -9,7 +9,7 @@ Capability parity is defined by ADR-0010 and generated from `src/refract/capabil
 | Instructions | `CLAUDE.md` importing `AGENTS.md` | `AGENTS.md` | `AGENTS.md` | `AGENTS.md` |
 | Skills | `.claude/skills` mirror | `.agents/skills` | `.agents/skills` | `.agents/skills` |
 | Skill invocation | `/<skill>` | native skills | `.opencode/commands/<skill>.md` | `/skill:<skill>` |
-| Permissions (`--permissions`) | `.claude/settings.json`: deny `.env` reads; native ask-before-edit/shell mode | `.codex/config.toml`: `on-request`, `workspace-write`, no network | `opencode.json`: edit/bash ask, `.env` reads denied | `.omp/settings.json`: `tools.approvalMode=always-ask` |
+| Permissions (`--permissions`) | `.claude/settings.json`: Read tool denied on `.env*`; native ask-before-edit/shell mode | `.codex/config.toml`: `on-request`, `workspace-write`, no network for sandboxed commands; no `.env` protection | `opencode.json`: edit/bash ask; Read tool denied on `*.env*` (grep and shell can still read) | `.omp/settings.json`: `tools.approvalMode=always-ask` (reads auto-approved; no `.env` protection) |
 | Sticky rules | `CLAUDE.md` | `AGENTS.md` | `AGENTS.md` | `.omp/RULES.md` |
 | Subagents (`--agents`) | `.claude/agents/*.md` | `.codex/agents/*.toml` | `.opencode/agents/*.md` | `.omp/agents/*.md` |
 | MCP (`--mcp`) | `.mcp.json` | `.codex/config.toml` | `opencode.json` | `.omp/mcp.json` |
@@ -48,4 +48,13 @@ Tests validate official file locations, agent front matter, skill-mirror identit
 
 ## Security defaults
 
-No MCP server, Git hook, repository-host workflow, broad permission grant, or issue tracker is enabled without selection. Hooks never invoke an LLM or perform bootstrap mutation. With `--permissions`, every platform's generated project policy asks before edits and shell commands and denies `.env` reads (see the parity table). Pi extension-based capabilities are never described as native. The external security-audit skill is documented and installed on demand (ADR-0006); it is never generated, auto-installed, or manifest-owned.
+No MCP server, Git hook, repository-host workflow, broad permission grant, or issue tracker is enabled without selection. Hooks never invoke an LLM or perform bootstrap mutation.
+
+`--permissions` applies each platform's strongest native project policy. Protection differs by platform; do not rely on it to keep secrets out of an agent's reach:
+
+- **Claude Code** asks before edits and shell commands; its Read tool is denied on `.env` and `.env.*`. Shell commands the user approves can still read them.
+- **Codex** runs commands and edits inside the `workspace-write` sandbox without asking; it asks only to leave the sandbox. Sandboxed commands have no network, but configured MCP servers (for example context7 with `--mcp`) are contacted by Codex itself. Nothing restricts reading `.env` inside the workspace.
+- **OpenCode** asks before edits and shell commands; the Read tool is denied on `*.env` and `*.env.*`, but the grep tool and approved shell commands can still read those files. Advisory commands run in the plan agent with edits denied.
+- **omp** `always-ask` prompts for write and exec tools and auto-approves reads. omp task subagents run with approvals off, so approving one task call approves everything that subagent does.
+
+Keep secrets out of the repository, or out of the agent's working tree, when this matters. Pi extension-based capabilities are never described as native. The external security-audit skill is documented and installed on demand (ADR-0006); it is never generated, auto-installed, or manifest-owned.

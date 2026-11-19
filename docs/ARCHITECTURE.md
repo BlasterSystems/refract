@@ -28,18 +28,33 @@ trusted-terminal confirmation ──> staged apply/rollback ──> ownership ma
 - `protocol.py`: strict agent intent and canonical plan-integrity schemas
 - `facade.py`: safe inspection, prepare, and apply entry points
 - `renderer.py`: portable core composition
-- `adapters/`: Claude, Codex, Pi, and OpenCode native artifacts
-- `planner.py`: ownership-aware file operation planning
+- `capabilities.py`: the per-platform capability registry behind effective features, warnings, and the support matrix (ADR-0010)
+- `adapters/`: Claude Code, Codex, OpenCode, omp, and deprecated Pi native artifacts, plus the hash-pinned hook launcher in `adapters/shared.py`
+- `planner.py`: ownership-aware file operation planning, including `--keep-existing` and protected control paths (ADR-0012)
+- `paths.py`: path normalization, target-containment checks, and the project-scope guard
+- `migration.py`: read-only findings about an existing agent setup
+- `gitsafe.py`: the only way refract runs git in a target, with repository-configured helper programs disabled
 - `apply.py`: staged apply and rollback
 - `manifest.py`: generated-file hashes and adapter selection
 - `validation.py`: syntax, token, portable-core, and ADR checks
-- `cli.py`: init, retrofit, and validate commands
+- `cli.py`: init, retrofit, inspect, and validate commands
 
 ## Safety model
 
 Unmanaged files are never overwritten. Immutable manifest-owned files update only when their content and mode match the prior generated state; drift becomes a conflict. Explicitly marked mutable seeds—project instructions, architecture/process docs, ADR index/template, and task template—may be customized and are preserved while their structure is validated. Dry-run does not create the target or modify Git configuration.
 
-Git hooks are generated only when selected, and `setup-hooks.sh` refuses to replace an existing custom `core.hooksPath` without `--force`.
+Git hooks are generated only when selected. `setup-hooks.sh` installs a hash-pinned launcher into git's own hooks directory, which sandboxed agents cannot write; it refuses to replace an existing custom hook or `core.hooksPath` without `--force`.
+
+### Hook and script trust
+
+Generated hooks and scripts run as the developer, outside any agent sandbox, while the files they execute live in the agent-writable workspace:
+
+- **Agent Stop hooks (Claude Code, Codex)** pin the SHA-256 of `agent-check` and `validate` in their hook configuration. They run verified private copies in isolated Python mode and skip if the pins do not match.
+- **The git pre-commit launcher** pins the hook, validator, docs-check, and `.refract/config.json` at setup time. It runs private copies of exactly those verified bytes and blocks the commit on any change. The configured test and build commands are project code and are not pinned; they run from the working tree, as they would by hand.
+- **`.refract/bin` scripts** use `python3 -I`, so modules planted beside them are never imported.
+- **Repository-supplied manifests are untrusted.** They can never mark refract control paths as mutable.
+- **Repository-derived names are escaped** before they reach the terminal or a hook's reply to the agent.
+- **OpenCode plugins and omp hooks are not pinned.** Those platforms do not sandbox the agent, so the agent can already change what they load.
 
 ## Agent-guided trust boundary
 

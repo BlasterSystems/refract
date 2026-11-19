@@ -31,12 +31,13 @@ An optional proposal uses `refract-intent/v1`:
     "test_command": "python -m unittest"
   },
   "features": {
-    "platforms": ["pi"],
+    "platforms": ["claude", "omp"],
     "mcp": false,
     "agents": false,
     "github": false,
     "scheduled_audit": false,
-    "hooks": false
+    "hooks": false,
+    "permissions": false
   }
 }
 ```
