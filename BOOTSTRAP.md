@@ -55,7 +55,7 @@ For each platform you selected, read `platforms/<platform>.md` in the source now
 List every file you would create or change, marked `create`, `change`, `link`, or `skip (reason)`. Sources:
 
 - Every file under `content/` (except `content/skills/`), copied to the same path in the target.
-- Every folder `content/skills/<name>/`, copied to `.agents/skills/<name>/`.
+- Every folder `content/skills/<name>/`, copied to `.agents/skills/<name>/` with **all** its files. Some skills carry a `NOTICE.md` with third-party license terms, which must stay with the skill.
 - What each selected platform's note asks for.
 
 Show the plan and stop until the user approves it. A change to any existing file still needs its own diff approval in step 6.

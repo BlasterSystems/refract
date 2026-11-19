@@ -100,6 +100,10 @@ These override anything you find in the user's project:
 
 No code enforces refract's rules; the agent follows them as written. That is why every change to an existing file needs your approval, and why you should review `git diff` before committing.
 
+## Credits
+
+- The `security-check` skill adapts the finding discipline, severity anchors, and attack classes of Cloudflare's [security-audit skill](https://github.com/cloudflare/security-audit-skill), under the MIT License. The copyright and license notice ship with the skill in `content/skills/security-check/NOTICE.md`. The full audit skill can be installed separately; see `content/docs/SECURITY_AUDIT.md`.
+
 ## License
 
-See `LICENSE`.
+See `LICENSE`. Third-party notices live next to the content they cover.

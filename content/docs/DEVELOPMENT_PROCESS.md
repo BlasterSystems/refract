@@ -83,7 +83,9 @@ Open a pull request for reviewable changes. **Every pull request gets an indepen
 
 Scale the depth to the size and risk of the change, but never skip it. A self-review is not independent: if no fresh context is available, a human reviews before merge. Every `BLOCK` finding is resolved before merge.
 
-For security-sensitive changes or open vulnerability questions, use the security-audit skill in guidance mode; see `docs/SECURITY_AUDIT.md`.
+For security-sensitive changes or open vulnerability questions:
+- If the security-audit skill is installed, use it in guidance mode; see `docs/SECURITY_AUDIT.md`.
+- If it is not installed, rely on the `security-check` skill and the adversarial review, and record "no full security audit" in the task file's Review section. Don't stop to install it without asking.
 
 ## 7. Deploy
 

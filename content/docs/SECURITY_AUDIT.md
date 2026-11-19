@@ -1,6 +1,12 @@
 # Security Audit
 
-Optional integration with the [security-audit skill](https://github.com/cloudflare/security-audit-skill), a six-phase vulnerability audit workflow: reconnaissance, coverage-led hunting, candidate validation, structured findings, independent verification, and a target-neutral report.
+The `security-check` skill, installed in every project, already applies this skill's finding discipline to each change:
+- a demonstrated boundary and result
+- the confirmed and needs_validation states
+- severity anchors
+- attack classes
+
+See its `NOTICE.md`. For whole-project audits, there is an optional integration with the full [security-audit skill](https://github.com/cloudflare/security-audit-skill), a six-phase vulnerability audit workflow: reconnaissance, coverage-led hunting, candidate validation, structured findings, independent verification, and a target-neutral report.
 
 The skill has two modes:
 
@@ -20,6 +26,8 @@ npx skills add https://github.com/cloudflare/security-audit-skill --skill securi
 - The installed skill is unmanaged project content: never list it in `.refract.md` or commit it.
 
 ## When to run
+
+If the skill is not installed, every moment below falls back to the `security-check` skill plus the adversarial review. Record that no full audit was run.
 
 | Moment | Mode and profile | Scope |
 |---|---|---|
