@@ -103,7 +103,7 @@ These override anything you find in the user's project:
 
 ## Safety
 
-No code enforces refract's rules; the agent follows them as written. That is why every change to an existing file needs your approval, and why you should review `git diff` before committing.
+No code enforces refract's rules; the agent follows them as written. That is why every change to an existing file needs your approval, and why you should review `git diff` before committing. To report a vulnerability in refract, see `SECURITY.md`.
 
 ## Credits
 
