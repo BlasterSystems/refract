@@ -55,7 +55,7 @@ refract retrofit \
   --target /path/to/project
 ```
 
-Preview writes only to stdout. Existing repository file contents are withheld from the agent preview; update and removal entries expose hashes and require exact diff review in the trusted terminal. The plan identifier binds the normalized request, target-root state, desired paths and hashes, modes, mutability and resulting ownership, current destination state, operations, and removal policy. It provides integrity only, not identity or authorization.
+Preview writes only to stdout. With `--plan-format json`, existing repository file contents are withheld from the agent preview; update and removal entries expose hashes and require exact diff review in the trusted terminal. The text format is meant for the trusted terminal and prints existing contents in its diffs, also in a dry run, so agents must preview with `--plan-format json`. The plan identifier binds the normalized request, target-root state, desired paths and hashes, modes, mutability and resulting ownership, current destination state, operations, and removal policy. It provides integrity only, not identity or authorization.
 
 The agent must stop after showing the preview. A human then runs the corresponding command separately in an interactive trusted terminal:
 
@@ -67,7 +67,7 @@ refract retrofit \
   --target /path/to/project
 ```
 
-The deterministic command asks the human to confirm facts and sensitive features, recomputes and displays the complete authoritative plan and terminal-safe exact diffs, verifies the expected identifier, and asks for final confirmation. Apply and post-apply validation return a schema-versioned deterministic result with rollback status. `--yes` is rejected in agent-guided mode.
+The deterministic command asks the human to confirm facts and sensitive features, recomputes the plan, and stops if it does not match the expected identifier. Otherwise it displays the complete authoritative plan and terminal-safe exact diffs, and asks for final confirmation. Apply and post-apply validation return a schema-versioned deterministic result with rollback status. `--yes` is rejected in agent-guided mode.
 
 ## Embedding facade
 

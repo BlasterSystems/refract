@@ -30,6 +30,21 @@ class CliIntegrationTests(unittest.TestCase):
             self.assertEqual(0, result.returncode, result.stdout)
             self.assertFalse(target.exists())
 
+    def test_wrapper_ignores_python_modules_in_the_working_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            marker = target / "imported"
+            planted = f"open({str(marker)!r}, 'w').close()\n"
+            (target / "token.py").write_text(planted, encoding="utf-8")
+            (target / "refract").mkdir()
+            (target / "refract" / "__init__.py").write_text(planted, encoding="utf-8")
+            (target / "refract" / "__main__.py").write_text(planted, encoding="utf-8")
+            result = run_cli("init", "--platform", "claude", "--yes", "--dry-run", "--target", ".", cwd=target)
+            self.assertEqual(0, result.returncode, result.stdout)
+            self.assertIn("Dry run complete", result.stdout)
+            self.assertFalse(marker.exists(), "wrapper imported a module from the target directory")
+            self.assertFalse((target / "__pycache__").exists())
+
     def test_cli_exposes_additive_read_only_inspect_command(self) -> None:
         help_result = run_cli("--help")
         self.assertEqual(0, help_result.returncode, help_result.stdout)

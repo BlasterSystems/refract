@@ -4,12 +4,17 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Fixed
+
+- `scripts/refract.sh` no longer imports Python modules from the current directory, so a target repository's files cannot shadow the standard library or Refract when the wrapper runs from a clone.
+
 ### Documentation
 
 - Install and upgrade instructions use pipx or uv, so they work where the system Python is externally managed (PEP 668). The README adds install options, an `externally-managed-environment` troubleshooting entry, and notes for pinned releases and earlier `pip install` setups.
 - `docs/PROMPTS.md` set-up prompt needs no install: the agent uses an installed `refract`, `uvx`, or a clone in a temporary folder, runs an agent-guided JSON preview, and you apply in an interactive terminal with `--expected-plan`, so Refract refuses to write if the plan changed.
-- New-project and existing-project agent prompts in the README and `docs/PROMPTS.md` use the same agent-guided preview and `--expected-plan` apply instead of a plain `--dry-run --yes` preview.
+- New-project and existing-project prompts use the same agent-guided preview and `--expected-plan` apply instead of a plain `--dry-run --yes` preview; the README links to them.
 - Agents never install Refract; the prompt rules and the README's rules for coding agents say how to run it in place.
+- `docs/AGENT_GUIDED.md` states that only `--plan-format json` withholds existing file contents from a preview, and describes the apply order as the CLI runs it.
 
 ## [0.3.0] - 2026-11-18
 
