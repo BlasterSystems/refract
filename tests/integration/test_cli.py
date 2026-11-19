@@ -6,6 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from refract.cli import _INCOMPLETE_FACTS_WARNING
+
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts/refract.sh"
 
@@ -130,15 +132,14 @@ class CliIntegrationTests(unittest.TestCase):
             payload = json.loads(run_cli(*args).stdout)
             self.assertEqual("npm run build", payload["request"]["project"]["build_command"])
             self.assertEqual("npm test", payload["request"]["project"]["test_command"])
-            self.assertFalse(any("inspection" in warning for warning in payload["warnings"]))
+            self.assertNotIn(_INCOMPLETE_FACTS_WARNING, payload["warnings"])
 
-            (target / "package.json").unlink()
-            unresolved = json.loads(run_cli(*args).stdout)
-            self.assertIsNone(unresolved["request"]["project"]["build_command"])
-            self.assertTrue(any("inspection stopped at its limits" in warning for warning in unresolved["warnings"]))
-
-            supplied = json.loads(run_cli(*args, "--test-command", "make test").stdout)
-            self.assertFalse(any("inspection" in warning for warning in supplied["warnings"]))
+            (target / "package.json").write_text(
+                json.dumps({"scripts": {"build": "tsc"}, "padding": "x" * 1_100_000}), encoding="utf-8"
+            )
+            unreadable = json.loads(run_cli(*args).stdout)
+            self.assertIsNone(unreadable["request"]["project"]["build_command"])
+            self.assertIn(_INCOMPLETE_FACTS_WARNING, unreadable["warnings"])
 
     def test_agent_intent_null_explicitly_clears_detected_command(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

@@ -131,16 +131,63 @@ class InspectionTests(unittest.TestCase):
             self.assertEqual(["b.txt", "z.txt", "a/y.txt"], [item["path"] for item in payload["files"]])
             self.assertTrue(payload["truncated"])
 
-    def test_truncation_without_a_manifest_marks_facts_incomplete(self) -> None:
+    def test_facts_incomplete_only_when_a_root_manifest_could_not_be_read(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            for index in range(4):
-                (root / f"{index}.txt").write_text("data", encoding="utf-8")
-            truncated = inspect_project(root, max_files=2, max_bytes=100).to_dict()
-            self.assertTrue(truncated["facts_incomplete"])
-            complete = inspect_project(root).to_dict()
-            self.assertFalse(complete["truncated"])
-            self.assertFalse(complete["facts_incomplete"])
+            (root / "docs").mkdir()
+            for index in range(250):
+                (root / "docs" / f"page-{index:03d}.md").write_text("# page", encoding="utf-8")
+            docs_only = inspect_project(root).to_dict()
+            self.assertTrue(docs_only["truncated"])
+            self.assertFalse(docs_only["facts_incomplete"])
+
+            (root / "package.json").write_text(
+                json.dumps({"scripts": {"build": "tsc"}, "padding": "x" * 200}), encoding="utf-8"
+            )
+            oversized = inspect_project(root, max_bytes=100).to_dict()
+            self.assertTrue(oversized["facts_incomplete"])
+            self.assertIsNone(oversized["facts"]["build_command"])
+
+    def test_oversized_lockfile_is_detected_by_name_and_does_not_end_the_scan(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "package.json").write_text(json.dumps({"scripts": {"build": "tsc"}}), encoding="utf-8")
+            (root / "yarn.lock").write_text("x" * 5000, encoding="utf-8")
+            (root / "App.csproj").write_text("<Project />", encoding="utf-8")
+            (root / "zz-demo.bin").write_bytes(b"\x00" * 5000)
+            (root / "website").mkdir()
+            (root / "website" / "yarn.lock").write_text("x" * 5000, encoding="utf-8")
+            (root / "src" / "lib").mkdir(parents=True)
+            (root / "src" / "lib" / "a.ts").write_text("export {}", encoding="utf-8")
+            payload = inspect_project(root, max_bytes=1000).to_dict()
+            self.assertTrue(payload["truncated"])
+            self.assertFalse(payload["facts_incomplete"])
+            self.assertEqual(["TypeScript", "C#"], payload["facts"]["languages"])
+            self.assertEqual("yarn build", payload["facts"]["build_command"])
+            self.assertIn("src/lib/a.ts", [item["path"] for item in payload["files"]])
+            self.assertEqual(3, payload["exclusions"]["byte-limit"])
+
+    def test_root_manifest_is_read_when_the_root_listing_exceeds_the_entry_limit(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for index in range(120):
+                (root / f"dir-{index:03d}").mkdir()
+            (root / "package.json").write_text(json.dumps({"scripts": {"test": "jest"}}), encoding="utf-8")
+            payload = inspect_project(root, max_files=5).to_dict()
+            self.assertEqual(1, payload["exclusions"]["entry-limit"])
+            self.assertEqual("npm test", payload["facts"]["test_command"])
+            self.assertTrue(payload["facts_incomplete"])
+
+    def test_symlinked_root_manifest_is_not_followed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "project"
+            root.mkdir()
+            outside = Path(directory) / "outside.json"
+            outside.write_text(json.dumps({"scripts": {"build": "evil"}}), encoding="utf-8")
+            os.symlink(outside, root / "package.json")
+            payload = inspect_project(root).to_dict()
+            self.assertEqual([], payload["facts"]["languages"])
+            self.assertEqual(1, payload["exclusions"]["symlink"])
 
     def test_directory_entry_budget_bounds_empty_tree_walks(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

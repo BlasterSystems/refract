@@ -100,13 +100,13 @@ def _prompt_bool(label: str, default: bool = False) -> bool:
 
 
 _INCOMPLETE_FACTS_WARNING = (
-    "inspection stopped at its limits before finding a build manifest, so no build, test, "
-    "or run command is set; pass --build-command, --test-command, and --run-command, "
-    "or propose them with --agent-intent"
+    "inspection could not read every build manifest at the repository root, so the detected "
+    "languages and commands may be incomplete; check them, and pass --build-command, "
+    "--test-command, or --run-command to set a command"
 )
 
 
-def _request_from_args(args: argparse.Namespace, notes: list[str] | None = None) -> BootstrapRequest:
+def _request_from_args(args: argparse.Namespace) -> tuple[BootstrapRequest, list[str]]:
     target = Path(args.target).expanduser()
     answers = _load_answers(args.answers)
     intent = AgentIntent.load(Path(args.agent_intent)) if args.agent_intent else None
@@ -114,10 +114,10 @@ def _request_from_args(args: argparse.Namespace, notes: list[str] | None = None)
     if args.agent_guided:
         inspection = inspect_project(target)
         detected = inspection.facts
-        facts_incomplete = inspection.facts_incomplete
+        notes = [_INCOMPLETE_FACTS_WARNING] if inspection.facts_incomplete else []
     else:
         detected = detect_project(target)
-        facts_incomplete = False
+        notes = []
 
     def project_value(cli_value: Any, key: str, detected_value: Any) -> Any:
         if cli_value is not None:
@@ -131,8 +131,6 @@ def _request_from_args(args: argparse.Namespace, notes: list[str] | None = None)
     build = project_value(args.build_command, "build_command", detected.build_command)
     test = project_value(args.test_command, "test_command", detected.test_command)
     run = project_value(args.run_command, "run_command", detected.run_command)
-    if facts_incomplete and notes is not None and build is None and test is None and run is None:
-        notes.append(_INCOMPLETE_FACTS_WARNING)
     ticket = args.ticket_prefix
     if ticket is None:
         if "ticket_prefix" in proposed_project:
@@ -234,7 +232,7 @@ def _request_from_args(args: argparse.Namespace, notes: list[str] | None = None)
     errors = facts.validate() + features.validate()
     if errors:
         raise ValueError("; ".join(errors))
-    return BootstrapRequest(target=target, mode=args.command, facts=facts, features=features)
+    return BootstrapRequest(target=target, mode=args.command, facts=facts, features=features), notes
 
 
 def _legacy_plan_payload(
@@ -345,8 +343,7 @@ def _run_generation(args: argparse.Namespace) -> int:
         raise ValueError(
             "; ".join(scope_problems) + " (override with --allow-unscoped-target)"
         )
-    inspection_notes: list[str] = []
-    request = _request_from_args(args, inspection_notes)
+    request, inspection_notes = _request_from_args(args)
     json_mode = args.plan_format == "json"
     if json_mode and not (args.yes or args.dry_run or args.agent_guided):
         raise ValueError("--plan-format json requires --yes, --dry-run, or --agent-guided")
