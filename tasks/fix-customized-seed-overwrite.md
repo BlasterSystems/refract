@@ -19,32 +19,40 @@ Separately, `.refract/bin/docs-check` treats any changed path containing `config
 ## Acceptance criteria
 
 - [x] A customized seed keeps its content across any number of re-runs, including runs that rewrite the manifest.
-- [x] The manifest records the hash of the generated version for a seed, never of the edited file, and states this with `"seed_hashes": "generated"`.
-- [x] The "generated seed changed" note appears once per change. A seed made identical to the generated version is tracked as generated again.
-- [x] Under a manifest without the key (0.3.0 or earlier), a seed is updated or removed only when its content equals what that release would have generated. Otherwise it is preserved.
-- [x] An edited seed that is no longer generated is released from the manifest and kept, not reported as a conflict and not removed.
+- [x] The manifest keeps the hash of the generated version a seed started from, never the hash of the edited file, and states this with `"seed_hashes": "generated"`.
+- [x] A seed made identical to the generated version is tracked as generated again.
+- [x] Under a manifest without the key (0.3.0 or earlier):
+  - a seed is updated only when its content equals what Refract would have generated under that release's version;
+  - any other differing seed is preserved and recorded with an all-zero "base unknown" hash, and its note says how to take the generated version;
+  - an obsolete seed is never removed, and a seed that became fully generated is a conflict.
 - [x] The plan document's `resulting_ownership` equals the manifest that apply writes.
-- [x] `docs-check` ignores `.refract/` and files that a manifest records as generated; other configuration paths are still reported.
+- [x] `docs-check` ignores paths under `.refract/`; other configuration paths are still reported.
 - [x] This repository's `.refract/bin/docs-check` is identical to the packaged template, and a test keeps it so.
 - [x] Tests fail when the fix is removed.
 
 ## Out of scope
 
-- Recognizing an unedited seed under an older manifest when the project facts change in the same run. Refract then keeps the file and says how to take the generated version. Reading facts back from `.refract/config.json` (entry-path consolidation, phase 2) removes this limit.
-- The other `docs-check` heuristics (for example test paths containing `integration`), planned with the verification work in the entry-path consolidation.
+Each of these is a policy decision and is listed in `tasks/research-entry-path-consolidation.md` for an ADR:
+
+- Handing an edited seed back to the project when Refract stops generating it. It stays a conflict, as before.
+- A way to acknowledge a changed generated seed while keeping the edits. The "generated seed changed" note stays until the file matches the generated version.
+- Recognizing an unedited seed under an older manifest when a template or a project fact changed. Refract keeps the file and says how to take the generated version.
+- Exempting other generated files from `docs-check`, and its other heuristics.
 
 ## Key changes
 
-- `src/refract/manifest.py`: `seed_hashes` key, `Manifest.tracks_generated_seeds`, and `generated_entry`, the one place that builds a manifest entry for a file as generated.
-- `src/refract/planner.py`: `Operation.customized`; equality with the generated version is checked first; protection under older manifests; release of edited seeds that are no longer generated.
-- `src/refract/renderer.py`: `render_project(..., generator_version=...)`, used to ask what an earlier release would have generated.
-- `src/refract/apply.py`, `src/refract/protocol.py`: a customized seed is recorded as generated, in the written manifest and in the plan document.
-- `src/refract/templates/core/bin/docs-check.py` and `.refract/bin/docs-check`: skip Refract's metadata and manifest-recorded generated files.
+- `src/refract/manifest.py`: `seed_hashes` key, `Manifest.tracks_generated_seeds`, `UNKNOWN_SEED_BASE`, and `preserved_seed_entry`, the one place that builds the manifest entry of a preserved seed.
+- `src/refract/planner.py`: `Operation.seed_base`; equality with the generated version is checked first; the rules for older manifests.
+- `src/refract/renderer.py`: `render_project(..., generator_version=...)`, used to ask what Refract would have generated under an earlier version.
+- `src/refract/apply.py`, `src/refract/protocol.py`: a preserved seed is recorded through `preserved_seed_entry`, in the written manifest and in the plan document.
+- `src/refract/templates/core/bin/docs-check.py` and `.refract/bin/docs-check`: skip `.refract/`.
 - `docs/ARCHITECTURE.md`: states the seed-hash rule.
 
 ## Review history
 
-The first version carried a customized seed's old manifest entry forward. Independent review found that it still lost edits on the first upgrade of an already affected project, kept a re-adopted seed marked customized forever, repeated the review note on every run, and turned an edited obsolete seed into a permanent conflict. The second version records the generated version's hash instead and adds the older-manifest rule.
+1. The first version carried a customized seed's manifest entry forward. Review found that it still lost edits on the first upgrade of an already affected project and kept a re-adopted seed marked customized.
+2. The second version added rules for older manifests but also new policy: it released edited obsolete seeds from the manifest, moved the recorded hash to the newest generated version, and exempted every manifest-listed file from `docs-check`. Review found problems in each addition, and that an ownership change needs an ADR (ADR-0005 decision 10).
+3. The third version keeps the first version's rule, keeps the older-manifest protection with an explicit "base unknown" state, and drops the added policy.
 
 ## Validation evidence
 

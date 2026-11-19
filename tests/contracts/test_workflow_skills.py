@@ -96,7 +96,8 @@ class WorkflowSkillContractTests(unittest.TestCase):
                 self.assertIn("customized and is preserved", kept[relative].detail)
                 self.assertNotIn("review the new version", kept[relative].detail)
             manifest = json.loads((root / ".refract/manifest.json").read_text())
-            manifest["files"]["docs/DEPLOYMENT.md"]["sha256"] = "0" * 64
+            # Any other generated version; all zeros is reserved for "base unknown".
+            manifest["files"]["docs/DEPLOYMENT.md"]["sha256"] = "f" * 64
             (root / ".refract/manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
             upgraded = {op.path: op for op in build_plan(root, render_project(req)).operations}
             self.assertIn("review the new version manually", upgraded["docs/DEPLOYMENT.md"].detail)

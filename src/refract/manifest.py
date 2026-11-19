@@ -13,9 +13,12 @@ from .paths import UnsafePathError, normalize_relative_path
 MANIFEST_PATH = ".refract/manifest.json"
 MANIFEST_SCHEMA = "refract-manifest/v1"
 # Value of the manifest's "seed_hashes" key. It states that the hash recorded for an
-# editable seed is the hash of the version refract generated, never of an edited file.
+# editable seed is the hash of a version refract generated, never of an edited file.
 # Manifests written before this key existed may hold an edited file's hash instead.
 SEED_HASHES_GENERATED = "generated"
+# Recorded for a preserved seed when the generated version it started from is unknown.
+# No file hashes to this value, so such a seed is never mistaken for an unedited one.
+UNKNOWN_SEED_BASE = "0" * 64
 
 
 class ManifestError(ValueError):
@@ -30,9 +33,14 @@ def sha256_path(path: Path) -> str:
     return sha256_bytes(path.read_bytes())
 
 
-def generated_entry(content: bytes, *, executable: bool, mutable: bool) -> dict[str, Any]:
-    """Manifest entry that describes a file exactly as refract generated it."""
-    return {"sha256": sha256_bytes(content), "executable": executable, "mutable": mutable}
+def preserved_seed_entry(base: str, *, executable: bool) -> dict[str, Any]:
+    """Manifest entry for an editable seed that is kept as the project edited it.
+
+    ``base`` is the hash of the generated version the edits started from, or
+    ``UNKNOWN_SEED_BASE``. It is never the hash of the file on disk: recording that would
+    make the file look unedited on the next run, and a later change would overwrite it.
+    """
+    return {"sha256": base, "executable": executable, "mutable": True}
 
 
 @dataclass
@@ -102,7 +110,8 @@ class Manifest:
             "generator_version": self.generator_version,
             "platforms": self.platforms,
             "updated_at": self.updated_at,
-            "seed_hashes": SEED_HASHES_GENERATED,
             "files": dict(sorted(self.files.items())),
         }
+        if self.tracks_generated_seeds:
+            data["seed_hashes"] = SEED_HASHES_GENERATED
         return (json.dumps(data, indent=2, sort_keys=False) + "\n").encode("utf-8")

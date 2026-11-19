@@ -285,10 +285,10 @@ class CliIntegrationTests(unittest.TestCase):
             self.assertEqual(2, check.returncode, check.stdout)
             self.assertIn("could not establish a reliable diff", check.stdout)
 
-    def test_docs_check_ignores_generated_files_but_reports_project_configuration(self) -> None:
+    def test_docs_check_ignores_refract_metadata_but_reports_project_configuration(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)
-            result = run_cli("init", "--platform", "claude", "--permissions", "--yes", "--target", str(target))
+            result = run_cli("init", "--platform", "pi", "--yes", "--target", str(target))
             self.assertEqual(0, result.returncode, result.stdout)
 
             def git(*args: str) -> None:
@@ -304,22 +304,17 @@ class CliIntegrationTests(unittest.TestCase):
                     text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=30, check=False,
                 )
 
-            def touch_json(relative: str) -> None:
-                path = target / relative
-                data = json.loads(path.read_text(encoding="utf-8"))
-                data["changed-by-test"] = True
-                path.write_text(json.dumps(data), encoding="utf-8")
-
             git("init", "-q", ".")
             git("add", "-A")
             git("commit", "-q", "-m", "baseline")
-            # What a refract upgrade touches: its metadata and a generated settings file.
-            touch_json(".refract/config.json")
-            touch_json(".claude/settings.json")
-            generated_only = check()
-            self.assertEqual(0, generated_only.returncode, generated_only.stdout)
-            self.assertIn("Changed files: 2", generated_only.stdout)
-            self.assertIn("No heuristic documentation gaps detected", generated_only.stdout)
+            # What a version bump touches: refract's own metadata.
+            config = target / ".refract/config.json"
+            data = json.loads(config.read_text(encoding="utf-8"))
+            data["changed-by-test"] = True
+            config.write_text(json.dumps(data), encoding="utf-8")
+            metadata_only = check()
+            self.assertEqual(0, metadata_only.returncode, metadata_only.stdout)
+            self.assertIn("No heuristic documentation gaps detected", metadata_only.stdout)
 
             (target / "app").mkdir()
             (target / "app/config.py").write_text("DEBUG = True\n", encoding="utf-8")
