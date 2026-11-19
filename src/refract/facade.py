@@ -123,7 +123,13 @@ def prepare_bootstrap(
     errors = validate_rendered(desired)
     if errors:
         raise ValueError("rendered output is invalid: " + "; ".join(errors))
-    plan = build_plan(request.target, desired, remove_obsolete=remove_obsolete, keep_existing=keep_existing)
+    plan = build_plan(
+        request.target,
+        desired,
+        remove_obsolete=remove_obsolete,
+        keep_existing=keep_existing,
+        previous_generation=lambda version: render_project(request, generator_version=version),
+    )
     document = plan_document(
         request, desired, plan, remove_obsolete=remove_obsolete, keep_existing=keep_existing
     )

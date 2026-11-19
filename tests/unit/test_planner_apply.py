@@ -9,7 +9,7 @@ from unittest import mock
 
 from refract.apply import ApplyError, apply_plan
 from refract.facade import apply_bootstrap, prepare_bootstrap
-from refract.manifest import Manifest, sha256_path
+from refract.manifest import Manifest, sha256_bytes, sha256_path
 from refract.model import GeneratedFile
 from refract.planner import Action, build_plan
 from refract.renderer import render_project
@@ -239,27 +239,180 @@ class PlannerApplyTests(unittest.TestCase):
             manifest = Manifest.load(root)
             self.assertNotIn("owned.txt", manifest.files)
 
+    @staticmethod
+    def _operations(plan: object) -> dict[str, object]:
+        return {operation.path: operation for operation in plan.operations}  # type: ignore[attr-defined]
+
+    @staticmethod
+    def _as_older_manifest(root: Path, *, version: str = "0.0.1", **hashes: str) -> None:
+        """Rewrite the manifest as a release without seed-hash tracking wrote it."""
+        path = root / ".refract/manifest.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        data.pop("seed_hashes")
+        data["generator_version"] = version
+        for relative, digest in hashes.items():
+            data["files"][relative]["sha256"] = digest
+        path.write_text(json.dumps(data), encoding="utf-8")
+
     def test_customized_seed_survives_reruns_that_rewrite_the_manifest(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory) / "project"
             first = request(root)
             apply_plan(build_plan(root, render_project(first)), first.features.normalized_platforms())
+            self.assertIn('"seed_hashes": "generated"', (root / ".refract/manifest.json").read_text(encoding="utf-8"))
             seed = root / "AGENTS.md"
-            baseline = Manifest.load(root).files["AGENTS.md"]
             seed.write_text(seed.read_text(encoding="utf-8") + "\nOur own rule.\n", encoding="utf-8")
             customized = seed.read_bytes()
-            for description in ("second description", "third description"):
+            runs = (("second description", True), ("third description", True), ("third description", False))
+            for description, generated_seed_changed in runs:
                 req = request(root)
                 req.facts.description = description
-                plan = build_plan(root, render_project(req))
-                operations = {operation.path: operation for operation in plan.operations}
-                self.assertEqual(Action.NO_CHANGE, operations["AGENTS.md"].action, description)
-                self.assertIn("customized and is preserved", operations["AGENTS.md"].detail)
-                self.assertIn("review the new version manually", operations["AGENTS.md"].detail)
-                self.assertEqual(Action.UPDATE_GENERATED, operations[".refract/config.json"].action)
+                desired = render_project(req)
+                plan = build_plan(root, desired)
+                operation = self._operations(plan)["AGENTS.md"]
+                self.assertEqual(Action.NO_CHANGE, operation.action, description)
+                self.assertTrue(operation.customized)
+                self.assertIn("customized and is preserved", operation.detail)
+                # The review note appears once per change of the generated seed, not forever.
+                self.assertEqual(generated_seed_changed, "review the new version manually" in operation.detail)
+                self.assertEqual(generated_seed_changed, bool(plan.changes))
                 apply_plan(plan, req.features.normalized_platforms())
                 self.assertEqual(customized, seed.read_bytes(), description)
-                self.assertEqual(baseline, Manifest.load(root).files["AGENTS.md"], description)
+                recorded = Manifest.load(root).files["AGENTS.md"]["sha256"]
+                self.assertEqual(sha256_bytes(desired["AGENTS.md"].content), recorded)
+                self.assertNotEqual(sha256_bytes(customized), recorded)
+
+    def test_seed_matching_the_generated_version_is_tracked_as_generated_again(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "project"
+            first = request(root)
+            apply_plan(build_plan(root, render_project(first)), first.features.normalized_platforms())
+            seed = root / "AGENTS.md"
+            seed.write_text("edited\n", encoding="utf-8")
+            second = request(root)
+            second.facts.description = "second description"
+            desired = render_project(second)
+            seed.write_bytes(desired["AGENTS.md"].content)
+            plan = build_plan(root, desired)
+            operation = self._operations(plan)["AGENTS.md"]
+            self.assertEqual(Action.NO_CHANGE, operation.action)
+            self.assertFalse(operation.customized)
+            self.assertEqual("owned generated file", operation.detail)
+            self.assertEqual(Action.MANIFEST_UPDATE, self._operations(plan)[".refract/manifest.json"].action)
+            apply_plan(plan, second.features.normalized_platforms())
+            third = request(root)
+            third.facts.description = "third description"
+            self.assertEqual(
+                Action.UPDATE_GENERATED, self._operations(build_plan(root, render_project(third)))["AGENTS.md"].action
+            )
+
+    def test_edited_seed_that_is_no_longer_generated_is_released_not_conflicted(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "project"
+            with_github = request(root, github=True)
+            apply_plan(build_plan(root, render_project(with_github)), with_github.features.normalized_platforms())
+            template = root / ".github/PULL_REQUEST_TEMPLATE.md"
+            template.write_text("ours\n", encoding="utf-8")
+            without = request(root)
+            plan = build_plan(root, render_project(without), remove_obsolete=True)
+            self.assertEqual([], plan.conflicts)
+            operations = self._operations(plan)
+            released = operations[".github/PULL_REQUEST_TEMPLATE.md"]
+            self.assertEqual(Action.SKIP_UNMANAGED, released.action)
+            self.assertIn("released from the manifest", released.detail)
+            self.assertEqual(Action.REMOVE_OBSOLETE, operations[".github/workflows/docs-check.yml"].action)
+            apply_plan(plan, without.features.normalized_platforms(), remove_obsolete=True)
+            self.assertEqual("ours\n", template.read_text(encoding="utf-8"))
+            self.assertNotIn(".github/PULL_REQUEST_TEMPLATE.md", Manifest.load(root).files)
+            self.assertFalse((root / ".github/workflows/docs-check.yml").exists())
+            again = build_plan(root, render_project(without))
+            self.assertFalse(again.changes)
+            self.assertFalse(again.conflicts)
+
+    def test_seed_edited_under_an_older_manifest_is_preserved_on_upgrade(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "project"
+            req = request(root)
+
+            def earlier(version: str) -> dict[str, GeneratedFile]:
+                return render_project(req, generator_version=version)
+
+            apply_plan(build_plan(root, earlier("0.0.1")), req.features.normalized_platforms())
+            seed = root / "AGENTS.md"
+            seed.write_text(seed.read_text(encoding="utf-8") + "\nOur own rule.\n", encoding="utf-8")
+            customized = seed.read_bytes()
+            # The older release recorded the edited content as if it had generated it.
+            self._as_older_manifest(root, **{"AGENTS.md": sha256_bytes(customized)})
+            plan = build_plan(root, render_project(req), previous_generation=earlier)
+            operation = self._operations(plan)["AGENTS.md"]
+            self.assertEqual(Action.NO_CHANGE, operation.action)
+            self.assertTrue(operation.customized)
+            self.assertIn("did not record whether it was edited", operation.detail)
+            self.assertEqual(Action.UPDATE_GENERATED, self._operations(plan)[".refract/config.json"].action)
+            apply_plan(plan, req.features.normalized_platforms())
+            self.assertEqual(customized, seed.read_bytes())
+            self.assertTrue(Manifest.load(root).tracks_generated_seeds)
+            again = build_plan(root, render_project(req), previous_generation=earlier)
+            self.assertFalse(again.changes)
+            self.assertIn("customized and is preserved", self._operations(again)["AGENTS.md"].detail)
+
+    def test_unedited_seed_under_an_older_manifest_updates_only_when_provably_generated(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "project"
+            req = request(root)
+
+            def earlier(version: str) -> dict[str, GeneratedFile]:
+                return render_project(req, generator_version=version)
+
+            apply_plan(build_plan(root, earlier("0.0.1")), req.features.normalized_platforms())
+            self._as_older_manifest(root)
+            proven = self._operations(build_plan(root, render_project(req), previous_generation=earlier))
+            self.assertEqual(Action.UPDATE_GENERATED, proven["AGENTS.md"].action)
+            unproven = self._operations(build_plan(root, render_project(req)))["AGENTS.md"]
+            self.assertEqual(Action.NO_CHANGE, unproven.action)
+            self.assertTrue(unproven.customized)
+
+    def test_older_manifest_is_rewritten_once_and_never_removes_a_seed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "project"
+            with_github = request(root, github=True)
+            apply_plan(build_plan(root, render_project(with_github)), with_github.features.normalized_platforms())
+            self._as_older_manifest(root, version=Manifest().generator_version)
+            unchanged = build_plan(root, render_project(with_github))
+            self.assertEqual(
+                [".refract/manifest.json"], [operation.path for operation in unchanged.changes]
+            )
+            # Without tracking, an unchanged obsolete seed may be an edited one, so it is kept.
+            without = request(root)
+            plan = build_plan(root, render_project(without), remove_obsolete=True)
+            self.assertEqual(Action.SKIP_UNMANAGED, self._operations(plan)[".github/PULL_REQUEST_TEMPLATE.md"].action)
+            apply_plan(plan, without.features.normalized_platforms(), remove_obsolete=True)
+            self.assertTrue((root / ".github/PULL_REQUEST_TEMPLATE.md").is_file())
+            self.assertFalse(build_plan(root, render_project(without)).changes)
+
+    def test_prepare_bootstrap_checks_seeds_against_the_earlier_version(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "project"
+            req = request(root)
+            apply_plan(
+                build_plan(root, render_project(req, generator_version="0.0.1")), req.features.normalized_platforms()
+            )
+            self._as_older_manifest(root)
+            unedited = self._operations(prepare_bootstrap(req).plan)
+            self.assertEqual(Action.UPDATE_GENERATED, unedited["AGENTS.md"].action)
+            seed = root / "AGENTS.md"
+            seed.write_text(seed.read_text(encoding="utf-8") + "\nOur own rule.\n", encoding="utf-8")
+            self._as_older_manifest_hash(root, "AGENTS.md", sha256_path(seed))
+            edited = self._operations(prepare_bootstrap(req).plan)["AGENTS.md"]
+            self.assertEqual(Action.NO_CHANGE, edited.action)
+            self.assertTrue(edited.customized)
+
+    @staticmethod
+    def _as_older_manifest_hash(root: Path, relative: str, digest: str) -> None:
+        path = root / ".refract/manifest.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        data["files"][relative]["sha256"] = digest
+        path.write_text(json.dumps(data), encoding="utf-8")
 
     def test_plan_document_ownership_matches_the_written_manifest_for_a_customized_seed(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

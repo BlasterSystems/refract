@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Callable
 
 from . import __version__
-from .manifest import MANIFEST_PATH, Manifest, sha256_path
+from .manifest import MANIFEST_PATH, Manifest, generated_entry, sha256_path
 from .paths import UnsafePathError, assert_safe_root_parent, assert_safe_target_path
 from .planner import Action, Operation, Plan
 
@@ -218,12 +218,15 @@ def apply_plan(
                 destination = assert_safe_target_path(root, operation.path, allow_missing_leaf=False)
                 if operation.action == Action.NO_CHANGE:
                     _assert_expected(operation, destination)
-                baseline = plan.previous_manifest.files.get(operation.path)
-                if operation.customized and baseline:
-                    # Keep the hash of the last generated version. Recording the edited
-                    # content here would make the file look unmodified on the next run,
-                    # and a later template or fact change would overwrite it.
-                    manifest.files[operation.path] = dict(baseline)
+                if operation.customized:
+                    # Record the generated version, not the edited file. Recording the
+                    # file's own hash would make it look unedited on the next run, and a
+                    # later template or fact change would overwrite it.
+                    manifest.files[operation.path] = generated_entry(
+                        operation.generated.content,
+                        executable=operation.generated.executable,
+                        mutable=operation.generated.mutable,
+                    )
                     continue
                 manifest.files[operation.path] = {
                     "sha256": sha256_path(destination),

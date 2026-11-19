@@ -36,7 +36,7 @@ Work is tracked in the project's issue tracker: task identifiers use the `{prefi
 7. **Reconciliation**: when work lands at a coarser grain than the tickets describe (an epic PR implementing many stories), verify each covered ticket against the actual code before transitioning it; tickets whose feature is genuinely absent stay open and become the next work items, not silent "Done"s."""
 
 
-def _values(request: BootstrapRequest) -> dict[str, str]:
+def _values(request: BootstrapRequest, generator_version: str) -> dict[str, str]:
     facts = request.facts
     return {
         "PROJECT_NAME": facts.name,
@@ -58,13 +58,18 @@ def _values(request: BootstrapRequest) -> dict[str, str]:
         "TICKET_LIFECYCLE": (
             _ticket_lifecycle(facts.ticket_prefix) if facts.ticket_prefix else ""
         ),
-        "GENERATED_VERSION": __version__,
+        "GENERATED_VERSION": generator_version,
     }
 
 
-def render_project(request: BootstrapRequest, template_root: Path | None = None) -> dict[str, GeneratedFile]:
+def render_project(
+    request: BootstrapRequest,
+    template_root: Path | None = None,
+    *,
+    generator_version: str = __version__,
+) -> dict[str, GeneratedFile]:
     templates = TemplateEngine(template_root or packaged_template_root())
-    values = _values(request)
+    values = _values(request, generator_version)
     files: dict[str, GeneratedFile] = {}
 
     core_templates = {
@@ -103,7 +108,7 @@ def render_project(request: BootstrapRequest, template_root: Path | None = None)
 
     config = {
         "schema_version": 1,
-        "generator_version": __version__,
+        "generator_version": generator_version,
         "project": {
             "name": request.facts.name,
             "description": request.facts.description or None,

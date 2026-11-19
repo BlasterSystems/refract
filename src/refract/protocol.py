@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from . import __version__
-from .manifest import MANIFEST_PATH, sha256_bytes
+from .manifest import MANIFEST_PATH, generated_entry, sha256_bytes
 from .model import BootstrapRequest, GeneratedFile, SUPPORTED_PLATFORMS
 from .paths import UnsafePathError, assert_safe_root_parent, normalize_relative_path
 from .planner import Action, Plan
@@ -313,21 +313,18 @@ def _resulting_ownership(plan: Plan, desired: Mapping[str, GeneratedFile], remov
         operation = by_path.get(relative)
         if operation is None or operation.action in {Action.CONFLICT, Action.SKIP_UNMANAGED, Action.SKIP_KEPT}:
             continue
-        baseline = plan.previous_manifest.files.get(relative)
-        if operation.customized and baseline:
-            result[relative] = dict(baseline)
-            continue
-        if operation.action == Action.NO_CHANGE and operation.expected_hash:
-            digest = operation.expected_hash
-            executable = bool(operation.expected_executable)
+        if operation.action == Action.NO_CHANGE and operation.expected_hash and not operation.customized:
+            result[relative] = {
+                "sha256": operation.expected_hash,
+                "executable": bool(operation.expected_executable),
+                "mutable": generated.mutable,
+            }
         else:
-            digest = sha256_bytes(generated.content)
-            executable = generated.executable
-        result[relative] = {
-            "sha256": digest,
-            "executable": executable,
-            "mutable": generated.mutable,
-        }
+            # Created, updated, and customized files are recorded as generated; apply.py
+            # writes the same entry for a customized seed.
+            result[relative] = generated_entry(
+                generated.content, executable=generated.executable, mutable=generated.mutable
+            )
     if not remove_obsolete:
         for operation in plan.operations:
             if operation.action == Action.REMOVE_OBSOLETE and operation.path in plan.previous_manifest.files:
