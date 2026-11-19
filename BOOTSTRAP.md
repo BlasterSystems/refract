@@ -87,6 +87,7 @@ Leave `${{ ... }}` and other text that is not an upper-case placeholder untouche
 
 - For a file that doesn't exist yet: write it.
 - For a file refract wrote in a previous run, and whose SHA-256 still matches the hash in `.refract.md`: the user hasn't edited it. Show the diff to the new version and replace it on approval.
+- For a file recorded as `kept` or `skipped` in `.refract.md`: the user already decided. Leave it and don't ask again, unless the user asks for refract's version; then treat it as a change to an existing file. If this release's version of that file differs from the one the user turned down, say so in the report, in one line.
 - For any other file that already exists: follow the policy below.
 
 ### Existing files refract did not write (or the user edited)
@@ -114,10 +115,24 @@ Write `.refract.md` at the target root (it is always refract's own file):
 ## Files
 | Path | SHA-256 when written | How |
 |---|---|---|
-<one row per file refract created or replaced; How is created, replaced, merged, or link>
+<one row per file refract touched or decided about>
 ```
 
-Compute each hash after writing, with `sha256sum <file>` (on macOS, `shasum -a 256 <file>`). Do not list files the user declined, or files refract merged into but doesn't own. Mark those `merged` and leave the hash empty.
+The `How` column takes one of these values:
+
+| How | Meaning | Hash |
+|---|---|---|
+| `created` / `replaced` | refract wrote the whole file | SHA-256 after writing |
+| `link` | a symbolic link refract made | empty |
+| `merged` | refract added to a file it doesn't own, such as `@AGENTS.md` in `CLAUDE.md` | empty |
+| `skipped` | an existing file refract had its own version of, and the user kept theirs | empty |
+| `kept` | a file refract wrote that the user later edited, and chose to keep | empty |
+
+Compute each hash with `sha256sum <file>` (on macOS, `shasum -a 256 <file>`).
+
+**Fresh and existing modes:** write `.refract.md`.
+
+**Update mode:** rewrite `.refract.md` only if this run changed a file or a recorded decision (a fact, a platform, a feature, or a `kept` or `skipped` choice). Set `Mode: update`, today's date, and the release you used. A run that changes nothing leaves `.refract.md` untouched; never rewrite it just to update the mode or date. Like any existing file, a rewrite of `.refract.md` is listed in the plan (step 4), and its diff is shown and approved (rule 2).
 
 ## 8. Check and report
 

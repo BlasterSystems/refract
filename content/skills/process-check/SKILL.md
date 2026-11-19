@@ -25,7 +25,7 @@ A read-only checklist. Report every failure with its file and line; do not fix a
 6. Each `.agents/skills/<name>/SKILL.md` starts with front matter whose `name` equals `<name>` and whose `description` is not empty.
 7. If `.claude/skills` exists, it is a link to `.agents/skills`, or each skill in it is identical to its `.agents/skills` copy. omp prefers `.claude/skills`, so drift silently changes behavior.
 8. Agent files (`.claude/agents/*.md`, `.omp/agents/*.md`) have front matter with `name` equal to the file name and a `description`. `.opencode/agents/*.md` and `.opencode/commands/*.md` have a `description`. `.codex/agents/*.toml` have non-empty `name`, `description`, and `developer_instructions`.
-9. No skill, agent, command, `CLAUDE.md`, or `.omp/RULES.md` tells the agent to install anything under the user's home directory (`~/.claude`, `~/.codex`, `~/.agents`, `~/.omp`, `~/.config/opencode`, or `$HOME/...`).
+9. No skill, agent, command, `CLAUDE.md`, or `.omp/RULES.md` tells the agent to install anything under the user's home directory (`~/.claude`, `~/.codex`, `~/.agents`, `~/.omp`, `~/.config/opencode`, or `$HOME/...`). This checklist is exempt, because it names those folders to forbid them.
 10. Every JSON and TOML configuration file parses.
 
 ## ADRs (`docs/adr/`)
