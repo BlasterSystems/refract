@@ -7,7 +7,7 @@ All notable changes to this project are documented here. The format follows [Kee
 ### Documentation
 
 - Install and upgrade instructions use pipx or uv, so they work where the system Python is externally managed (PEP 668). The README adds install options, an `externally-managed-environment` troubleshooting entry, and notes for pinned releases and earlier `pip install` setups.
-- `docs/PROMPTS.md` install-and-set-up prompt: the agent installs the CLI if missing and previews; the human applies with a documented command that asks for confirmation before writing.
+- `docs/PROMPTS.md` install-and-set-up prompt: the agent installs the CLI if missing and runs an agent-guided preview; the human applies in an interactive terminal with `--expected-plan`, so Refract refuses to write if the plan changed.
 
 ## [0.3.0] - 2026-11-18
 

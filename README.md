@@ -17,7 +17,7 @@ Refract gives new and existing repositories the same agentic development setup o
 
 ## Quick start
 
-Requires Python 3.11+, git, and [pipx](https://pipx.pypa.io/) or [uv](https://docs.astral.sh/uv/). Other ways to install: [install options](#install-options).
+Requires git and either [pipx](https://pipx.pypa.io/) with Python 3.11+, or [uv](https://docs.astral.sh/uv/), which downloads a compatible Python itself. Other ways to install: [install options](#install-options).
 
 ```bash
 pipx install git+https://github.com/BlasterSystems/refract   # or: uv tool install git+https://github.com/BlasterSystems/refract
@@ -141,7 +141,7 @@ Go deeper → [docs/AGENT_GUIDED.md](docs/AGENT_GUIDED.md) (trust boundary and p
 <details>
 <summary><a id="install-options"></a><b>Install options</b></summary>
 
-Refract is a Python CLI with no runtime dependencies. Install it into its own environment: on Debian, Ubuntu, Arch, and Homebrew, plain `pip install` into the system Python fails with `externally-managed-environment` (PEP 668).
+Refract is a Python CLI with no runtime dependencies. Install it into its own environment: on Debian 12+, Ubuntu 23.04+, Arch, and Homebrew, plain `pip install` into the system Python fails with `externally-managed-environment` (PEP 668).
 
 | Method | Install | Upgrade |
 |---|---|---|
@@ -151,8 +151,9 @@ Refract is a Python CLI with no runtime dependencies. Install it into its own en
 | No install (uv) | `uvx --from git+https://github.com/BlasterSystems/refract refract --help` | Runs the latest commit each time |
 
 - **Pin a release** by appending a tag to the URL: `git+https://github.com/BlasterSystems/refract@vX.Y.Z` (`v0.3.0` or later; older tags predate the `refract` command). `pipx reinstall` stays on the pinned tag, so move to another release with `pipx install --force git+https://github.com/BlasterSystems/refract@vX.Y.Z` or `uv tool install git+https://github.com/BlasterSystems/refract@vX.Y.Z`.
-- **Installed earlier with `pip install ./refract`?** Run `pip uninstall refract` in that same Python first. Otherwise the old command stays in place: uv stops with `Executable already exists`, and pipx reports success while `refract` still runs the old copy.
-- **No pipx?** Use your package manager, then run `pipx ensurepath`: `sudo apt install pipx` (Debian/Ubuntu), `sudo pacman -S python-pipx` (Arch), `brew install pipx` (macOS). If that pipx runs on Python older than 3.11, as on Ubuntu 22.04, add `--python python3.11` to `pipx install`, or use uv, which downloads a compatible Python itself.
+- **Installed earlier with `pip install ./refract`?** Run `which -a refract` to find every copy, and remove the old one with `pip uninstall refract`, using the Python that installed it. Otherwise the old copy can keep running: in the same folder, uv stops with `Executable already exists` and pipx reports success but leaves the old file; in another folder earlier on `PATH`, it still wins.
+- **No pipx?** Use your package manager, then run `pipx ensurepath`: `sudo apt install pipx` (Debian/Ubuntu), `sudo pacman -S python-pipx` (Arch), `brew install pipx` (macOS).
+- **Python older than 3.11**, as on Ubuntu 22.04: pipx and the virtual environment need 3.11+, so use uv, which downloads a compatible Python itself.
 - **`ensurepip is not available`** when creating a virtual environment on Debian/Ubuntu: `sudo apt install python3-venv`.
 - **`refract: command not found`** after pipx or uv: run `pipx ensurepath` or `uv tool update-shell`, then open a new terminal. With a virtual environment, call `~/.venvs/refract/bin/refract` or add that folder to `PATH`.
 - **Do not use `--break-system-packages` or `sudo pip install`.** They can break tools your OS depends on.
@@ -249,7 +250,7 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 PYTHONPATH=src python3 -m refract validate --target .
 ```
 
-To use your checkout as the `refract` command, run `pipx install --force --editable .` or `uv tool install --editable .` from the repository root. Both replace an existing install of refract.
+To use your checkout as the `refract` command, run `pipx install --force --editable .` or `uv tool install --force --editable .` from the repository root. Both replace an existing install of refract.
 
 ## Credits
 
