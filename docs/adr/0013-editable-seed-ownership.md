@@ -1,8 +1,8 @@
 # ADR-0013: Editable seeds are replaced only when shown to be generated
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-19
-- **Decision owners:** Project owner (decision pending)
+- **Decision owners:** Project owner (accepted 2026-11-19)
 - **Scope:** Ownership manifest and planning of editable seeds
 - **Tags:** ownership, manifest, seeds, retrofit, safety
 - **Supersedes:** None
