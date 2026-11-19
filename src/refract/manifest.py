@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -33,14 +34,14 @@ def sha256_path(path: Path) -> str:
     return sha256_bytes(path.read_bytes())
 
 
-def preserved_seed_entry(base: str, *, executable: bool) -> dict[str, Any]:
-    """Manifest entry for an editable seed that is kept as the project edited it.
+def preserved_seed_entry(previous: Mapping[str, Any], base: str) -> dict[str, Any]:
+    """Manifest entry for an editable seed that is kept as the project left it.
 
-    ``base`` is the hash of the generated version the edits started from, or
+    ``base`` is the hash of the generated version the content started from, or
     ``UNKNOWN_SEED_BASE``. It is never the hash of the file on disk: recording that would
     make the file look unedited on the next run, and a later change would overwrite it.
     """
-    return {"sha256": base, "executable": executable, "mutable": True}
+    return {"sha256": base, "executable": bool(previous.get("executable", False)), "mutable": True}
 
 
 @dataclass

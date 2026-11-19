@@ -210,7 +210,13 @@ def apply_plan(
         _revalidate_passive_operations(plan)
         manifest = Manifest(generator_version=__version__, platforms=platforms)
         for operation in plan.operations:
-            if operation.generated is not None and operation.action in {
+            if operation.seed_base is not None:
+                destination = assert_safe_target_path(root, operation.path, allow_missing_leaf=False)
+                _assert_expected(operation, destination)
+                manifest.files[operation.path] = preserved_seed_entry(
+                    plan.previous_manifest.files[operation.path], operation.seed_base
+                )
+            elif operation.generated is not None and operation.action in {
                 Action.CREATE,
                 Action.UPDATE_GENERATED,
                 Action.NO_CHANGE,
@@ -218,11 +224,6 @@ def apply_plan(
                 destination = assert_safe_target_path(root, operation.path, allow_missing_leaf=False)
                 if operation.action == Action.NO_CHANGE:
                     _assert_expected(operation, destination)
-                if operation.seed_base is not None:
-                    manifest.files[operation.path] = preserved_seed_entry(
-                        operation.seed_base, executable=operation.generated.executable
-                    )
-                    continue
                 manifest.files[operation.path] = {
                     "sha256": sha256_path(destination),
                     "executable": _executable(destination),

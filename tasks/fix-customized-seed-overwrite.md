@@ -18,41 +18,45 @@ Separately, `.refract/bin/docs-check` treats any changed path containing `config
 
 ## Acceptance criteria
 
-- [x] A customized seed keeps its content across any number of re-runs, including runs that rewrite the manifest.
+The rule and its states are decided in ADR-0013.
+
+- [x] A seed is replaced or removed only when its content is shown to be Refract's own output.
 - [x] The manifest keeps the hash of the generated version a seed started from, never the hash of the edited file, and states this with `"seed_hashes": "generated"`.
+- [x] A preserved seed never blocks an apply, whether the path is still generated or obsolete.
 - [x] A seed made identical to the generated version is tracked as generated again.
-- [x] Under a manifest without the key (0.3.0 or earlier):
-  - a seed is updated only when its content equals what Refract would have generated under that release's version;
-  - any other differing seed is preserved and recorded with an all-zero "base unknown" hash, and its note says how to take the generated version;
-  - an obsolete seed is never removed, and a seed that became fully generated is a conflict.
+- [x] Under a manifest without the key (0.3.0 or earlier), seed hashes are not trusted: a seed is recognized only by content, and any other seed is kept with an all-zero "base unknown" hash and a note that says how to take the generated version.
+- [x] A manifest's seed claim is ignored for Refract control paths.
 - [x] The plan document's `resulting_ownership` equals the manifest that apply writes.
 - [x] `docs-check` ignores paths under `.refract/`; other configuration paths are still reported.
 - [x] This repository's `.refract/bin/docs-check` is identical to the packaged template, and a test keeps it so.
-- [x] Tests fail when the fix is removed.
+- [x] There is one test per state, and each rule has a test that fails when the rule is switched off.
 
 ## Out of scope
 
-Each of these is a policy decision and is listed in `tasks/research-entry-path-consolidation.md` for an ADR:
+Tracked in issue #20:
 
-- Handing an edited seed back to the project when Refract stops generating it. It stays a conflict, as before.
-- A way to acknowledge a changed generated seed while keeping the edits. The "generated seed changed" note stays until the file matches the generated version.
-- Recognizing an unedited seed under an older manifest when a template or a project fact changed. Refract keeps the file and says how to take the generated version.
-- Exempting other generated files from `docs-check`, and its other heuristics.
+- Handing an edited seed back to the project, so that Refract stops claiming it.
+- A way to acknowledge a changed generated seed while keeping the edits.
+- The generator version footer in editable seeds.
+- Recognizing an unedited seed under an older manifest when a template or a project fact changed.
+- Exempting other generated files from `docs-check`.
 
 ## Key changes
 
+- `docs/adr/0013-editable-seed-ownership.md`: the rule (Proposed).
 - `src/refract/manifest.py`: `seed_hashes` key, `Manifest.tracks_generated_seeds`, `UNKNOWN_SEED_BASE`, and `preserved_seed_entry`, the one place that builds the manifest entry of a preserved seed.
-- `src/refract/planner.py`: `Operation.seed_base`; equality with the generated version is checked first; the rules for older manifests.
-- `src/refract/renderer.py`: `render_project(..., generator_version=...)`, used to ask what Refract would have generated under an earlier version.
+- `src/refract/planner.py`: `Operation.seed_base` and the rules of ADR-0013.
+- `src/refract/renderer.py`: `render_project(..., generator_version=...)`, used to render the current templates with an earlier version string.
 - `src/refract/apply.py`, `src/refract/protocol.py`: a preserved seed is recorded through `preserved_seed_entry`, in the written manifest and in the plan document.
 - `src/refract/templates/core/bin/docs-check.py` and `.refract/bin/docs-check`: skip `.refract/`.
-- `docs/ARCHITECTURE.md`: states the seed-hash rule.
+- `docs/ARCHITECTURE.md`: states the rule.
 
 ## Review history
 
 1. The first version carried a customized seed's manifest entry forward. Review found that it still lost edits on the first upgrade of an already affected project and kept a re-adopted seed marked customized.
-2. The second version added rules for older manifests but also new policy: it released edited obsolete seeds from the manifest, moved the recorded hash to the newest generated version, and exempted every manifest-listed file from `docs-check`. Review found problems in each addition, and that an ownership change needs an ADR (ADR-0005 decision 10).
-3. The third version keeps the first version's rule, keeps the older-manifest protection with an explicit "base unknown" state, and drops the added policy.
+2. The second version added rules for older manifests, released edited obsolete seeds from the manifest, moved the recorded hash to the newest generated version, and exempted every manifest-listed file from `docs-check`. Review found problems in each addition.
+3. The third version dropped the additions and reported edited or unverifiable obsolete seeds as conflicts. Review found that this blocked upgrades in two ordinary cases.
+4. The fourth version stops deciding case by case. ADR-0013 states one rule, the planner applies it to every state, and each state has a test.
 
 ## Validation evidence
 
