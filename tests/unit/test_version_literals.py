@@ -27,15 +27,20 @@ DOC_FILES = ("README.md", "docs/PROMPTS.md", "docs/PROJECT_SUMMARY.md")
 # of importing them: this test must stay an independent witness of the docs,
 # not a re-run of the script's own logic.
 _FLOOR_PATTERN = re.compile(
-    r"reports (?:(?:a version below|less than) (?P<below>\d+\.\d+\.\d+)"
+    r"(?:reports (?:(?:a version below|less than) (?P<below>\d+\.\d+\.\d+)"
     r"|(?P<later>\d+\.\d+\.\d+) or later)"
+    r"|Current release:\*{0,2} (?P<release>\d+\.\d+\.\d+))"
 )
+
+_GROUPS = ("below", "later", "release")
 
 
 def _floor_literal(match: re.Match[str]) -> str:
     """Return the version literal captured inside a floor context."""
-    group = "below" if match.group("below") is not None else "later"
-    return match.group(group)
+    for group in _GROUPS:
+        if match.group(group) is not None:
+            return match.group(group)
+    raise AssertionError("unreachable: every pattern alternative captures one group")
 
 
 class DocumentedVersionFloors(unittest.TestCase):
@@ -58,7 +63,7 @@ class DocumentedVersionFloors(unittest.TestCase):
                     literal = _floor_literal(match)
                     if literal == __version__:
                         continue
-                    group = "below" if match.group("below") is not None else "later"
+                    group = next(group for group in _GROUPS if match.group(group) is not None)
                     start = match.start(group) - match.start()
                     expected = match.group(0)[:start] + __version__ + match.group(0)[start + len(literal):]
                     drifts.append(f"  {display}:{number}\n-   {match.group(0)}\n+   {expected}")

@@ -32,6 +32,6 @@ else
     uv pip install --quiet --python "$scratch/venv/bin/python" "$scratch"/wheel/*.whl
 fi
 "$scratch/venv/bin/refract" --version
-"$scratch/venv/bin/refract" init --platform pi --dry-run --yes --target "$scratch/smoke"
+"$scratch/venv/bin/refract" init --platform all --dry-run --yes --target "$scratch/smoke"
 
 echo "check.sh: all gates passed."

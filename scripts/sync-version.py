@@ -35,15 +35,20 @@ DOC_FLOOR_FILES: tuple[str, ...] = (
 )
 
 _FLOOR_PATTERN = re.compile(
-    r"reports (?:(?:a version below|less than) (?P<below>\d+\.\d+\.\d+)"
+    r"(?:reports (?:(?:a version below|less than) (?P<below>\d+\.\d+\.\d+)"
     r"|(?P<later>\d+\.\d+\.\d+) or later)"
+    r"|Current release:\*{0,2} (?P<release>\d+\.\d+\.\d+))"
 )
+
+_GROUPS = ("below", "later", "release")
 
 
 def _floor_literal(match: re.Match[str]) -> str:
     """Return the version literal captured inside a floor context."""
-    group = "below" if match.group("below") is not None else "later"
-    return match.group(group)
+    for group in _GROUPS:
+        if match.group(group) is not None:
+            return match.group(group)
+    raise AssertionError("unreachable: every pattern alternative captures one group")
 
 
 def _floor_with_version(match: re.Match[str], version: str) -> str:
@@ -54,7 +59,7 @@ def _floor_with_version(match: re.Match[str], version: str) -> str:
     literal = _floor_literal(match)
     if literal == version:
         return match.group(0)
-    group = "below" if match.group("below") is not None else "later"
+    group = next(group for group in _GROUPS if match.group(group) is not None)
     start = match.start(group) - match.start()
     return match.group(0)[:start] + version + match.group(0)[start + len(literal):]
 
