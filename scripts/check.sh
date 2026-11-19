@@ -22,15 +22,20 @@ echo "== strict docs check against ${CHECK_BASE:-origin/main}"
 echo "== wheel build and installed-CLI smoke test"
 scratch="$(mktemp -d)"
 trap 'rm -rf "$scratch"' EXIT
+# The smoke must exercise the wheel, not the checkout: drop PYTHONPATH so the
+# repository's src/ cannot shadow or satisfy the installed package.
+unset PYTHONPATH
+echo "python3: $(python3 -V 2>&1)"
 if python3 -m pip --version >/dev/null 2>&1; then
-    python3 -m pip wheel --no-deps --quiet -w "$scratch/wheel" .
+    python3 -m pip wheel --no-deps -w "$scratch/wheel" .
     python3 -m venv "$scratch/venv"
-    "$scratch/venv/bin/pip" install --quiet --no-deps "$scratch"/wheel/*.whl
+    "$scratch/venv/bin/python" -m pip install --no-deps "$scratch"/wheel/*.whl
 else
-    uv build --wheel --quiet --out-dir "$scratch/wheel" .
-    uv venv --quiet "$scratch/venv"
-    uv pip install --quiet --python "$scratch/venv/bin/python" "$scratch"/wheel/*.whl
+    uv build --wheel --out-dir "$scratch/wheel" .
+    uv venv "$scratch/venv"
+    uv pip install --python "$scratch/venv/bin/python" "$scratch"/wheel/*.whl
 fi
+echo "venv bin: $(ls "$scratch/venv/bin")"
 "$scratch/venv/bin/refract" --version
 "$scratch/venv/bin/refract" init --platform all --dry-run --yes --target "$scratch/smoke"
 
