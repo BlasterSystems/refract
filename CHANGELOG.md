@@ -4,9 +4,24 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Security
+
+- An agent-guided dry run in text format no longer prints the contents of existing managed files in its diffs. It withholds them as the JSON format does; only the interactive apply shows them.
+
 ### Fixed
 
+- `scripts/refract.sh` no longer imports Python modules from the current directory or from an inherited `PYTHONPATH`, so a target repository's files cannot shadow the standard library or Refract when the wrapper runs from a clone. It reports a clear error on Python older than 3.11.
+- An agent-guided apply with a wrong `--expected-plan` now displays the recomputed plan before it stops, as ADR-0005 specifies. It still writes nothing.
 - Agent-guided previews no longer lose languages and commands in repositories with more than 200 files. `refract inspect` looks up build manifests at the repository root by name, detects lockfiles by presence, reads shallow files before deeper ones, and skips a file that is too large instead of ending the scan. When a root manifest cannot be read, the inspection reports `facts_incomplete` and the plan warns.
+
+### Documentation
+
+- Install and upgrade instructions use pipx or uv, so they work where the system Python is externally managed (PEP 668). The README adds install options, an `externally-managed-environment` troubleshooting entry, and notes for pinned releases and earlier `pip install` setups.
+- `docs/PROMPTS.md` set-up prompt needs no install: the agent uses an installed `refract`, `uvx`, or a clone in a temporary folder, runs an agent-guided JSON preview, and you apply in an interactive terminal with `--expected-plan`, so Refract refuses to write if the plan changed.
+- New-project and existing-project prompts use the same agent-guided preview and `--expected-plan` apply instead of a plain `--dry-run --yes` preview; the README links to them.
+- Agents never install Refract; the prompt rules and the README's rules for coding agents say how to run it in place.
+- Advisory setup prompt: when inspection is truncated or a command or ticket prefix is missing, the agent looks for it with its own read-only tools and says where it came from.
+- `docs/AGENT_GUIDED.md` describes the apply order as the CLI runs it.
 
 ## [0.3.0] - 2026-11-18
 

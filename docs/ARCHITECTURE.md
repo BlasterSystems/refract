@@ -60,6 +60,10 @@ Generated hooks and scripts run as the developer, outside any agent sandbox, whi
 
 Repository evidence, agent proposals, and repository-supplied manifests are untrusted. Agents may inspect bounded evidence and preview deterministic plans, but cannot supply generated files or apply. Agent-guided apply is recomputed, fully displayed, and directly confirmed in a separate interactive human terminal. Plan identifiers provide integrity, not identity or authorization. See `docs/AGENT_GUIDED.md`, `docs/THREAT_MODEL.md`, and ADR-0005.
 
+- **Previews never carry existing file contents.** A dry run withholds them in both the JSON and the text format; only the interactive apply shows exact diffs against existing files.
+- **The recomputed plan is displayed before the expected identifier is checked,** so a mismatch still shows the human the current plan, and nothing is written.
+- **`scripts/refract.sh` isolates its imports.** Agents may run it from a temporary clone inside a target repository, so it keeps the current directory and any inherited `PYTHONPATH` off the import path.
+
 ## Portable core
 
 `AGENTS.md`, workflow documents, tasks, ADRs, validators, and `.agents/skills` contain no coding-platform tool syntax. Adapters add only officially supported platform files.

@@ -293,7 +293,9 @@ def _capability_warnings(request: BootstrapRequest) -> list[str]:
     return capability_warnings(request.features)
 
 
-def _display_agent_review(prepared: PreparedBootstrap, warnings: list[str]) -> None:
+def _display_agent_review(
+    prepared: PreparedBootstrap, warnings: list[str], *, include_existing_content: bool
+) -> None:
     print("Agent-guided plan recomputed by the deterministic core.")
     print("Plan identifier provides integrity only; it does not identify or authorize an approver.")
     print("Complete canonical plan bound by the plan identifier:")
@@ -303,7 +305,7 @@ def _display_agent_review(prepared: PreparedBootstrap, warnings: list[str]) -> N
         print("WARNING: The existing manifest is a repository-supplied, unauthenticated ownership claim.")
     for warning in warnings:
         print(f"WARNING: {_terminal_safe_line(warning)}")
-    diffs = prepared.review_diffs(include_existing_content=True)
+    diffs = prepared.review_diffs(include_existing_content=include_existing_content)
     if diffs:
         print("Reviewable generated-file diffs:")
         for path, diff in sorted(diffs.items()):
@@ -359,18 +361,21 @@ def _run_generation(args: argparse.Namespace) -> int:
         + existing_setup_findings(request.target)
     )
 
-    if args.agent_guided and args.expected_plan and prepared.plan_id != args.expected_plan:
-        raise ValueError(
-            f"plan identifier mismatch: expected {args.expected_plan}, recomputed {prepared.plan_id}; review a new dry-run"
-        )
-
     if not json_mode:
         if args.agent_guided:
-            _display_agent_review(prepared, warnings)
+            # A dry run is the agent's preview; only the human apply, which requires an
+            # interactive terminal, may show the contents of existing files.
+            _display_agent_review(prepared, warnings, include_existing_content=not args.dry_run)
         else:
             print(_terminal_safe_text(plan.format()))
             for warning in warnings:
                 print(f"WARNING: {_terminal_safe_line(warning)}", file=sys.stderr)
+    # The recomputed plan is displayed before the identifier is checked (ADR-0005 §8), so a
+    # mismatch still shows the human what the current plan is.
+    if args.agent_guided and args.expected_plan and prepared.plan_id != args.expected_plan:
+        raise ValueError(
+            f"plan identifier mismatch: expected {args.expected_plan}, recomputed {prepared.plan_id}; review a new dry-run"
+        )
     if plan.conflicts:
         if json_mode:
             print(json.dumps(_payload(prepared, args, status="conflict", applied=False, warnings=warnings), indent=2))

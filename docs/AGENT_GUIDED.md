@@ -55,7 +55,7 @@ refract retrofit \
   --target /path/to/project
 ```
 
-Preview writes only to stdout. Existing repository file contents are withheld from the agent preview; update and removal entries expose hashes and require exact diff review in the trusted terminal. The plan identifier binds the normalized request, target-root state, desired paths and hashes, modes, mutability and resulting ownership, current destination state, operations, and removal policy. It provides integrity only, not identity or authorization.
+Preview writes only to stdout. Existing repository file contents are withheld from the agent preview in both the JSON and the text format; update and removal entries expose hashes and require exact diff review in the trusted terminal. Only the interactive apply shows those contents. The plan identifier binds the normalized request, target-root state, desired paths and hashes, modes, mutability and resulting ownership, current destination state, operations, and removal policy. It provides integrity only, not identity or authorization.
 
 The agent must stop after showing the preview. A human then runs the corresponding command separately in an interactive trusted terminal:
 
@@ -67,7 +67,7 @@ refract retrofit \
   --target /path/to/project
 ```
 
-The deterministic command asks the human to confirm facts and sensitive features, recomputes and displays the complete authoritative plan and terminal-safe exact diffs, verifies the expected identifier, and asks for final confirmation. Apply and post-apply validation return a schema-versioned deterministic result with rollback status. `--yes` is rejected in agent-guided mode.
+The deterministic command asks the human to confirm facts and sensitive features, recomputes and displays the complete authoritative plan and terminal-safe exact diffs, verifies the expected identifier, and asks for final confirmation. On a mismatch it stops after the display and writes nothing. Apply and post-apply validation return a schema-versioned deterministic result with rollback status. `--yes` is rejected in agent-guided mode.
 
 ## Embedding facade
 
