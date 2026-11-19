@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import difflib
+import json
 import os
 import stat
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -10,7 +12,7 @@ from typing import Any
 from .apply import ApplyError, apply_plan
 from .inspection import InspectionArtifact, inspect_project
 from .manifest import sha256_bytes
-from .model import BootstrapRequest, GeneratedFile
+from .model import BootstrapRequest, FeatureSelection, GeneratedFile, ProjectFacts
 from .paths import assert_safe_target_path
 from .planner import Action, Plan, build_plan
 from .protocol import PlanArtifact, ResultArtifact, plan_document
@@ -116,6 +118,68 @@ class PreparedBootstrap:
         return payload
 
 
+_STORED_CONFIG_LIMIT = 1_048_576
+
+
+def _stored_request(request: BootstrapRequest) -> BootstrapRequest | None:
+    """The request recorded in ``.refract/config.json``, or None when it cannot be read.
+
+    The file is repository content. It is used only to render what an earlier release
+    would have generated, for comparison by hash; nothing from it is written.
+    """
+    try:
+        path = assert_safe_target_path(request.target, ".refract/config.json", allow_missing_leaf=False)
+        descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+        with os.fdopen(descriptor, "rb") as handle:
+            if not stat.S_ISREG(os.fstat(handle.fileno()).st_mode):
+                return None
+            raw = handle.read(_STORED_CONFIG_LIMIT + 1)
+        if len(raw) > _STORED_CONFIG_LIMIT:
+            return None
+        config = json.loads(raw)
+        project = config["project"]
+        requested = config["features"]["requested"]
+        commands = project.get("commands") or {}
+        stored = BootstrapRequest(
+            target=request.target,
+            mode=request.mode,
+            facts=ProjectFacts(
+                name=project["name"],
+                description=project.get("description") or "",
+                languages=list(project.get("languages") or []),
+                build_command=commands.get("build"),
+                test_command=commands.get("test"),
+                run_command=commands.get("run"),
+                ticket_prefix=project.get("ticket_prefix"),
+                components=list(project.get("components") or []),
+            ),
+            features=FeatureSelection(
+                platforms=list(requested["platforms"]),
+                **{
+                    name: bool(requested.get(name, False))
+                    for name in ("mcp", "agents", "github", "scheduled_audit", "hooks", "permissions")
+                },
+            ),
+        )
+        stored.facts.validate()
+        stored.features.normalized_platforms()
+        return stored
+    except (OSError, ValueError, TypeError, KeyError, AttributeError):
+        return None
+
+
+def _earlier_generations(request: BootstrapRequest, version: str) -> Iterator[Mapping[str, GeneratedFile]]:
+    """What the current templates render with an earlier version string.
+
+    Rendered from the facts and features the project was generated with, when they can
+    be read, and from the current request. The planner compares editable seeds with both.
+    """
+    stored = _stored_request(request)
+    if stored is not None:
+        yield render_project(stored, generator_version=version)
+    yield render_project(request, generator_version=version)
+
+
 def prepare_bootstrap(
     request: BootstrapRequest, *, remove_obsolete: bool = False, keep_existing: bool = False
 ) -> PreparedBootstrap:
@@ -128,7 +192,7 @@ def prepare_bootstrap(
         desired,
         remove_obsolete=remove_obsolete,
         keep_existing=keep_existing,
-        previous_generation=lambda version: render_project(request, generator_version=version),
+        earlier_generations=lambda version: _earlier_generations(request, version),
     )
     document = plan_document(
         request, desired, plan, remove_obsolete=remove_obsolete, keep_existing=keep_existing

@@ -26,6 +26,30 @@ CORE_SKILLS = (
 )
 
 
+# Every path refract generates, or has ever generated, as an editable seed. Only these
+# paths can be treated as seeds, whatever a repository-supplied manifest claims. Never
+# remove a path: one that stops being a seed must stay listed so that manifests written
+# while it was a seed are still handled safely (ADR-0013).
+SEED_PATHS = frozenset(
+    {
+        ".github/PULL_REQUEST_TEMPLATE.md",
+        "AGENTS.md",
+        "docs/AGENT_GUIDED.md",
+        "docs/ARCHITECTURE.md",
+        "docs/DEPLOYMENT.md",
+        "docs/DEVELOPMENT_PROCESS.md",
+        "docs/README.md",
+        "docs/RELEASING.md",
+        "docs/SECURITY_AUDIT.md",
+        "docs/TASK_BREAKDOWN.md",
+        "docs/adr/README.md",
+        "docs/adr/template.md",
+        "docs/branches/README.md",
+        "tasks/task-template.md",
+    }
+)
+
+
 @dataclass(frozen=True)
 class DetectedValue:
     value: Any
