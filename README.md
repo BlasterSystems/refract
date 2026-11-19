@@ -47,8 +47,10 @@ Add `--permissions` for ask-before-edit policies, `--hooks` for git and agent en
 **Agent prompt:**
 
 ```text
-Set up Refract for this new project: run `refract init --platform claude,codex,opencode,omp --dry-run --yes --target .`, show me the plan, and wait. I will apply it myself.
+Set up Refract for this new project: from the repository root, run `refract init --agent-guided --platform claude,codex,opencode,omp --dry-run --target .`, report the plan identifier and the plan, and wait. I will apply it myself.
 ```
+
+Then apply in your own terminal: the same command without `--dry-run`, plus `--expected-plan <PLAN_ID>`. Refract refuses if the plan changed since the preview.
 
 Go deeper → [docs/PROMPTS.md](docs/PROMPTS.md#new-project) · [generated files](docs/GENERATED_OUTPUT.md)
 
@@ -63,8 +65,10 @@ Without `--keep-existing`, any file of yours at a generated path stops the run, 
 **Agent prompt:**
 
 ```text
-Preview adding Refract to this repository with `refract retrofit --platform claude,codex,opencode,omp --keep-existing --dry-run --yes --target .`. Summarize the kept files, the skipped skills, and every migration finding with a suggested fix. Do not apply.
+From the repository root, preview adding Refract with `refract retrofit --agent-guided --platform claude,codex,opencode,omp --keep-existing --dry-run --target .`. Report the plan identifier, and summarize the kept files, the skipped skills, and every migration finding with a suggested fix. Do not apply.
 ```
+
+Then apply in your own terminal: the same command without `--dry-run`, plus `--expected-plan <PLAN_ID>`.
 
 Go deeper → [docs/MIGRATION.md](docs/MIGRATION.md) · [advisory agent-guided setup](docs/PROMPTS.md#advisory-setup)
 

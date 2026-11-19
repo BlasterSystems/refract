@@ -51,24 +51,42 @@ Refract recomputes the plan and stops if anything changed since the preview. It 
 ## New project
 
 ```text
-Set up Refract for this new project: run `refract init --platform claude,codex,opencode,omp --dry-run --yes --target .`, show me the plan, and wait. I will apply it myself.
+Set up Refract for this new project. From the repository root, preview (writes nothing):
+`refract init --agent-guided --platform claude,codex,opencode,omp --dry-run --target .`
+Report the plan identifier and the plan, and stop. I will apply it myself.
 ```
 
 With options:
 
 ```text
-Preview Refract for this project with permission policies and hooks:
-`refract init --platform claude,codex,opencode,omp --permissions --hooks --dry-run --yes --target .`.
-Explain what each generated file is for in one line each, then stop.
+Preview Refract for this project with permission policies and hooks, from the repository root:
+`refract init --agent-guided --platform claude,codex,opencode,omp --permissions --hooks --dry-run --target .`
+Report the plan identifier, explain what each generated file is for in one line each, then stop.
+```
+
+Apply in your own interactive terminal at the repository root, with the same flags as the preview and its plan identifier. Refract checks and confirms as described in [Install and set up](#install-and-set-up):
+
+```bash
+refract init --agent-guided --platform claude,codex,opencode,omp \
+  --expected-plan <PLAN_ID> --target .
 ```
 
 ## Existing project
 
 ```text
-Preview adding Refract to this repository with
-`refract retrofit --platform claude,codex,opencode,omp --keep-existing --dry-run --yes --target .`.
-Summarize: (1) files kept as ours, (2) skills skipped because we keep our own,
-(3) every migration finding with a concrete fix. Do not apply.
+Preview adding Refract to this repository. From its root (writes nothing):
+`refract retrofit --agent-guided --platform claude,codex,opencode,omp --keep-existing --dry-run --target .`
+Report the plan identifier and summarize: (1) files kept as ours (SKIP_UNMANAGED),
+(2) skills skipped because we keep our own, (3) every WARNING migration finding with
+a concrete fix. If the preview exits with code 2, list each CONFLICT and its detail
+instead. Do not apply.
+```
+
+Apply the same way, with the same flags as the preview:
+
+```bash
+refract retrofit --agent-guided --platform claude,codex,opencode,omp --keep-existing \
+  --expected-plan <PLAN_ID> --target .
 ```
 
 Follow-up after the human applied:
