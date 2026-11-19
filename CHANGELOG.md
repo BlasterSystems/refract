@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Documentation
+
+- `SECURITY.md` restored for the skill-based process: private reporting, supported versions, and a scope covering what refract's instructions make an agent do in a target repository.
+
 ## [0.4.0] - 2026-11-19
 
 ### Breaking
