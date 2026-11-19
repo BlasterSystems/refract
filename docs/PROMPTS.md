@@ -151,6 +151,13 @@ must never modify project files, stage, commit, or apply anything; the human app
 
    refract inspect --target .
 
+   The inspection reads a bounded sample and no git history. If it reports
+   `"truncated": true`, or a build, test, or run command or the ticket prefix is
+   missing, look for that fact yourself with read-only tools: manifests at the
+   repository root (package.json, pyproject.toml, Makefile), CI workflows, and
+   `git log --oneline -50` for a ticket prefix. Tell me where each such fact came
+   from; I confirm every fact when I apply.
+
 3. From the evidence, write a strict proposal to /tmp/refract-intent.json (outside
    this repo). Only these fields are accepted; anything else is rejected:
 
