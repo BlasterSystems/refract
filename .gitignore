@@ -42,5 +42,6 @@ dist/
 
 # Editors and operating systems
 .DS_Store
+._*
 .idea/
 .vscode/
