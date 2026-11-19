@@ -9,6 +9,8 @@ from pathlib import Path
 
 ROOT = Path(os.environ.get("REFRACT_ROOT") or Path(__file__).resolve().parents[2])
 
+_TEST_DIR_COMPONENTS = frozenset({"tests", "test", "__tests__", "spec"})
+
 
 def git_names(arguments: list[str]) -> tuple[list[str], str | None]:
     result = subprocess.run(
@@ -49,6 +51,9 @@ def classify(paths: list[str]) -> list[str]:
     # Files under a .refract/ directory are refract's own metadata. They change on every
     # upgrade and version bump and are documented by refract, not by the project.
     paths = [path for path in paths if ".refract" not in path.split("/")]
+    # Files under test directories follow the tests, not the documentation heuristics:
+    # moving a fixture or adding a test must not demand a documentation update.
+    paths = [path for path in paths if not _TEST_DIR_COMPONENTS.intersection(path.split("/"))]
     docs = [path for path in paths if path.lower().endswith(".md")]
     architecture = [
         path for path in paths

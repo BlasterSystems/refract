@@ -323,6 +323,44 @@ class CliIntegrationTests(unittest.TestCase):
             self.assertEqual(1, project_config.returncode, project_config.stdout)
             self.assertIn("Configuration-related files changed", project_config.stdout)
 
+    def test_docs_check_ignores_test_directories(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            result = run_cli("init", "--platform", "pi", "--yes", "--target", str(target))
+            self.assertEqual(0, result.returncode, result.stdout)
+
+            def git(*args: str) -> None:
+                subprocess.run(
+                    ["git", "-c", "user.name=test", "-c", "user.email=test@example.invalid",
+                     "-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null", *args],
+                    cwd=target, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30,
+                )
+
+            def check() -> subprocess.CompletedProcess[str]:
+                return subprocess.run(
+                    [str(target / ".refract/bin/docs-check"), "--strict"], cwd=target,
+                    text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=30, check=False,
+                )
+
+            git("init", "-q", ".")
+            git("add", "-A")
+            git("commit", "-q", "-m", "baseline")
+            # Renaming a fixture and adding a test module must not demand documentation.
+            (target / "tests").mkdir()
+            (target / "tests/test_pipeline.py").write_text("def test_pipeline() -> None:\n    pass\n", encoding="utf-8")
+            (target / "spec").mkdir()
+            (target / "spec/old_handler_name.py").write_text("# moved fixture\n", encoding="utf-8")
+            git("add", "-A")
+            moved_fixtures = check()
+            self.assertEqual(0, moved_fixtures.returncode, moved_fixtures.stdout)
+            self.assertIn("No heuristic documentation gaps detected", moved_fixtures.stdout)
+            # A handler rename outside the test directories is still flagged.
+            (target / "src").mkdir()
+            (target / "src/order_handler_v2.py").write_text("def handle():\n    pass\n", encoding="utf-8")
+            git("add", "src/order_handler_v2.py")
+            flagged = check()
+            self.assertEqual(1, flagged.returncode, flagged.stdout)
+
     def test_docs_check_rejects_option_like_base(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)
