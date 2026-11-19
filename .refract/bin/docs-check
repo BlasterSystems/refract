@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import subprocess
 import sys
@@ -44,11 +45,43 @@ def changed_files(base: str | None) -> tuple[list[str], str | None]:
     return sorted(set(collected)), "; ".join(errors) if errors else None
 
 
+def _generated_files(directory: Path, cache: dict[Path, dict[str, object]]) -> dict[str, object]:
+    """Files that a refract manifest in ``directory`` records, or nothing."""
+    if directory not in cache:
+        files: object = {}
+        manifest = directory / ".refract/manifest.json"
+        try:
+            if manifest.is_file() and not manifest.is_symlink():
+                data = json.loads(manifest.read_text(encoding="utf-8"))
+                files = data.get("files", {}) if isinstance(data, dict) else {}
+        except (OSError, ValueError):
+            files = {}
+        cache[directory] = files if isinstance(files, dict) else {}
+    return cache[directory]
+
+
+def is_refract_generated(path: str, cache: dict[Path, dict[str, object]]) -> bool:
+    """True for refract's metadata and for files a manifest records as generated.
+
+    Refract regenerates these on every upgrade and documents them itself, so they do
+    not call for project documentation. Editable seeds are project content and are
+    still checked. The nearest directory with a manifest decides.
+    """
+    parts = path.split("/")
+    if ".refract" in parts:
+        return True
+    for depth in range(len(parts) - 1, -1, -1):
+        files = _generated_files(ROOT.joinpath(*parts[:depth]), cache)
+        if files:
+            entry = files.get("/".join(parts[depth:]))
+            return isinstance(entry, dict) and entry.get("mutable") is False
+    return False
+
+
 def classify(paths: list[str]) -> list[str]:
     findings: list[str] = []
-    # Files under a .refract/ directory are Refract's own generated metadata. They change
-    # on every upgrade and are documented by Refract, not by the project.
-    paths = [path for path in paths if ".refract" not in path.split("/")]
+    cache: dict[Path, dict[str, object]] = {}
+    paths = [path for path in paths if not is_refract_generated(path, cache)]
     docs = [path for path in paths if path.lower().endswith(".md")]
     architecture = [
         path for path in paths

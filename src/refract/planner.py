@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import os
+import re
 import stat
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -9,6 +11,9 @@ from pathlib import Path
 from .manifest import MANIFEST_PATH, Manifest, ManifestError, sha256_bytes, sha256_path
 from .model import GeneratedFile
 from .paths import UnsafePathError, assert_safe_root_parent, assert_safe_target_path, normalize_relative_path
+
+
+_RELEASE_VERSION = re.compile(r"\d+\.\d+\.\d+")
 
 
 class Action(str, Enum):
@@ -32,9 +37,9 @@ class Operation:
     detail: str = ""
     expected_hash: str | None = None
     expected_executable: bool | None = None
-    # True for an editable seed whose content differs from the last generated version.
-    # Its manifest entry is carried forward unchanged, so the customization stays
-    # recognizable on every later run.
+    # True for an editable seed that is kept because it was edited, or because an older
+    # manifest cannot show that it was not. Its manifest entry then records the hash of
+    # the generated version, never of the file on disk, so it stays recognizable later.
     customized: bool = False
 
 
@@ -136,6 +141,7 @@ def build_plan(
     *,
     remove_obsolete: bool = False,
     keep_existing: bool = False,
+    previous_generation: Callable[[str], Mapping[str, GeneratedFile]] | None = None,
 ) -> Plan:
     """Plan an ownership-aware write.
 
@@ -183,6 +189,26 @@ def build_plan(
         except (UnsafePathError, ManifestError, OSError) as exc:
             manifest_error = str(exc)
             operations.append(Operation(MANIFEST_PATH, Action.CONFLICT, detail=manifest_error))
+
+    # A manifest written before seed hashes were tracked may hold an edited seed's hash,
+    # so "content equals the manifest hash" does not prove the seed is unedited. Such a
+    # seed is changed or removed only when its content can be shown to be generated.
+    untracked_seeds = manifest_hash is not None and not manifest_error and not manifest.tracks_generated_seeds
+    if untracked_seeds:
+        manifest_metadata_changed = True
+    earlier_generation: dict[str, str] | None = None
+
+    def generated_by_earlier_version(relative: str, current_hash: str) -> bool:
+        nonlocal earlier_generation
+        if earlier_generation is None:
+            earlier_generation = {}
+            if previous_generation is not None and _RELEASE_VERSION.fullmatch(manifest.generator_version):
+                try:
+                    rendered = previous_generation(manifest.generator_version)
+                except (OSError, ValueError, KeyError):
+                    rendered = {}
+                earlier_generation = {path: sha256_bytes(item.content) for path, item in rendered.items()}
+        return earlier_generation.get(relative) == current_hash
 
     kept: set[str] = set()
     if keep_existing and not manifest_error:
@@ -238,24 +264,42 @@ def build_plan(
             previous
             and generated.mutable
             and previous.get("mutable", False)
-            and current_hash != previous.get("sha256")
+            and current_hash != desired_hash
         ):
-            seed_changed = desired_hash != previous.get("sha256")
-            operations.append(
-                Operation(
-                    relative,
-                    Action.NO_CHANGE,
-                    generated,
-                    "mutable generated seed was customized and is preserved"
-                    + ("; the generated seed changed since it was customized, review the new version manually" if seed_changed else ""),
-                    expected_hash=current_hash,
-                    expected_executable=_is_executable(path),
-                    customized=True,
+            edited = current_hash != previous.get("sha256")
+            unverifiable = not edited and untracked_seeds and not generated_by_earlier_version(relative, current_hash)
+            if edited or unverifiable:
+                seed_changed = desired_hash != previous.get("sha256")
+                if seed_changed:
+                    # The manifest moves to the hash of the newly generated version.
+                    manifest_metadata_changed = True
+                if edited:
+                    detail = "mutable generated seed was customized and is preserved" + (
+                        "; the generated seed changed since it was customized, review the new version manually"
+                        if seed_changed
+                        else ""
+                    )
+                else:
+                    detail = (
+                        "mutable generated seed is preserved: an earlier refract version did not record whether it"
+                        " was edited; delete it and re-run to take the generated version"
+                    )
+                operations.append(
+                    Operation(
+                        relative,
+                        Action.NO_CHANGE,
+                        generated,
+                        detail,
+                        expected_hash=current_hash,
+                        expected_executable=_is_executable(path),
+                        customized=True,
+                    )
                 )
-            )
-            continue
+                continue
         if current_hash == desired_hash:
             if previous:
+                if previous.get("sha256") != current_hash:
+                    manifest_metadata_changed = True
                 if _is_executable(path) != generated.executable:
                     operations.append(
                         Operation(
@@ -344,7 +388,11 @@ def build_plan(
                 operations.append(Operation(relative, Action.PRUNE_MISSING, None, "remove stale manifest claim"))
                 continue
             previous = manifest.files[relative]
-            if path.is_file() and not path.is_symlink() and sha256_path(path) == previous.get("sha256") and _is_executable(path) == previous.get("executable"):
+            regular = path.is_file() and not path.is_symlink()
+            current_hash = sha256_path(path) if regular else None
+            unchanged = current_hash == previous.get("sha256") and _is_executable(path) == previous.get("executable")
+            seed = bool(previous.get("mutable", False)) and not is_protected(relative)
+            if regular and unchanged and not (seed and untracked_seeds):
                 operations.append(
                     Operation(
                         relative,
@@ -353,6 +401,20 @@ def build_plan(
                         "requires --remove-obsolete",
                         expected_hash=previous.get("sha256"),
                         expected_executable=previous.get("executable"),
+                    )
+                )
+            elif regular and seed:
+                # An edited seed that refract no longer generates goes back to the project:
+                # the file stays and the manifest stops claiming it.
+                manifest_metadata_changed = True
+                operations.append(
+                    Operation(
+                        relative,
+                        Action.SKIP_UNMANAGED,
+                        None,
+                        "mutable seed is no longer generated; kept as project-owned and released from the manifest",
+                        expected_hash=current_hash,
+                        expected_executable=_is_executable(path),
                     )
                 )
             else:

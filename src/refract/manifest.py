@@ -12,6 +12,10 @@ from .paths import UnsafePathError, normalize_relative_path
 
 MANIFEST_PATH = ".refract/manifest.json"
 MANIFEST_SCHEMA = "refract-manifest/v1"
+# Value of the manifest's "seed_hashes" key. It states that the hash recorded for an
+# editable seed is the hash of the version refract generated, never of an edited file.
+# Manifests written before this key existed may hold an edited file's hash instead.
+SEED_HASHES_GENERATED = "generated"
 
 
 class ManifestError(ValueError):
@@ -26,6 +30,11 @@ def sha256_path(path: Path) -> str:
     return sha256_bytes(path.read_bytes())
 
 
+def generated_entry(content: bytes, *, executable: bool, mutable: bool) -> dict[str, Any]:
+    """Manifest entry that describes a file exactly as refract generated it."""
+    return {"sha256": sha256_bytes(content), "executable": executable, "mutable": mutable}
+
+
 @dataclass
 class Manifest:
     generator_version: str = __version__
@@ -33,6 +42,7 @@ class Manifest:
     files: dict[str, dict[str, Any]] = field(default_factory=dict)
     updated_at: str = ""
     schema: str = MANIFEST_SCHEMA
+    tracks_generated_seeds: bool = True
 
     @classmethod
     def load(cls, root: Path) -> "Manifest":
@@ -82,6 +92,7 @@ class Manifest:
             files=files,
             updated_at=str(data.get("updated_at", "")),
             schema=MANIFEST_SCHEMA,
+            tracks_generated_seeds=data.get("seed_hashes") == SEED_HASHES_GENERATED,
         )
 
     def to_bytes(self) -> bytes:
@@ -91,6 +102,7 @@ class Manifest:
             "generator_version": self.generator_version,
             "platforms": self.platforms,
             "updated_at": self.updated_at,
+            "seed_hashes": SEED_HASHES_GENERATED,
             "files": dict(sorted(self.files.items())),
         }
         return (json.dumps(data, indent=2, sort_keys=False) + "\n").encode("utf-8")
