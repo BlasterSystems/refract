@@ -16,7 +16,7 @@ Open your agent (Claude Code, Codex, OpenCode, or omp) in the project folder and
 
 ```text
 Set up this new project with the refract process.
-Clone https://github.com/BlasterSystems/refract (branch new-approach) into a temporary folder outside this project, read its README.md, then follow BOOTSTRAP.md.
+Clone https://github.com/BlasterSystems/refract at tag v0.4.0 into a temporary folder outside this project, read its README.md, then follow BOOTSTRAP.md.
 This is a new project: help me decide the project facts, and ask me which platforms and optional features I want before writing anything.
 ```
 
@@ -24,7 +24,7 @@ This is a new project: help me decide the project facts, and ask me which platfo
 
 ```text
 Set up this existing project with the refract process.
-Clone https://github.com/BlasterSystems/refract (branch new-approach) into a temporary folder outside this project, read its README.md, then follow BOOTSTRAP.md.
+Clone https://github.com/BlasterSystems/refract at tag v0.4.0 into a temporary folder outside this project, read its README.md, then follow BOOTSTRAP.md.
 This project already has code and may already have agent instructions or docs. Detect what you can, confirm it with me, and show me a diff before changing any file that already exists. Do not delete or replace my files without my explicit approval.
 ```
 
