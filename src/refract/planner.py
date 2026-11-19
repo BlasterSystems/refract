@@ -32,6 +32,10 @@ class Operation:
     detail: str = ""
     expected_hash: str | None = None
     expected_executable: bool | None = None
+    # True for an editable seed whose content differs from the last generated version.
+    # Its manifest entry is carried forward unchanged, so the customization stays
+    # recognizable on every later run.
+    customized: bool = False
 
 
 @dataclass
@@ -246,6 +250,7 @@ def build_plan(
                     + ("; the generated seed changed since it was customized, review the new version manually" if seed_changed else ""),
                     expected_hash=current_hash,
                     expected_executable=_is_executable(path),
+                    customized=True,
                 )
             )
             continue

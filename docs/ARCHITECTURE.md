@@ -41,7 +41,7 @@ trusted-terminal confirmation ──> staged apply/rollback ──> ownership ma
 
 ## Safety model
 
-Unmanaged files are never overwritten. Immutable manifest-owned files update only when their content and mode match the prior generated state; drift becomes a conflict. Explicitly marked mutable seeds—project instructions, architecture/process docs, ADR index/template, and task template—may be customized and are preserved while their structure is validated. Dry-run does not create the target or modify Git configuration.
+Unmanaged files are never overwritten. Immutable manifest-owned files update only when their content and mode match the prior generated state; drift becomes a conflict. Explicitly marked mutable seeds—project instructions, architecture/process docs, ADR index/template, and task template—may be customized and are preserved while their structure is validated. The manifest records the hash of the last generated version of each seed. A customized seed carries that entry forward unchanged on every apply, so it stays recognizable as customized; recording its edited content instead would let a later template or fact change overwrite it. Dry-run does not create the target or modify Git configuration.
 
 Git hooks are generated only when selected. `setup-hooks.sh` installs a hash-pinned launcher into git's own hooks directory, which sandboxed agents cannot write; it refuses to replace an existing custom hook or `core.hooksPath` without `--force`.
 

@@ -121,6 +121,10 @@ class ReleaseContractTests(unittest.TestCase):
         self.assertIn("trap 'rmdir \"$preview_target\"' EXIT", instructions)
         self.assertNotIn("rmdir \"$preview_target\"\n```", instructions)
 
+    def test_repository_docs_check_is_the_packaged_template(self) -> None:
+        template = ROOT / "src/refract/templates/core/bin/docs-check.py"
+        self.assertEqual(template.read_bytes(), (ROOT / ".refract/bin/docs-check").read_bytes())
+
     def test_shared_release_skill_is_identical_and_confirmation_gated(self) -> None:
         template = (
             ROOT / "src/refract/templates/core/skills/semantic-versioning/SKILL.md"

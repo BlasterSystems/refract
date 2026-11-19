@@ -46,6 +46,9 @@ def changed_files(base: str | None) -> tuple[list[str], str | None]:
 
 def classify(paths: list[str]) -> list[str]:
     findings: list[str] = []
+    # Files under a .refract/ directory are Refract's own generated metadata. They change
+    # on every upgrade and are documented by Refract, not by the project.
+    paths = [path for path in paths if ".refract" not in path.split("/")]
     docs = [path for path in paths if path.lower().endswith(".md")]
     architecture = [
         path for path in paths

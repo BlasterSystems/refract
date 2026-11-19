@@ -313,6 +313,10 @@ def _resulting_ownership(plan: Plan, desired: Mapping[str, GeneratedFile], remov
         operation = by_path.get(relative)
         if operation is None or operation.action in {Action.CONFLICT, Action.SKIP_UNMANAGED, Action.SKIP_KEPT}:
             continue
+        baseline = plan.previous_manifest.files.get(relative)
+        if operation.customized and baseline:
+            result[relative] = dict(baseline)
+            continue
         if operation.action == Action.NO_CHANGE and operation.expected_hash:
             digest = operation.expected_hash
             executable = bool(operation.expected_executable)
