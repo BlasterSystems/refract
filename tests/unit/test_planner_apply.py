@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest import mock
 
 from refract.apply import ApplyError, apply_plan
+from refract.facade import apply_bootstrap, prepare_bootstrap
 from refract.manifest import Manifest, sha256_path
 from refract.model import GeneratedFile
 from refract.planner import Action, build_plan
@@ -237,6 +238,41 @@ class PlannerApplyTests(unittest.TestCase):
             self.assertFalse((root / "owned.txt").exists())
             manifest = Manifest.load(root)
             self.assertNotIn("owned.txt", manifest.files)
+
+    def test_customized_seed_survives_reruns_that_rewrite_the_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "project"
+            first = request(root)
+            apply_plan(build_plan(root, render_project(first)), first.features.normalized_platforms())
+            seed = root / "AGENTS.md"
+            baseline = Manifest.load(root).files["AGENTS.md"]
+            seed.write_text(seed.read_text(encoding="utf-8") + "\nOur own rule.\n", encoding="utf-8")
+            customized = seed.read_bytes()
+            for description in ("second description", "third description"):
+                req = request(root)
+                req.facts.description = description
+                plan = build_plan(root, render_project(req))
+                operations = {operation.path: operation for operation in plan.operations}
+                self.assertEqual(Action.NO_CHANGE, operations["AGENTS.md"].action, description)
+                self.assertIn("customized and is preserved", operations["AGENTS.md"].detail)
+                self.assertIn("review the new version manually", operations["AGENTS.md"].detail)
+                self.assertEqual(Action.UPDATE_GENERATED, operations[".refract/config.json"].action)
+                apply_plan(plan, req.features.normalized_platforms())
+                self.assertEqual(customized, seed.read_bytes(), description)
+                self.assertEqual(baseline, Manifest.load(root).files["AGENTS.md"], description)
+
+    def test_plan_document_ownership_matches_the_written_manifest_for_a_customized_seed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "project"
+            first = request(root)
+            self.assertTrue(apply_bootstrap(prepare_bootstrap(first)).applied)
+            seed = root / "AGENTS.md"
+            seed.write_text(seed.read_text(encoding="utf-8") + "\nOur own rule.\n", encoding="utf-8")
+            req = request(root)
+            req.facts.description = "second description"
+            prepared = prepare_bootstrap(req)
+            self.assertTrue(apply_bootstrap(prepared).applied)
+            self.assertEqual(prepared.document["resulting_ownership"], Manifest.load(root).files)
 
     def test_identical_unmanaged_file_remains_unowned(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

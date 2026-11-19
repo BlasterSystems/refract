@@ -285,6 +285,40 @@ class CliIntegrationTests(unittest.TestCase):
             self.assertEqual(2, check.returncode, check.stdout)
             self.assertIn("could not establish a reliable diff", check.stdout)
 
+    def test_docs_check_ignores_refract_metadata_but_reports_project_configuration(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            result = run_cli("init", "--platform", "pi", "--yes", "--target", str(target))
+            self.assertEqual(0, result.returncode, result.stdout)
+
+            def git(*args: str) -> None:
+                subprocess.run(
+                    ["git", "-c", "user.name=test", "-c", "user.email=test@example.invalid", *args],
+                    cwd=target, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30,
+                )
+
+            def check() -> subprocess.CompletedProcess[str]:
+                return subprocess.run(
+                    [str(target / ".refract/bin/docs-check"), "--strict"], cwd=target,
+                    text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=30, check=False,
+                )
+
+            git("init", "-q", ".")
+            git("add", "-A")
+            git("commit", "-q", "-m", "baseline")
+            config = target / ".refract/config.json"
+            config.write_text(config.read_text(encoding="utf-8").replace("0.", "9.", 1), encoding="utf-8")
+            metadata_only = check()
+            self.assertEqual(0, metadata_only.returncode, metadata_only.stdout)
+            self.assertIn("No heuristic documentation gaps detected", metadata_only.stdout)
+
+            (target / "app").mkdir()
+            (target / "app/config.py").write_text("DEBUG = True\n", encoding="utf-8")
+            git("add", "app/config.py")
+            project_config = check()
+            self.assertEqual(1, project_config.returncode, project_config.stdout)
+            self.assertIn("Configuration-related files changed", project_config.stdout)
+
     def test_docs_check_rejects_option_like_base(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)
