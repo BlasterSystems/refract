@@ -30,7 +30,11 @@ A read-only checklist. Report every failure with its file and line; do not fix a
 
 ## ADRs (`docs/adr/`)
 
-11. `docs/adr/README.md` exists. Every other ADR file except `template.md` is named `NNNN-short-title.md`, with no duplicate numbers.
+Two exceptions apply to checks 11 to 14:
+- **A pointer index.** If `docs/adr/README.md` only points to another index file, apply the index checks to that file.
+- **Existing-format ADRs.** ADRs that `.refract.md` records as `skipped` existed before the setup. Don't fail them. List each one once, as `INFO: existing-format ADR, not checked`. New ADRs must follow every check.
+
+11. `docs/adr/README.md` exists. Every other ADR file except `template.md` and the index is named `NNNN-short-title.md`, with no duplicate numbers.
 12. Each ADR's heading starts with `# ADR-NNNN:` using its own number. It has a valid `Status` (`Proposed`, `Accepted`, `Rejected`, `Deprecated`, `Superseded`) and these sections: `## Context`, `## Decision drivers`, `## Considered options`, `## Decision`, `## Consequences`, `## Implementation and validation`, `## Revisit triggers`, `## References`.
 13. Every ADR has an index row whose status and link match the file.
 14. Every `Supersedes` and `Superseded by` reference points to an existing ADR:
@@ -40,4 +44,4 @@ A read-only checklist. Report every failure with its file and line; do not fix a
 
 ## Report
 
-End with `process-check: PASS` or `process-check: FAIL (<n> problems)`, followed by the list.
+End with `process-check: PASS` or `process-check: FAIL (<n> problems)`, followed by the list. INFO lines don't count as problems.
