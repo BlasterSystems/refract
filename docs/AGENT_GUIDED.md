@@ -15,7 +15,7 @@ The agent-guided workflow adds LLM assistance without making the LLM a trusted w
 refract inspect --target /path/to/project
 ```
 
-The JSON artifact reports evidence paths, hashes, confidence, exclusions, file/byte/entry/depth limits, and truncation. Raw snippets are omitted by default. `--include-snippets` requires an explicit decision because repository text may be sent to a remote model provider.
+The JSON artifact reports evidence paths, hashes, confidence, exclusions, file/byte/entry/depth limits, and truncation. The scan reads shallow files before deeper ones and known build manifests first in each directory, so a large tree cannot use up the limits before the repository root is read. `facts_incomplete` is true when the scan was truncated and no build manifest was found; an agent-guided plan then warns that no build, test, or run command is set. Raw snippets are omitted by default. `--include-snippets` requires an explicit decision because repository text may be sent to a remote model provider.
 
 Inspection artifacts are evidence, not authorization. The scanner cannot restrict additional repository access already granted to the surrounding agent runtime.
 

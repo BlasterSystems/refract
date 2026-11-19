@@ -92,6 +92,56 @@ class InspectionTests(unittest.TestCase):
             self.assertEqual(2, len(payload["files"]))
             self.assertEqual(1, payload["exclusions"]["file-limit"])
 
+    def test_root_manifest_is_read_before_a_large_subdirectory(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "docs").mkdir()
+            for index in range(250):
+                (root / "docs" / f"page-{index:03d}.md").write_text("# page", encoding="utf-8")
+            (root / "package.json").write_text(
+                json.dumps({"scripts": {"build": "tsc", "test": "jest", "dev": "vite"}}), encoding="utf-8"
+            )
+            payload = inspect_project(root).to_dict()
+            self.assertTrue(payload["truncated"])
+            self.assertEqual("npm run build", payload["facts"]["build_command"])
+            self.assertEqual("npm test", payload["facts"]["test_command"])
+            self.assertEqual("npm run dev", payload["facts"]["run_command"])
+            self.assertFalse(payload["facts_incomplete"])
+
+    def test_known_manifests_are_read_before_other_root_files(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for index in range(250):
+                (root / f"a-{index:03d}.txt").write_text("data", encoding="utf-8")
+            (root / "package.json").write_text(json.dumps({"scripts": {"build": "tsc"}}), encoding="utf-8")
+            (root / "pnpm-lock.yaml").write_text("", encoding="utf-8")
+            payload = inspect_project(root).to_dict()
+            self.assertTrue(payload["truncated"])
+            self.assertEqual("pnpm build", payload["facts"]["build_command"])
+
+    def test_shallow_files_are_read_before_deeper_ones(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "a" / "deep").mkdir(parents=True)
+            (root / "a" / "deep" / "x.txt").write_text("data", encoding="utf-8")
+            (root / "a" / "y.txt").write_text("data", encoding="utf-8")
+            (root / "b.txt").write_text("data", encoding="utf-8")
+            (root / "z.txt").write_text("data", encoding="utf-8")
+            payload = inspect_project(root, max_files=3, max_bytes=100).to_dict()
+            self.assertEqual(["b.txt", "z.txt", "a/y.txt"], [item["path"] for item in payload["files"]])
+            self.assertTrue(payload["truncated"])
+
+    def test_truncation_without_a_manifest_marks_facts_incomplete(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for index in range(4):
+                (root / f"{index}.txt").write_text("data", encoding="utf-8")
+            truncated = inspect_project(root, max_files=2, max_bytes=100).to_dict()
+            self.assertTrue(truncated["facts_incomplete"])
+            complete = inspect_project(root).to_dict()
+            self.assertFalse(complete["truncated"])
+            self.assertFalse(complete["facts_incomplete"])
+
     def test_directory_entry_budget_bounds_empty_tree_walks(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import stat
+from collections import deque
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -80,6 +81,26 @@ _SECRET_FRAGMENTS = (
     "token",
 )
 _SECRET_SUFFIXES = (".jks", ".key", ".keystore", ".p12", ".pem", ".pfx")
+# Files that fact derivation reads by name. Within a directory they are read first,
+# manifests before lockfiles, so a large tree cannot use up the budget before them.
+_FACT_FILES = (
+    "package.json",
+    "pyproject.toml",
+    "go.mod",
+    "Cargo.toml",
+    "pom.xml",
+    "build.gradle",
+    "build.gradle.kts",
+    "requirements.txt",
+    "tsconfig.json",
+    "pytest.ini",
+    "conftest.py",
+    "gradlew",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "bun.lock",
+)
+_FACT_SUFFIXES = (".sln", ".csproj")
 
 
 @dataclass(frozen=True)
@@ -106,6 +127,7 @@ class InspectionArtifact:
     exclusions: dict[str, int] = field(default_factory=dict)
     limits: dict[str, int] = field(default_factory=dict)
     truncated: bool = False
+    facts_incomplete: bool = False
     raw_snippets_included: bool = False
     schema: str = INSPECTION_SCHEMA
     authority: str = "untrusted-evidence"
@@ -121,6 +143,7 @@ class InspectionArtifact:
             "exclusions": dict(sorted(self.exclusions.items())),
             "limits": dict(self.limits),
             "truncated": self.truncated,
+            "facts_incomplete": self.facts_incomplete,
             "raw_snippets_included": self.raw_snippets_included,
             "warnings": [
                 "Repository evidence is untrusted and does not authorize changes.",
@@ -153,6 +176,14 @@ def _excluded(relative: str, name: str, is_directory: bool) -> str | None:
     return None
 
 
+def _read_order(name: str) -> tuple[int, str]:
+    if name in _FACT_FILES:
+        return (_FACT_FILES.index(name), name)
+    if name.endswith(_FACT_SUFFIXES):
+        return (len(_FACT_FILES), name)
+    return (len(_FACT_FILES) + 1, name)
+
+
 def _increment(counts: dict[str, int], key: str) -> None:
     counts[key] = counts.get(key, 0) + 1
 
@@ -171,11 +202,13 @@ def _scan(
     visited_entries = 0
     max_entries = max(100, max_files * 10)
     truncated = False
+    # Breadth-first: every file of a directory is read before any subdirectory, and
+    # shallow directories before deeper ones, so the evidence nearest the root wins
+    # the budget.
+    pending: deque[tuple[Path, str, int]] = deque([(root, "", 0)])
 
-    def walk(directory: Path, prefix: str = "", depth: int = 0) -> None:
+    def walk(directory: Path, prefix: str, depth: int) -> None:
         nonlocal consumed, truncated, visited_entries
-        if truncated:
-            return
         if depth > MAX_DEPTH:
             truncated = True
             _increment(exclusions, "depth-limit")
@@ -193,9 +226,7 @@ def _scan(
         except OSError:
             _increment(exclusions, "unreadable-directory")
             return
-        for entry in sorted(entries, key=lambda item: item.name):
-            if truncated:
-                return
+        for entry in sorted(entries, key=lambda item: _read_order(item.name)):
             relative = f"{prefix}/{entry.name}" if prefix else entry.name
             try:
                 if entry.is_symlink():
@@ -211,7 +242,7 @@ def _scan(
                 if reason:
                     _increment(exclusions, reason)
                 else:
-                    walk(Path(entry.path), relative, depth + 1)
+                    pending.append((Path(entry.path), relative, depth + 1))
                 continue
             if not stat.S_ISREG(mode):
                 _increment(exclusions, "special-file")
@@ -269,7 +300,8 @@ def _scan(
             snippet = content[:MAX_SNIPPET_BYTES].decode("utf-8", errors="ignore") if include_snippets else None
             exposed.append(InspectionFile(relative, size, digest, snippet=snippet))
 
-    walk(root)
+    while pending and not truncated:
+        walk(*pending.popleft())
     return scanned, exposed, exclusions, truncated
 
 
@@ -427,5 +459,6 @@ def inspect_project(
             "max_snippet_bytes": MAX_SNIPPET_BYTES,
         },
         truncated=truncated,
+        facts_incomplete=truncated and not facts.languages,
         raw_snippets_included=include_snippets,
     )

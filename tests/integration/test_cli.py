@@ -117,6 +117,29 @@ class CliIntegrationTests(unittest.TestCase):
             self.assertEqual("untrusted-preview", payload["authority"])
             self.assertFalse(target.exists())
 
+    def test_agent_guided_preview_reads_root_manifest_in_a_large_repository(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "project"
+            (target / "docs").mkdir(parents=True)
+            for index in range(250):
+                (target / "docs" / f"page-{index:03d}.md").write_text("# page", encoding="utf-8")
+            (target / "package.json").write_text(
+                json.dumps({"scripts": {"build": "tsc", "test": "jest"}}), encoding="utf-8"
+            )
+            args = ("init", "--agent-guided", "--platform", "claude", "--dry-run", "--plan-format", "json", "--target", str(target))
+            payload = json.loads(run_cli(*args).stdout)
+            self.assertEqual("npm run build", payload["request"]["project"]["build_command"])
+            self.assertEqual("npm test", payload["request"]["project"]["test_command"])
+            self.assertFalse(any("inspection" in warning for warning in payload["warnings"]))
+
+            (target / "package.json").unlink()
+            unresolved = json.loads(run_cli(*args).stdout)
+            self.assertIsNone(unresolved["request"]["project"]["build_command"])
+            self.assertTrue(any("inspection stopped at its limits" in warning for warning in unresolved["warnings"]))
+
+            supplied = json.loads(run_cli(*args, "--test-command", "make test").stdout)
+            self.assertFalse(any("inspection" in warning for warning in supplied["warnings"]))
+
     def test_agent_intent_null_explicitly_clears_detected_command(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / "project"

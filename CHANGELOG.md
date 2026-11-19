@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Fixed
+
+- Agent-guided previews no longer lose languages and commands in repositories with more than 200 files: `refract inspect` reads shallow files before deeper ones and build manifests first. When the scan is truncated and no manifest is found, the inspection reports `facts_incomplete` and the plan warns that no command is set.
+
 ## [0.3.0] - 2026-11-18
 
 ### Breaking changes

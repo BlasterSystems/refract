@@ -99,12 +99,25 @@ def _prompt_bool(label: str, default: bool = False) -> bool:
     raise ValueError(f"{label} requires yes or no")
 
 
-def _request_from_args(args: argparse.Namespace) -> BootstrapRequest:
+_INCOMPLETE_FACTS_WARNING = (
+    "inspection stopped at its limits before finding a build manifest, so no build, test, "
+    "or run command is set; pass --build-command, --test-command, and --run-command, "
+    "or propose them with --agent-intent"
+)
+
+
+def _request_from_args(args: argparse.Namespace, notes: list[str] | None = None) -> BootstrapRequest:
     target = Path(args.target).expanduser()
     answers = _load_answers(args.answers)
     intent = AgentIntent.load(Path(args.agent_intent)) if args.agent_intent else None
     proposed_project, proposed_features = intent_defaults(intent)
-    detected = inspect_project(target).facts if args.agent_guided else detect_project(target)
+    if args.agent_guided:
+        inspection = inspect_project(target)
+        detected = inspection.facts
+        facts_incomplete = inspection.facts_incomplete
+    else:
+        detected = detect_project(target)
+        facts_incomplete = False
 
     def project_value(cli_value: Any, key: str, detected_value: Any) -> Any:
         if cli_value is not None:
@@ -118,6 +131,8 @@ def _request_from_args(args: argparse.Namespace) -> BootstrapRequest:
     build = project_value(args.build_command, "build_command", detected.build_command)
     test = project_value(args.test_command, "test_command", detected.test_command)
     run = project_value(args.run_command, "run_command", detected.run_command)
+    if facts_incomplete and notes is not None and build is None and test is None and run is None:
+        notes.append(_INCOMPLETE_FACTS_WARNING)
     ticket = args.ticket_prefix
     if ticket is None:
         if "ticket_prefix" in proposed_project:
@@ -330,7 +345,8 @@ def _run_generation(args: argparse.Namespace) -> int:
         raise ValueError(
             "; ".join(scope_problems) + " (override with --allow-unscoped-target)"
         )
-    request = _request_from_args(args)
+    inspection_notes: list[str] = []
+    request = _request_from_args(args, inspection_notes)
     json_mode = args.plan_format == "json"
     if json_mode and not (args.yes or args.dry_run or args.agent_guided):
         raise ValueError("--plan-format json requires --yes, --dry-run, or --agent-guided")
@@ -339,7 +355,12 @@ def _run_generation(args: argparse.Namespace) -> int:
         request, remove_obsolete=args.remove_obsolete, keep_existing=args.keep_existing
     )
     plan = prepared.plan
-    warnings = _capability_warnings(request) + plan_findings(plan) + existing_setup_findings(request.target)
+    warnings = (
+        inspection_notes
+        + _capability_warnings(request)
+        + plan_findings(plan)
+        + existing_setup_findings(request.target)
+    )
 
     if args.agent_guided and args.expected_plan and prepared.plan_id != args.expected_plan:
         raise ValueError(
