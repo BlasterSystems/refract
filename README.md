@@ -17,13 +17,15 @@ Refract gives new and existing repositories the same agentic development setup o
 
 ## Quick start
 
-Requires Python 3.11+ and git.
+Requires Python 3.11+, git, and [pipx](https://pipx.pypa.io/) or [uv](https://docs.astral.sh/uv/). Other ways to install: [install options](#install-options).
 
 ```bash
-git clone https://github.com/BlasterSystems/refract && pip install ./refract
+pipx install git+https://github.com/BlasterSystems/refract   # or: uv tool install git+https://github.com/BlasterSystems/refract
 refract init --platform all --dry-run --yes --target ./my-project   # preview, writes nothing
 refract init --platform all --yes --target ./my-project             # apply
 ```
+
+Or let your coding agent install and preview it: paste the [install-and-set-up prompt](docs/PROMPTS.md#install-and-set-up), then run the apply command it gives you.
 
 **What you get:**
 - `AGENTS.md` with tiered docs, so agents read only what a task needs.
@@ -96,7 +98,7 @@ Go deeper → [docs/PROMPTS.md](docs/PROMPTS.md#deployment) · [deployment seed]
 ## Upgrade a managed project
 
 ```bash
-pip install --upgrade ./refract
+pipx reinstall refract   # or: uv tool install --reinstall git+https://github.com/BlasterSystems/refract
 refract retrofit --platform claude,codex,opencode,omp --dry-run --yes --target .
 ```
 
@@ -112,6 +114,7 @@ refract validate --target .   # or .refract/bin/validate inside a project
 
 | Message | Fix |
 |---|---|
+| `error: externally-managed-environment` from `pip install` | Your OS manages its Python (PEP 668). Install with pipx or uv instead; see [install options](#install-options) |
 | `CONFLICT … unmanaged destination exists` | Move your file aside, or re-run with `--keep-existing` |
 | `… is not a git repository but contains nested repositories` | Run Refract inside each project, not in a parent folder |
 | `CONFLICT … generated file content or mode was modified` | Restore the file or move your changes into a project-owned file |
@@ -132,6 +135,26 @@ Go deeper → [docs/AGENT_GUIDED.md](docs/AGENT_GUIDED.md) (trust boundary and p
 ---
 
 ## Reference
+
+<details>
+<summary><a id="install-options"></a><b>Install options</b></summary>
+
+Refract is a Python CLI with no runtime dependencies. Install it into its own environment: on Debian, Ubuntu, Arch, and Homebrew, plain `pip install` into the system Python fails with `externally-managed-environment` (PEP 668).
+
+| Method | Install | Upgrade |
+|---|---|---|
+| pipx (recommended) | `pipx install git+https://github.com/BlasterSystems/refract` | `pipx reinstall refract` |
+| uv | `uv tool install git+https://github.com/BlasterSystems/refract` | `uv tool install --reinstall git+https://github.com/BlasterSystems/refract` |
+| Virtual environment | `python3 -m venv ~/.venvs/refract && ~/.venvs/refract/bin/pip install git+https://github.com/BlasterSystems/refract` | Re-run the `pip install` with `--force-reinstall` |
+| No install (uv) | `uvx --from git+https://github.com/BlasterSystems/refract refract --help` | Runs the latest commit each time |
+
+- **Pin a release** by appending a tag to the URL: `git+https://github.com/BlasterSystems/refract@vX.Y.Z` (see [CHANGELOG.md](CHANGELOG.md)).
+- **No pipx?** Use your package manager: `sudo apt install pipx` (Debian/Ubuntu), `brew install pipx` (macOS), then `pipx ensurepath`.
+- **`ensurepip is not available`** when creating a virtual environment on Debian/Ubuntu: `sudo apt install python3-venv`.
+- **`refract: command not found`** after pipx or uv: run `pipx ensurepath` or `uv tool update-shell`, then open a new terminal. With a virtual environment, call `~/.venvs/refract/bin/refract` or add that folder to `PATH`.
+- **Do not use `--break-system-packages` or `sudo pip install`.** They can break tools your OS depends on.
+
+</details>
 
 <details>
 <summary><a id="options-reference"></a><b>Options reference</b></summary>
@@ -222,6 +245,8 @@ Read in this order, and stop as soon as you have what you need:
 PYTHONPATH=src python3 -m unittest discover -s tests -v
 PYTHONPATH=src python3 -m refract validate --target .
 ```
+
+To use your checkout as the `refract` command, run `pipx install --editable .` or `uv tool install --editable .` from the repository root.
 
 ## Credits
 
