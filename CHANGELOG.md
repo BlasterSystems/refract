@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Security
+
+- An agent-guided dry run in text format no longer prints the contents of existing managed files in its diffs. It withholds them as the JSON format does; only the interactive apply shows them.
+
 ### Fixed
 
 - `scripts/refract.sh` no longer imports Python modules from the current directory, so a target repository's files cannot shadow the standard library or Refract when the wrapper runs from a clone.
@@ -15,7 +19,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - New-project and existing-project prompts use the same agent-guided preview and `--expected-plan` apply instead of a plain `--dry-run --yes` preview; the README links to them.
 - Agents never install Refract; the prompt rules and the README's rules for coding agents say how to run it in place.
 - Advisory setup prompt: when inspection is truncated or a command or ticket prefix is missing, the agent looks for it with its own read-only tools and says where it came from.
-- `docs/AGENT_GUIDED.md` states that only `--plan-format json` withholds existing file contents from a preview, and describes the apply order as the CLI runs it.
+- `docs/AGENT_GUIDED.md` describes the apply order as the CLI runs it.
 
 ## [0.3.0] - 2026-11-18
 

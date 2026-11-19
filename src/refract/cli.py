@@ -280,7 +280,9 @@ def _capability_warnings(request: BootstrapRequest) -> list[str]:
     return capability_warnings(request.features)
 
 
-def _display_agent_review(prepared: PreparedBootstrap, warnings: list[str]) -> None:
+def _display_agent_review(
+    prepared: PreparedBootstrap, warnings: list[str], *, include_existing_content: bool = True
+) -> None:
     print("Agent-guided plan recomputed by the deterministic core.")
     print("Plan identifier provides integrity only; it does not identify or authorize an approver.")
     print("Complete canonical plan bound by the plan identifier:")
@@ -290,7 +292,7 @@ def _display_agent_review(prepared: PreparedBootstrap, warnings: list[str]) -> N
         print("WARNING: The existing manifest is a repository-supplied, unauthenticated ownership claim.")
     for warning in warnings:
         print(f"WARNING: {_terminal_safe_line(warning)}")
-    diffs = prepared.review_diffs(include_existing_content=True)
+    diffs = prepared.review_diffs(include_existing_content=include_existing_content)
     if diffs:
         print("Reviewable generated-file diffs:")
         for path, diff in sorted(diffs.items()):
@@ -348,7 +350,9 @@ def _run_generation(args: argparse.Namespace) -> int:
 
     if not json_mode:
         if args.agent_guided:
-            _display_agent_review(prepared, warnings)
+            # A dry run is the agent's preview; only the human apply, which requires an
+            # interactive terminal, may show the contents of existing files.
+            _display_agent_review(prepared, warnings, include_existing_content=not args.dry_run)
         else:
             print(_terminal_safe_text(plan.format()))
             for warning in warnings:

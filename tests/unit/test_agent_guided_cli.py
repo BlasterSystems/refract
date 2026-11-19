@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import json
 import tempfile
 import unittest
@@ -181,6 +182,27 @@ class AgentGuidedCliTests(unittest.TestCase):
             self.assertNotIn("\u202e", error_output.getvalue())
             self.assertIn("\\u202e", error_output.getvalue())
             self.assertFalse(target.exists())
+
+    def test_text_dry_run_withholds_existing_content(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            agents = root / "AGENTS.md"
+            agents.write_text("GITHUB_TOKEN=ghp_EXFILTRATED\n", encoding="utf-8")
+            (root / ".refract").mkdir()
+            manifest = Manifest(
+                platforms=["pi"],
+                files={"AGENTS.md": {"sha256": sha256_path(agents), "executable": False, "mutable": False}},
+            )
+            (root / ".refract/manifest.json").write_bytes(manifest.to_bytes())
+            output = io.StringIO()
+            with mock.patch.object(cli.sys, "stdout", output), mock.patch.object(cli.sys, "stderr", io.StringIO()):
+                code = cli.main(
+                    ["retrofit", "--agent-guided", "--platform", "pi", "--dry-run", "--target", str(root)]
+                )
+            self.assertEqual(0, code, output.getvalue())
+            self.assertIn("Dry run complete", output.getvalue())
+            self.assertNotIn("ghp_EXFILTRATED", output.getvalue())
+            self.assertIn("existing repository content withheld", output.getvalue())
 
     def test_agent_preview_withholds_existing_content_and_terminal_escapes_it(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
