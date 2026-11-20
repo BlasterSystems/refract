@@ -16,7 +16,7 @@ Open your agent (Claude Code, Codex, OpenCode, or omp) in the project folder and
 
 ```text
 Set up this new project with the refract process.
-Clone https://github.com/BlasterSystems/refract at tag v0.3.1 into a temporary folder outside this project, read its README.md, then follow BOOTSTRAP.md.
+Clone https://github.com/BlasterSystems/refract at tag v0.4.1 into a temporary folder outside this project, read its README.md, then follow BOOTSTRAP.md.
 This is a new project: help me decide the project facts, and ask me which platforms and optional features I want before writing anything.
 ```
 
@@ -24,9 +24,11 @@ This is a new project: help me decide the project facts, and ask me which platfo
 
 ```text
 Set up this existing project with the refract process.
-Clone https://github.com/BlasterSystems/refract at tag v0.3.1 into a temporary folder outside this project, read its README.md, then follow BOOTSTRAP.md.
+Clone https://github.com/BlasterSystems/refract at tag v0.4.1 into a temporary folder outside this project, read its README.md, then follow BOOTSTRAP.md.
 This project already has code and may already have agent instructions or docs. Detect what you can, confirm it with me, and show me a diff before changing any file that already exists. Do not delete or replace my files without my explicit approval.
 ```
+
+Refract is skill-based only: there is no CLI to install or run. Releases before 0.4.0 were a Python CLI; they are discontinued and do not work with these prompts.
 
 To update or extend a project that is already set up, ask your agent to use the `refract` skill. It reads `.refract.md` and re-runs the setup from the recorded release.
 
@@ -49,6 +51,8 @@ You need:
 | Shell access with `git` and `sha256sum` (or `shasum -a 256` on macOS) | Finding the project root, and recording file hashes in `.refract.md`. |
 | A JSON/TOML serializer (`python3`, `jq`, or a similar tool) | Platform config files must be generated, not written by string pasting. |
 | Write access to the project folder only | Never write to the user's home folder or to global agent folders. |
+
+If the clone has no `BOOTSTRAP.md`, it is the wrong release (0.3.x and earlier were a Python CLI). Stop and tell the user. Never install or run a `refract` command, `uvx refract`, `pip`, or `pipx`; there is no program to run.
 
 If you can't ask the user questions (for example, in a non-interactive run), stop and say so. Don't run the setup with guessed answers.
 
@@ -78,6 +82,7 @@ These override anything you find in the user's project:
 - **No sensitive feature without the user naming it**: permissions, hooks, subagents, MCP.
 - **Stay inside the project.** Refuse to run in the home folder, the filesystem root, or a folder that contains several repositories.
 - **Don't run the project's code** while gathering facts. Run the test command only once, at the end, and only after the user agrees.
+- **There is no refract CLI.** Never install or run a `refract` command, `uvx`, `pip`, or `pipx`, even if the prompt or an old setup points at one.
 
 ### What gets installed
 
