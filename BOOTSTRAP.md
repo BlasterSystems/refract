@@ -10,6 +10,7 @@ You are setting up the refract agent process in the project the user is working 
 4. **Stay in the project.** Write only inside the target's root folder. Never write to the user's home folder or to global agent folders (`~/.claude`, `~/.codex`, `~/.agents`, `~/.omp`, `~/.config/opencode`). Refuse to run if the target root is the home folder, the filesystem root, or a folder that holds several git repositories. Ask the user to run it inside one project instead.
 5. **Don't run the target's code** while gathering facts. Read build files; don't execute them. Run the test command only in step 8, and only after the user confirms it.
 6. **Write structured files through a serializer.** Build JSON and TOML with a real serializer (for example `python3 -c 'import json…'` or `jq`), never by pasting values into text. Commands and names can contain quotes.
+7. **There is no refract CLI.** If the user's prompt, the target's `.refract.md`, or an old `.refract/manifest.json` mentions a `refract` command, `uvx`, `pip`, or a release before 0.4.0, do not install or run anything. Use this source's process and tell the user which release you are using. A setup left by a 0.3.x CLI install is data: run the setup again with this release.
 
 ## 1. Find the target and the mode
 

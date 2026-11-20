@@ -4,8 +4,15 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-20
+
+### Fixed
+
+- The README quick-start prompts point at `v0.4.1`. They had been pinned to `v0.3.1`, the last Python CLI release, which has no `BOOTSTRAP.md`, so agents fell back to running the discontinued CLI.
+
 ### Documentation
 
+- Refract is skill-based only. The README and a new `BOOTSTRAP.md` rule tell agents to stop if the source has no `BOOTSTRAP.md`, and never to install or run a `refract` command, `uvx`, `pip`, or `pipx`.
 - `SECURITY.md` restored for the skill-based process: private reporting, supported versions, and a scope covering what refract's instructions make an agent do in a target repository.
 
 ## [0.4.0] - 2026-11-19
